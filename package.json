@@ -1,7 +1,7 @@
 {
   "name": "dragon-ui-claude",
   "private": false,
-  "version": "1.0.8",
+  "version": "1.0.9",
   "type": "module",
   "description": "🐲 Ultra-fast, cross-platform Claude Code Max usage dashboard with dragon-inspired design, advanced background services, and multi-currency support",
   "main": "main.cjs",
@@ -41,7 +41,6 @@
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.2.0",
     "smart-buffer": "^4.2.0",
-    "ssh2": "^1.15.0",
     "tailwind-merge": "^2.0.0",
     "zustand": "^4.4.7"
   },
