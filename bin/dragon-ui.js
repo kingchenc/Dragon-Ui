@@ -34,8 +34,20 @@ function checkIfRebuildNeeded() {
     
     console.log('🔍 Checking if native modules need rebuilding...');
     
-    // Check for rebuild cache file
-    const cacheFile = path.join(packageRoot, '.dragon-ui-rebuild-cache');
+    // Check for rebuild cache file (use OS temp directory if package root is not writable)
+    let cacheFile = path.join(packageRoot, '.dragon-ui-rebuild-cache');
+    let cacheDir = packageRoot;
+    
+    // Check if we can write to package root (might be restricted in global installs)
+    try {
+      fs.accessSync(packageRoot, fs.constants.W_OK);
+    } catch (error) {
+      // Use OS temp directory if package root is not writable  
+      const os = require('os');
+      cacheDir = os.tmpdir();
+      cacheFile = path.join(cacheDir, '.dragon-ui-rebuild-cache');
+    }
+    
     const electronPackageJson = path.join(packageRoot, 'node_modules', 'electron', 'package.json');
     
     if (fs.existsSync(cacheFile) && fs.existsSync(electronPackageJson)) {
@@ -45,16 +57,13 @@ function checkIfRebuildNeeded() {
         
         // Check if electron version matches cached version
         if (cacheData.electronVersion === electronPkg.version) {
-          // Check if better-sqlite3 binary exists and is newer than cache
+          // Check if better-sqlite3 binary exists
           const bindingPath = path.join(sqlitePath, 'build', 'Release', 'better_sqlite3.node');
           if (fs.existsSync(bindingPath)) {
-            const bindingStat = fs.statSync(bindingPath);
-            const cacheTime = new Date(cacheData.timestamp);
-            
-            if (bindingStat.mtime > cacheTime) {
-              console.log('✅ Native modules are up to date');
-              return false;
-            }
+            console.log('✅ Native modules are up to date');
+            return false;
+          } else {
+            console.log('🔧 Binary missing, rebuild needed');
           }
         } else {
           console.log('🔄 Electron version changed, rebuild needed');
@@ -94,7 +103,15 @@ function rebuildNativeModules(callback) {
             electronVersion: electronPkg.version
           };
           
-          const cacheFile = path.join(packageRoot, '.dragon-ui-rebuild-cache');
+          // Use the same cache file logic as in checkIfRebuildNeeded
+          let cacheFile = path.join(packageRoot, '.dragon-ui-rebuild-cache');
+          try {
+            fs.accessSync(packageRoot, fs.constants.W_OK);
+          } catch (error) {
+            const os = require('os');
+            cacheFile = path.join(os.tmpdir(), '.dragon-ui-rebuild-cache');
+          }
+          
           fs.writeFileSync(cacheFile, JSON.stringify(cacheData, null, 2));
           console.log('💾 Rebuild cache updated');
         }
