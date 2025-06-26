@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const glob = require('glob');
 const DatabaseService = require('./database.cjs');
+const { sshService } = require('./ssh-service.cjs');
 
 /**
  * Data Loader Service
@@ -16,10 +17,23 @@ class DataLoaderService {
 
   /**
    * Load all JSONL usage entries from given paths (with incremental loading)
+   * Now supports SSH remote loading if enabled
    */
   async loadAllUsageEntries(activePaths) {
     const startTime = performance.now();
     console.log('[LOAD] DataLoader: Starting incremental loading...');
+    
+    // Check if SSH is enabled and configured
+    const isSSHEnabled = sshService && sshService.isEnabled();
+    if (isSSHEnabled) {
+      console.log('[SSH] DataLoader: SSH is enabled, attempting remote data loading...');
+      const remoteDataLoaded = await this.loadRemoteSSHData();
+      if (remoteDataLoaded > 0) {
+        console.log(`[SSH] DataLoader: Successfully loaded ${remoteDataLoaded} entries from SSH`);
+      } else {
+        console.log('[SSH] DataLoader: No remote data loaded, falling back to local paths');
+      }
+    }
     
     // Get last processed timestamp from DB
     const lastTimestamp = this.db.getLastTimestamp();
@@ -332,6 +346,120 @@ class DataLoaderService {
     
     scanDirectory(basePath);
     return jsonlFiles;
+  }
+
+  /**
+   * Load remote data via SSH if enabled and configured
+   * Safely handles connection failures without crashing the app
+   */
+  async loadRemoteSSHData() {
+    try {
+      if (!sshService || !sshService.isEnabled()) {
+        console.log('[SSH] DataLoader: SSH not enabled or available');
+        return 0;
+      }
+
+      console.log('[SSH] DataLoader: Attempting to create SSH connection...');
+      
+      // Create SSH connection with timeout and error handling
+      const connectionResult = await sshService.createConnection('data-loader');
+      
+      if (!connectionResult.success) {
+        console.warn('[SSH] DataLoader: Failed to create SSH connection:', connectionResult.message);
+        return 0;
+      }
+
+      console.log('[SSH] DataLoader: SSH connection established successfully');
+
+      // List remote JSONL files in common Claude directories
+      const remotePaths = [
+        '~/.config/claude/projects',
+        '~/.claude/projects',
+        '/tmp/claude-projects',
+        '/home/claude/projects'
+      ];
+
+      let totalLoadedEntries = 0;
+      
+      for (const remotePath of remotePaths) {
+        try {
+          console.log(`[SSH] DataLoader: Scanning remote path: ${remotePath}`);
+          
+          const filesResult = await sshService.listRemoteFiles(remotePath, 'data-loader');
+          
+          if (filesResult.success && filesResult.files && filesResult.files.length > 0) {
+            console.log(`[SSH] DataLoader: Found ${filesResult.files.length} JSONL files in ${remotePath}`);
+            
+            // Download and process each remote JSONL file
+            for (const file of filesResult.files) {
+              try {
+                const remoteFilePath = `${remotePath}/${file.name}`;
+                const localTempPath = path.join(require('os').tmpdir(), 'dragon-ui-ssh', file.name);
+                
+                console.log(`[SSH] DataLoader: Downloading ${file.name}...`);
+                
+                const downloadResult = await sshService.downloadJsonl(remoteFilePath, localTempPath, 'data-loader');
+                
+                if (downloadResult.success) {
+                  console.log(`[SSH] DataLoader: Successfully downloaded ${file.name} (${downloadResult.fileSize} bytes)`);
+                  
+                  // Process the downloaded file
+                  const lastTimestamp = this.db.getLastTimestamp();
+                  const newEntries = await this.processJsonlFileIncremental(localTempPath, lastTimestamp);
+                  totalLoadedEntries += newEntries;
+                  
+                  // Clean up temporary file
+                  try {
+                    require('fs').unlinkSync(localTempPath);
+                  } catch (cleanupError) {
+                    console.warn('[SSH] DataLoader: Failed to cleanup temp file:', cleanupError.message);
+                  }
+                  
+                } else {
+                  console.warn(`[SSH] DataLoader: Failed to download ${file.name}:`, downloadResult.message);
+                }
+                
+              } catch (fileError) {
+                console.warn(`[SSH] DataLoader: Error processing remote file ${file.name}:`, fileError.message);
+                // Continue with next file
+              }
+            }
+          } else {
+            console.log(`[SSH] DataLoader: No JSONL files found in ${remotePath}`);
+          }
+          
+        } catch (pathError) {
+          console.warn(`[SSH] DataLoader: Error accessing remote path ${remotePath}:`, pathError.message);
+          // Continue with next path
+        }
+      }
+
+      // Close SSH connection
+      try {
+        sshService.closeConnection('data-loader');
+        console.log('[SSH] DataLoader: SSH connection closed');
+      } catch (closeError) {
+        console.warn('[SSH] DataLoader: Error closing SSH connection:', closeError.message);
+      }
+
+      console.log(`[SSH] DataLoader: Completed SSH data loading, processed ${totalLoadedEntries} new entries`);
+      return totalLoadedEntries;
+
+    } catch (error) {
+      console.error('[SSH] DataLoader: Critical SSH error (safely handled):', error.message);
+      
+      // Ensure SSH connection is cleaned up even on error
+      try {
+        if (sshService) {
+          sshService.closeConnection('data-loader');
+        }
+      } catch (cleanupError) {
+        // Ignore cleanup errors
+      }
+      
+      // Return 0 to indicate no data loaded, but don't crash the app
+      return 0;
+    }
   }
 
   /**

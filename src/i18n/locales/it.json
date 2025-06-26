@@ -393,11 +393,12 @@
           "refreshDatabase": "Aggiorna database"
         },
         "confirmClear": "Sei sicuro di voler cancellare TUTTI i dati dal database? Questa azione non può essere annullata.",
-        "clearedSuccess": "Database cancellato con successo!",
+        "clearSuccess": "Database cancellato con successo!",
         "clearFailed": "Errore nella cancellazione del database.",
         "clearFirst": "Per favore, cancella prima il database.",
-        "refreshedSuccess": "Database aggiornato con successo!",
-        "refreshFailed": "Errore nell'aggiornamento del database."
+        "refreshSuccess": "Database aggiornato con successo!",
+        "refreshFailed": "Errore nell'aggiornamento del database.",
+        "databaseCleared": "Il database è stato cancellato!"
       },
       "dataExport": {
         "title": "Esportazione dati",
@@ -432,6 +433,27 @@
           "description": "Valuta di visualizzazione per calcoli dei costi (convertita da USD)",
           "changeFailed": "Errore nel cambio valuta. Per favore riprova."
         }
+      },
+      "sshSupport": {
+        "title": "Supporto SSH",
+        "enable": {
+          "title": "Abilita accesso remoto SSH",
+          "description": "Consenti accesso remoto alla dashboard Dragon UI tramite SSH",
+          "enabled": "Abilitato",
+          "disabled": "Disabilitato"
+        },
+        "config": {
+          "host": "Host",
+          "ipPlaceholder": "192.168.1.100",
+          "port": "Porta",
+          "username": "Nome utente",
+          "usernamePlaceholder": "admin",
+          "password": "Password"
+        },
+        "actions": {
+          "testConnection": "Testa connessione"
+        },
+        "note": "Il supporto SSH consente l'accesso remoto sicuro alla dashboard Dragon UI. Tutte le impostazioni vengono salvate automaticamente mentre si digita."
       },
       "claudeProjects": {
         "title": "Progetti Claude",

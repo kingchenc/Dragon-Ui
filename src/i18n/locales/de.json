@@ -393,11 +393,12 @@
           "refreshDatabase": "Datenbank aktualisieren"
         },
         "confirmClear": "Sind Sie sicher, dass Sie ALLE Daten aus der Datenbank löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
-        "clearedSuccess": "Datenbank erfolgreich gelöscht!",
+        "clearSuccess": "Datenbank erfolgreich gelöscht!",
         "clearFailed": "Fehler beim Löschen der Datenbank.",
         "clearFirst": "Bitte löschen Sie zuerst die Datenbank.",
-        "refreshedSuccess": "Datenbank erfolgreich aktualisiert!",
-        "refreshFailed": "Fehler beim Aktualisieren der Datenbank."
+        "refreshSuccess": "Datenbank erfolgreich aktualisiert!",
+        "refreshFailed": "Fehler beim Aktualisieren der Datenbank.",
+        "databaseCleared": "Datenbank wurde gelöscht!"
       },
       "dataExport": {
         "title": "Datenexport",
@@ -432,6 +433,27 @@
           "description": "Anzeigewährung für Kostenberechnungen (umgerechnet von USD)",
           "changeFailed": "Fehler beim Ändern der Währung. Bitte versuchen Sie es erneut."
         }
+      },
+      "sshSupport": {
+        "title": "SSH-Unterstützung",
+        "enable": {
+          "title": "SSH-Fernzugriff aktivieren",
+          "description": "Fernzugriff auf das Dragon UI Dashboard über SSH ermöglichen",
+          "enabled": "Aktiviert",
+          "disabled": "Deaktiviert"
+        },
+        "config": {
+          "host": "Host",
+          "hostPlaceholder": "192.168.1.100",
+          "port": "Port",
+          "username": "Benutzername",
+          "usernamePlaceholder": "admin",
+          "password": "Passwort"
+        },
+        "actions": {
+          "testConnection": "Verbindung testen"
+        },
+        "note": "SSH-Unterstützung ermöglicht sicheren Fernzugriff auf Ihr Dragon UI Dashboard. Alle Einstellungen werden automatisch beim Tippen gespeichert."
       },
       "claudeProjects": {
         "title": "Claude-Projekte",

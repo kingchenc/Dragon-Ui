@@ -1,4 +1,18 @@
 // Electron API types for window.electronAPI
+
+// SSH Configuration interface
+export interface SSHConfig {
+  enabled: boolean;
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  privateKeyPath: string;
+  useKeyAuth: boolean;
+  connectionTimeout: number;
+  keepAliveInterval: number;
+}
+
 export interface ElectronAPI {
   getAppVersion: () => Promise<string>;
   exportData: (data: string, filename: string) => Promise<{
@@ -21,6 +35,12 @@ export interface ElectronAPI {
     isMaximized?: boolean;
     isFullScreen?: boolean;
   }>;
+  
+  // SSH Support
+  'ssh-set-config': (config: SSHConfig) => Promise<{ success: boolean; message?: string; error?: string }>;
+  'ssh-get-config': () => Promise<{ success: boolean; data?: SSHConfig; error?: string }>;
+  'ssh-test-connection': (config: SSHConfig) => Promise<{ success: boolean; message: string; error?: string }>;
+  'ssh-execute-command': (config: SSHConfig, command: string) => Promise<{ success: boolean; output?: string; error?: string }>;
   
   // Direct IPC calls for modular services
   invokeClaudeProjectsStats: () => Promise<{ success: boolean; data: any; error?: string }>;

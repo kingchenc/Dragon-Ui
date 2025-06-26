@@ -393,11 +393,12 @@
           "refreshDatabase": "Atualizar banco de dados"
         },
         "confirmClear": "Tem certeza de que deseja limpar TODOS os dados do banco de dados? Esta ação não pode ser desfeita.",
-        "clearedSuccess": "Banco de dados limpo com sucesso!",
+        "clearSuccess": "Banco de dados limpo com sucesso!",
         "clearFailed": "Falha ao limpar banco de dados.",
         "clearFirst": "Por favor, limpe primeiro o banco de dados.",
-        "refreshedSuccess": "Banco de dados atualizado com sucesso!",
-        "refreshFailed": "Falha ao atualizar banco de dados."
+        "refreshSuccess": "Banco de dados atualizado com sucesso!",
+        "refreshFailed": "Falha ao atualizar banco de dados.",
+        "databaseCleared": "Banco de dados foi limpo!"
       },
       "dataExport": {
         "title": "Exportação de dados",
@@ -432,6 +433,27 @@
           "description": "Moeda de exibição para cálculos de custos (convertida de USD)",
           "changeFailed": "Falha ao alterar moeda. Tente novamente."
         }
+      },
+      "sshSupport": {
+        "title": "Suporte SSH",
+        "enable": {
+          "title": "Habilitar acesso remoto SSH",
+          "description": "Permitir acesso remoto ao painel Dragon UI via SSH",
+          "enabled": "Habilitado",
+          "disabled": "Desabilitado"
+        },
+        "config": {
+          "host": "Host",
+          "ipPlaceholder": "192.168.1.100",
+          "port": "Porta",
+          "username": "Nome de usuário",
+          "usernamePlaceholder": "admin",
+          "password": "Senha"
+        },
+        "actions": {
+          "testConnection": "Testar conexão"
+        },
+        "note": "O suporte SSH permite acesso remoto seguro ao seu painel Dragon UI. Todas as configurações são salvas automaticamente conforme você digita."
       },
       "claudeProjects": {
         "title": "Projetos Claude",

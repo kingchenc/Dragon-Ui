@@ -138,3 +138,8 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Database files
+usage.db
+usage.db-shm
+usage.db-wal

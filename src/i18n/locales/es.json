@@ -393,11 +393,12 @@
           "refreshDatabase": "Actualizar base de datos"
         },
         "confirmClear": "¿Está seguro de que desea limpiar TODOS los datos de la base de datos? Esta acción no se puede deshacer.",
-        "clearedSuccess": "¡Base de datos limpiada exitosamente!",
+        "clearSuccess": "¡Base de datos limpiada exitosamente!",
         "clearFailed": "Error al limpiar la base de datos.",
         "clearFirst": "Por favor, primero limpie la base de datos.",
-        "refreshedSuccess": "¡Base de datos actualizada exitosamente!",
-        "refreshFailed": "Error al actualizar la base de datos."
+        "refreshSuccess": "¡Base de datos actualizada exitosamente!",
+        "refreshFailed": "Error al actualizar la base de datos.",
+        "databaseCleared": "¡La base de datos ha sido limpiada!"
       },
       "dataExport": {
         "title": "Exportación de datos",
@@ -432,6 +433,27 @@
           "description": "Moneda de visualización para cálculos de costos (convertida desde USD)",
           "changeFailed": "Error al cambiar la moneda. Por favor, inténtelo de nuevo."
         }
+      },
+      "sshSupport": {
+        "title": "Soporte SSH",
+        "enable": {
+          "title": "Habilitar acceso remoto SSH",
+          "description": "Permitir acceso remoto al panel de control Dragon UI via SSH",
+          "enabled": "Habilitado",
+          "disabled": "Deshabilitado"
+        },
+        "config": {
+          "host": "Host",
+          "hostPlaceholder": "192.168.1.100",
+          "port": "Puerto",
+          "username": "Nombre de usuario",
+          "usernamePlaceholder": "admin",
+          "password": "Contraseña"
+        },
+        "actions": {
+          "testConnection": "Probar conexión"
+        },
+        "note": "El soporte SSH permite acceso remoto seguro a su panel de control Dragon UI. Todas las configuraciones se guardan automáticamente mientras escribe."
       },
       "claudeProjects": {
         "title": "Proyectos Claude",

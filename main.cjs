@@ -8,6 +8,7 @@ const os = require('os');
 const DataLoaderService = require('./services/data-loader.cjs');
 const CoreDataService = require('./services/core-data.cjs');
 const PathManagerService = require('./services/path-manager.cjs');
+const { sshService } = require('./services/ssh-service.cjs');
 
 let mainWindow;
 
@@ -242,6 +243,7 @@ console.log('[INIT] Initializing core services with SQLite database...');
 const pathManager = new PathManagerService();
 const dataLoader = new DataLoaderService(); // This now initializes the SQLite database
 const coreDataService = new CoreDataService(dataLoader, pathManager);
+// SSH service is initialized as singleton
 
 // Log database initialization
 console.log('[DB] SQLite database initialized via DataLoaderService');
@@ -711,6 +713,115 @@ app.whenReady().then(() => {
 // Unregister shortcuts when app is quitting
 app.on('will-quit', () => {
   globalShortcut.unregisterAll();
+});
+
+// SSH Service IPC Handlers
+ipcMain.handle('ssh-set-config', async (event, config) => {
+  try {
+    console.log('[SSH] Setting SSH configuration via IPC');
+    sshService.setConfig(config);
+    return { success: true };
+  } catch (error) {
+    console.error('[SSH] Set config error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('ssh-get-config', async () => {
+  try {
+    const config = sshService.getConfig();
+    return { success: true, config };
+  } catch (error) {
+    console.error('[SSH] Get config error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('ssh-test-connection', async (event, config) => {
+  try {
+    console.log('[SSH] Testing SSH connection via IPC');
+    if (config) {
+      sshService.setConfig(config);
+    }
+    const result = await sshService.testConnection();
+    return result;
+  } catch (error) {
+    console.error('[SSH] Test connection error:', error);
+    return { success: false, message: error.message };
+  }
+});
+
+ipcMain.handle('ssh-create-connection', async (event, connectionId = 'default') => {
+  try {
+    console.log(`[SSH] Creating SSH connection '${connectionId}' via IPC`);
+    const result = await sshService.createConnection(connectionId);
+    return result;
+  } catch (error) {
+    console.error('[SSH] Create connection error:', error);
+    return { success: false, message: error.message };
+  }
+});
+
+ipcMain.handle('ssh-execute-command', async (event, command, connectionId = 'default') => {
+  try {
+    console.log(`[SSH] Executing command '${command}' via IPC`);
+    const result = await sshService.executeCommand(command, connectionId);
+    return result;
+  } catch (error) {
+    console.error('[SSH] Execute command error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('ssh-download-jsonl', async (event, remotePath, localPath, connectionId = 'default') => {
+  try {
+    console.log(`[SSH] Downloading JSONL file '${remotePath}' to '${localPath}' via IPC`);
+    
+    // Default local path if not provided
+    if (!localPath) {
+      const downloadsPath = path.join(os.homedir(), 'Downloads', 'dragon-ui-ssh');
+      const fileName = path.basename(remotePath);
+      localPath = path.join(downloadsPath, fileName);
+    }
+    
+    const result = await sshService.downloadJsonl(remotePath, localPath, connectionId);
+    return result;
+  } catch (error) {
+    console.error('[SSH] Download JSONL error:', error);
+    return { success: false, message: error.message };
+  }
+});
+
+ipcMain.handle('ssh-list-remote-files', async (event, remotePath, connectionId = 'default') => {
+  try {
+    console.log(`[SSH] Listing remote files in '${remotePath}' via IPC`);
+    const result = await sshService.listRemoteFiles(remotePath, connectionId);
+    return result;
+  } catch (error) {
+    console.error('[SSH] List remote files error:', error);
+    return { success: false, message: error.message };
+  }
+});
+
+ipcMain.handle('ssh-close-connection', async (event, connectionId = 'default') => {
+  try {
+    console.log(`[SSH] Closing SSH connection '${connectionId}' via IPC`);
+    const result = sshService.closeConnection(connectionId);
+    return { success: result };
+  } catch (error) {
+    console.error('[SSH] Close connection error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('ssh-get-active-connections', async () => {
+  try {
+    const connections = sshService.getActiveConnections();
+    return { success: true, connections };
+  } catch (error) {
+    console.error('[SSH] Get active connections error:', error);
+    return { success: false, error: error.message };
+  }
 });
 
 console.log('[OK] Modular Dragon UI main process initialized');

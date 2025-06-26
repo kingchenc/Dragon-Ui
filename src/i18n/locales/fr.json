@@ -393,11 +393,12 @@
           "refreshDatabase": "Actualiser la base de données"
         },
         "confirmClear": "Êtes-vous sûr de vouloir effacer TOUTES les données de la base de données ? Cette action ne peut pas être annulée.",
-        "clearedSuccess": "Base de données effacée avec succès !",
+        "clearSuccess": "Base de données effacée avec succès !",
         "clearFailed": "Échec de l'effacement de la base de données.",
         "clearFirst": "Veuillez d'abord effacer la base de données.",
-        "refreshedSuccess": "Base de données actualisée avec succès !",
-        "refreshFailed": "Échec de l'actualisation de la base de données."
+        "refreshSuccess": "Base de données actualisée avec succès !",
+        "refreshFailed": "Échec de l'actualisation de la base de données.",
+        "databaseCleared": "La base de données a été effacée !"
       },
       "dataExport": {
         "title": "Export de données",
@@ -432,6 +433,27 @@
           "description": "Devise d'affichage pour les calculs de coûts (convertie depuis USD)",
           "changeFailed": "Échec du changement de devise. Veuillez réessayer."
         }
+      },
+      "sshSupport": {
+        "title": "Support SSH",
+        "enable": {
+          "title": "Activer l'accès distant SSH",
+          "description": "Permettre l'accès distant au tableau de bord Dragon UI via SSH",
+          "enabled": "Activé",
+          "disabled": "Désactivé"
+        },
+        "config": {
+          "host": "Hôte",
+          "hostPlaceholder": "192.168.1.100",
+          "port": "Port",
+          "username": "Nom d'utilisateur",
+          "usernamePlaceholder": "admin",
+          "password": "Mot de passe"
+        },
+        "actions": {
+          "testConnection": "Tester la connexion"
+        },
+        "note": "Le support SSH permet un accès distant sécurisé à votre tableau de bord Dragon UI. Tous les paramètres sont automatiquement sauvegardés au fur et à mesure que vous tapez."
       },
       "claudeProjects": {
         "title": "Projets Claude",

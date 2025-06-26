@@ -38,6 +38,11 @@ Thumbs.db
 .git/
 .gitignore
 
+# Database files
+usage.db
+usage.db-shm
+usage.db-wal
+
 # Keep these for npm package
 !dist/
 !main.cjs

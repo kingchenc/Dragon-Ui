@@ -393,11 +393,12 @@
           "refreshDatabase": "データベースを更新"
         },
         "confirmClear": "データベースから全データを削除してもよろしいですか？この操作は元に戻せません。",
-        "clearedSuccess": "データベースのクリアが成功しました！",
+        "clearSuccess": "データベースのクリアが成功しました！",
         "clearFailed": "データベースのクリアに失敗しました。",
         "clearFirst": "まずデータベースをクリアしてください。",
-        "refreshedSuccess": "データベースの更新が成功しました！",
-        "refreshFailed": "データベースの更新に失敗しました。"
+        "refreshSuccess": "データベースの更新が成功しました！",
+        "refreshFailed": "データベースの更新に失敗しました。",
+        "databaseCleared": "データベースがクリアされました！"
       },
       "dataExport": {
         "title": "データエクスポート",
@@ -432,6 +433,27 @@
           "description": "コスト計算の表示通貨（USDから変換）",
           "changeFailed": "通貨の変更に失敗しました。再試行してください。"
         }
+      },
+      "sshSupport": {
+        "title": "SSH サポート",
+        "enable": {
+          "title": "SSH リモートアクセスを有効にする",
+          "description": "SSH を介して Dragon UI ダッシュボードへのリモートアクセスを許可する",
+          "enabled": "有効",
+          "disabled": "無効"
+        },
+        "config": {
+          "host": "ホスト",
+          "hostPlaceholder": "192.168.1.100",
+          "port": "ポート",
+          "username": "ユーザー名",
+          "usernamePlaceholder": "admin",
+          "password": "パスワード"
+        },
+        "actions": {
+          "testConnection": "接続テスト"
+        },
+        "note": "SSH サポートにより、Dragon UI ダッシュボードへの安全なリモートアクセスが可能になります。すべての設定は入力時に自動的に保存されます。"
       },
       "claudeProjects": {
         "title": "Claudeプロジェクト",

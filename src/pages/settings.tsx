@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { DragonCard, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { DragonBadge } from '@/components/ui/badge'
@@ -23,9 +23,13 @@ import {
   Calendar,
   Trash2,
   Search,
-  AlertTriangle
+  AlertTriangle,
+  Server,
+  Key,
+  User,
+  Network
 } from 'lucide-react'
-import { exportToCsv, downloadData } from '@/lib/utils'
+import { downloadData } from '@/lib/utils'
 import { SUPPORTED_CURRENCIES, currencyService } from '@/lib/currency-service'
 import { SUPPORTED_LANGUAGES } from '@/i18n/languages'
 
@@ -64,12 +68,11 @@ export default function SettingsPage() {
     settings, 
     updateSettings, 
     refreshCoreData,
-    coreData,
     lastRefresh,
-    theme,
     currency,
     changeCurrency,
-    exportData
+    exportData,
+    updateSshConfig
   } = useAppStore()
   const { t } = useTranslation()
   
@@ -305,6 +308,39 @@ export default function SettingsPage() {
     }
   }
 
+  // SSH Configuration handlers
+  const updateSshSettings = (updates: Partial<NonNullable<typeof settings.sshConfig>>) => {
+    updateSshConfig(updates)
+  }
+
+  const testSshConnection = async () => {
+    try {
+      if (!settings.sshConfig) {
+        alert('SSH configuration not available')
+        return
+      }
+      
+      console.log('Testing SSH connection:', settings.sshConfig)
+      
+      // Use window API for SSH connection test
+      if (window.electronAPI?.invoke) {
+        const result = await window.electronAPI.invoke('ssh-test-connection', settings.sshConfig)
+        
+        if (result.success) {
+          alert(`SSH connection test successful!\n${result.message}`)
+        } else {
+          alert(`SSH connection test failed!\n${result.message}`)
+        }
+      } else {
+        // Fallback for mock testing
+        alert('SSH connection test successful! (Mock response - Electron API not available)')
+      }
+    } catch (error) {
+      console.error('SSH connection test failed:', error)
+      alert('SSH connection test failed!')
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -492,91 +528,8 @@ export default function SettingsPage() {
         </CardContent>
       </DragonCard>
 
-      {/* Database Management */}
-      <DragonCard variant="flame">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2 text-white">
-            <Database className="h-5 w-5" />
-            <span>{t('pages.settings.databaseManagement.title')}</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h4 className="font-semibold text-white mb-2">{t('pages.settings.databaseManagement.databaseOperations.title')}</h4>
-            <p className="text-sm text-white/80 mb-4">
-              {t('pages.settings.databaseManagement.databaseOperations.description')}
-            </p>
-            <div className="flex space-x-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleClearDatabase}
-                className="bg-red-500/20 border-red-500/30 text-white hover:bg-red-500/30"
-              >
-                <AlertTriangle className="h-4 w-4 mr-2" />
-                {t('pages.settings.databaseManagement.databaseOperations.clearDatabase')}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRefreshDatabase}
-                disabled={!databaseCleared}
-                className={`${
-                  databaseCleared 
-                    ? 'bg-green-500/20 border-green-500/30 text-white hover:bg-green-500/30' 
-                    : 'bg-white/5 border-white/10 text-white/50 cursor-not-allowed'
-                }`}
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                {t('pages.settings.databaseManagement.databaseOperations.refreshDatabase')}
-              </Button>
-            </div>
-            {databaseCleared && (
-              <div className="mt-3 p-3 bg-yellow-500/20 border border-yellow-500/30 rounded-md">
-                <p className="text-sm text-yellow-100">
-                  {t('pages.settings.databaseManagement.databaseCleared')}
-                </p>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </DragonCard>
 
-      {/* Data Export */}
-      <DragonCard variant="scales">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Download className="h-5 w-5 text-dragon-secondary" />
-            <span>{t('pages.settings.dataExport.title')}</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h4 className="font-semibold mb-2">{t('pages.settings.dataExport.exportUsageData.title')}</h4>
-            <p className="text-sm text-muted-foreground mb-4">
-              {t('pages.settings.dataExport.exportUsageData.description')}
-            </p>
-            <div className="flex space-x-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleExportData('csv')}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                {t('pages.settings.dataExport.exportUsageData.exportCsv')}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleExportData('json')}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                {t('pages.settings.dataExport.exportUsageData.exportJson')}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </DragonCard>
+
 
       {/* Advanced Settings */}
       <DragonCard variant="default">
@@ -866,6 +819,196 @@ export default function SettingsPage() {
         </CardContent>
       </DragonCard>
 
+      {/* SSH Support */}
+      <DragonCard variant="flame">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Server className="h-5 w-5 text-white" />
+            <span>{t('pages.settings.sshSupport.title')}</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="font-semibold text-white">{t('pages.settings.sshSupport.enable.title')}</h4>
+              <p className="text-sm text-white/80">
+                {t('pages.settings.sshSupport.enable.description')}
+              </p>
+            </div>
+            <Button
+              variant={settings.sshConfig?.enabled ? "dragon" : "outline"}
+              size="sm"
+              onClick={() => updateSshSettings({ enabled: !settings.sshConfig?.enabled })}
+            >
+              {settings.sshConfig?.enabled ? t('pages.settings.sshSupport.enable.enabled') : t('pages.settings.sshSupport.enable.disabled')}
+            </Button>
+          </div>
+
+          {settings.sshConfig?.enabled && (
+            <div className="space-y-4 pt-4 border-t border-white/20">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-white mb-2">
+                    <Network className="h-4 w-4 inline mr-1" />
+                    {t('pages.settings.sshSupport.config.host')}
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.sshConfig?.host || ''}
+                    onChange={(e) => updateSshSettings({ host: e.target.value })}
+                    placeholder={t('pages.settings.sshSupport.config.hostPlaceholder')}
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-md text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/30"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-white mb-2">
+                    <Server className="h-4 w-4 inline mr-1" />
+                    {t('pages.settings.sshSupport.config.port')}
+                  </label>
+                  <input
+                    type="number"
+                    value={settings.sshConfig?.port || 22}
+                    onChange={(e) => updateSshSettings({ port: parseInt(e.target.value) || 22 })}
+                    placeholder="22"
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-md text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/30"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-white mb-2">
+                    <User className="h-4 w-4 inline mr-1" />
+                    {t('pages.settings.sshSupport.config.username')}
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.sshConfig?.username || ''}
+                    onChange={(e) => updateSshSettings({ username: e.target.value })}
+                    placeholder={t('pages.settings.sshSupport.config.usernamePlaceholder')}
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-md text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/30"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-white mb-2">
+                    <Key className="h-4 w-4 inline mr-1" />
+                    {t('pages.settings.sshSupport.config.password')}
+                  </label>
+                  <input
+                    type="password"
+                    value={settings.sshConfig?.password || ''}
+                    onChange={(e) => updateSshSettings({ password: e.target.value })}
+                    placeholder="••••••••"
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-md text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/30"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex space-x-3 pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={testSshConnection}
+                  className="bg-blue-500/20 border-blue-500/30 text-white hover:bg-blue-500/30"
+                >
+                  <Network className="h-4 w-4 mr-2" />
+                  {t('pages.settings.sshSupport.actions.testConnection')}
+                </Button>
+              </div>
+              
+              <div className="mt-4 p-3 bg-white/5 border border-white/10 rounded-md">
+                <p className="text-xs text-white/60">
+                  {t('pages.settings.sshSupport.note')}
+                </p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </DragonCard>
+
+      {/* Database Management */}
+      <DragonCard variant="flame">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2 text-white">
+            <Database className="h-5 w-5" />
+            <span>{t('pages.settings.databaseManagement.title')}</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <h4 className="font-semibold text-white mb-2">{t('pages.settings.databaseManagement.databaseOperations.title')}</h4>
+            <p className="text-sm text-white/80 mb-4">
+              {t('pages.settings.databaseManagement.databaseOperations.description')}
+            </p>
+            <div className="flex space-x-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleClearDatabase}
+                className="bg-red-500/20 border-red-500/30 text-white hover:bg-red-500/30"
+              >
+                <AlertTriangle className="h-4 w-4 mr-2" />
+                {t('pages.settings.databaseManagement.databaseOperations.clearDatabase')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefreshDatabase}
+                disabled={!databaseCleared}
+                className={`${
+                  databaseCleared 
+                    ? 'bg-green-500/20 border-green-500/30 text-white hover:bg-green-500/30' 
+                    : 'bg-white/5 border-white/10 text-white/50 cursor-not-allowed'
+                }`}
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                {t('pages.settings.databaseManagement.databaseOperations.refreshDatabase')}
+              </Button>
+            </div>
+            {databaseCleared && (
+              <div className="mt-3 p-3 bg-yellow-500/20 border border-yellow-500/30 rounded-md">
+                <p className="text-sm text-yellow-100">
+                  {t('pages.settings.databaseManagement.databaseCleared')}
+                </p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </DragonCard>
+
+      {/* Data Export */}
+      <DragonCard variant="scales">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Download className="h-5 w-5 text-dragon-secondary" />
+            <span>{t('pages.settings.dataExport.title')}</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <h4 className="font-semibold mb-2">{t('pages.settings.dataExport.exportUsageData.title')}</h4>
+            <p className="text-sm text-muted-foreground mb-4">
+              {t('pages.settings.dataExport.exportUsageData.description')}
+            </p>
+            <div className="flex space-x-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleExportData('csv')}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                {t('pages.settings.dataExport.exportUsageData.exportCsv')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleExportData('json')}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                {t('pages.settings.dataExport.exportUsageData.exportJson')}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </DragonCard>
+
       {/* About */}
       <DragonCard variant="gradient">
         <CardHeader>
@@ -937,6 +1080,9 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </DragonCard>
+
+      {/* SSH Support */}
+
     </div>
   )
 }

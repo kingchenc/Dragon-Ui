@@ -393,11 +393,12 @@
           "refreshDatabase": "Database vernieuwen"
         },
         "confirmClear": "Weet u zeker dat u ALLE gegevens uit de database wilt wissen? Deze actie kan niet ongedaan worden gemaakt.",
-        "clearedSuccess": "Database succesvol gewist!",
+        "clearSuccess": "Database succesvol gewist!",
         "clearFailed": "Fout bij het wissen van de database.",
         "clearFirst": "Wis eerst de database.",
-        "refreshedSuccess": "Database succesvol vernieuwd!",
-        "refreshFailed": "Fout bij het vernieuwen van de database."
+        "refreshSuccess": "Database succesvol vernieuwd!",
+        "refreshFailed": "Fout bij het vernieuwen van de database.",
+        "databaseCleared": "Database is gewist!"
       },
       "dataExport": {
         "title": "Gegevensexport",
@@ -432,6 +433,27 @@
           "description": "Weergavevaluta voor kostenberekeningen (omgerekend van USD)",
           "changeFailed": "Fout bij het wijzigen van valuta. Probeer het opnieuw."
         }
+      },
+      "sshSupport": {
+        "title": "SSH-ondersteuning",
+        "enable": {
+          "title": "SSH-externe toegang inschakelen",
+          "description": "Externe toegang tot Dragon UI dashboard via SSH toestaan",
+          "enabled": "Ingeschakeld",
+          "disabled": "Uitgeschakeld"
+        },
+        "config": {
+          "host": "Host",
+          "ipPlaceholder": "192.168.1.100",
+          "port": "Poort",
+          "username": "Gebruikersnaam",
+          "usernamePlaceholder": "admin",
+          "password": "Wachtwoord"
+        },
+        "actions": {
+          "testConnection": "Verbinding testen"
+        },
+        "note": "SSH-ondersteuning maakt veilige externe toegang tot uw Dragon UI dashboard mogelijk. Alle instellingen worden automatisch opgeslagen terwijl u typt."
       },
       "claudeProjects": {
         "title": "Claude-projecten",

@@ -393,11 +393,12 @@
           "refreshDatabase": "Refresh Database"
         },
         "confirmClear": "Are you sure you want to clear ALL data from the database? This action cannot be undone.",
-        "clearedSuccess": "Database cleared successfully!",
+        "clearSuccess": "Database cleared successfully!",
         "clearFailed": "Failed to clear database.",
         "clearFirst": "Please clear the database first.",
-        "refreshedSuccess": "Database refreshed successfully!",
-        "refreshFailed": "Failed to refresh database."
+        "refreshSuccess": "Database refreshed successfully!",
+        "refreshFailed": "Failed to refresh database.",
+        "databaseCleared": "Database has been cleared!"
       },
       "dataExport": {
         "title": "Data Export",
@@ -432,6 +433,27 @@
           "description": "Display currency for cost calculations (converted from USD)",
           "changeFailed": "Failed to change currency. Please try again."
         }
+      },
+      "sshSupport": {
+        "title": "SSH Support",
+        "enable": {
+          "title": "Enable SSH Remote Access",
+          "description": "Allow remote access to Dragon UI dashboard via SSH",
+          "enabled": "Enabled",
+          "disabled": "Disabled"
+        },
+        "config": {
+          "host": "Host",
+          "hostPlaceholder": "192.168.1.100",
+          "port": "Port",
+          "username": "Username",
+          "usernamePlaceholder": "admin",
+          "password": "Password"
+        },
+        "actions": {
+          "testConnection": "Test Connection"
+        },
+        "note": "SSH support allows secure remote access to your Dragon UI dashboard. All settings are automatically saved as you type."
       },
       "claudeProjects": {
         "title": "Claude Projects",

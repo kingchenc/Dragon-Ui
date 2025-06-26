@@ -393,11 +393,12 @@
           "refreshDatabase": "刷新数据库"
         },
         "confirmClear": "您确定要清除数据库中的所有数据吗？此操作无法撤销。",
-        "clearedSuccess": "数据库清除成功！",
+        "clearSuccess": "数据库清除成功！",
         "clearFailed": "数据库清除失败。",
         "clearFirst": "请先清除数据库。",
-        "refreshedSuccess": "数据库刷新成功！",
-        "refreshFailed": "数据库刷新失败。"
+        "refreshSuccess": "数据库刷新成功！",
+        "refreshFailed": "数据库刷新失败。",
+        "databaseCleared": "数据库已清除！"
       },
       "dataExport": {
         "title": "数据导出",
@@ -432,6 +433,27 @@
           "description": "成本计算的显示货币（从USD转换）",
           "changeFailed": "货币更改失败。请重试。"
         }
+      },
+      "sshSupport": {
+        "title": "SSH 支持",
+        "enable": {
+          "title": "启用 SSH 远程访问",
+          "description": "允许通过 SSH 远程访问 Dragon UI 仪表板",
+          "enabled": "已启用",
+          "disabled": "已禁用"
+        },
+        "config": {
+          "host": "主机",
+          "ipPlaceholder": "192.168.1.100",
+          "port": "端口",
+          "username": "用户名",
+          "usernamePlaceholder": "admin",
+          "password": "密码"
+        },
+        "actions": {
+          "testConnection": "测试连接"
+        },
+        "note": "SSH 支持允许安全远程访问您的 Dragon UI 仪表板。所有设置在您输入时自动保存。"
       },
       "claudeProjects": {
         "title": "Claude项目",

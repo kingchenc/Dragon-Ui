@@ -207,6 +207,17 @@ interface AppState {
       customPaths: string[]
       activePaths: string[]
     }
+    sshConfig: {
+      enabled: boolean
+      host: string
+      port: number
+      username: string
+      password: string
+      privateKeyPath: string
+      useKeyAuth: boolean
+      connectionTimeout: number
+      keepAliveInterval: number
+    }
   }
   updateSettings: (settings: Partial<AppState['settings']>) => void    // Error handling
     error: string | null
@@ -224,6 +235,11 @@ interface AppState {
   changeCurrency: (newCurrency: string) => Promise<void>
   changeLanguage: (newLanguage: LanguageCode) => Promise<void>
   exportData: (dataType: string, format?: string, options?: any) => Promise<string>
+  
+  // SSH helpers
+  updateSshConfig: (config: Partial<AppState['settings']['sshConfig']>) => void
+  getSshConfig: () => AppState['settings']['sshConfig']
+  testSshConnection: () => Promise<{ success: boolean; message: string }>
   
   // Tab data getters (computed from coreData)
   getOverviewData: () => any
@@ -316,6 +332,17 @@ export const useAppStore = create<AppState>()(
         standardPaths: [],
         customPaths: [],
         activePaths: []
+      },
+      sshConfig: {
+        enabled: false,
+        host: '',
+        port: 22,
+        username: '',
+        password: '',
+        privateKeyPath: '',
+        useKeyAuth: false,
+        connectionTimeout: 10000,
+        keepAliveInterval: 30000
       }
     },
     
@@ -722,6 +749,35 @@ export const useAppStore = create<AppState>()(
       if (newSettings.language && newSettings.language !== get().settings.language) {
         console.log('[STORE] Language change detected in updateSettings, calling changeLanguage:', newSettings.language)
         get().changeLanguage(newSettings.language).catch(console.error)
+      }
+    },
+    
+    // SSH configuration helpers
+    updateSshConfig: (config: Partial<AppState['settings']['sshConfig']>) => {
+      set(state => ({
+        settings: {
+          ...state.settings,
+          sshConfig: {
+            ...state.settings.sshConfig,
+            ...config
+          }
+        }
+      }))
+    },
+    
+    getSshConfig: () => {
+      return get().settings.sshConfig
+    },
+    
+    testSshConnection: async () => {
+      try {
+        const sshConfig = get().settings.sshConfig
+        const result = await window.electronAPI.invoke('ssh-test-connection', sshConfig)
+        return result
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        console.error('[ERR] Store: SSH connection test failed:', errorMessage)
+        return { success: false, message: errorMessage }
       }
     }
   })),

@@ -1,5 +1,18 @@
 // Global window interface extensions for Dragon UI
 
+// SSH Configuration interface
+interface SSHConfig {
+  enabled: boolean;
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  privateKeyPath: string;
+  useKeyAuth: boolean;
+  connectionTimeout: number;
+  keepAliveInterval: number;
+}
+
 // Vite build-time constants
 declare const __APP_VERSION__: string;
 
@@ -52,6 +65,12 @@ declare global {
       // Screenshot functionality
       takeFullPageScreenshot: () => Promise<{ success: boolean; filePath?: string; message?: string; error?: string }>;
       onHotkeyScreenshot: (callback: () => void) => void;
+      
+      // SSH Support
+      'ssh-set-config': (config: SSHConfig) => Promise<{ success: boolean; message?: string; error?: string }>;
+      'ssh-get-config': () => Promise<{ success: boolean; data?: SSHConfig; error?: string }>;
+      'ssh-test-connection': (config: SSHConfig) => Promise<{ success: boolean; message: string; error?: string }>;
+      'ssh-execute-command': (config: SSHConfig, command: string) => Promise<{ success: boolean; output?: string; error?: string }>;
       
       // Legacy IPC calls (for compatibility)
       invokeClaudeProjectsStats: () => Promise<any>;
