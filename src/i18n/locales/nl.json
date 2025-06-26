@@ -1,0 +1,495 @@
+{
+  "app": {
+    "loading": "Dragon UI laden...",
+    "subtitle": "Claude Code Max Gebruiksdashboard",
+    "updated": "Bijgewerkt",
+    "refresh": "Vernieuwen",
+    "dismiss": "Sluiten",
+    "navigation": {
+      "overview": "Overzicht",
+      "projects": "Projecten", 
+      "sessions": "Sessies",
+      "monthly": "Maandelijks",
+      "daily": "Dagelijks",
+      "active": "Actief",
+      "settings": "Instellingen"
+    },
+    "lastUpdate": {
+      "justNow": "Zojuist",
+      "minutesAgo": "min geleden"
+    },
+    "footer": {
+      "builtWith": "Gebouwd met",
+      "and": "en",
+      "by": "door",
+      "features": "Ultra-snel • Cross-platform • Draak-geïnspireerd"
+    },
+    "theme": {
+      "light": "Licht",
+      "dark": "Donker",
+      "lightMode": "Lichte modus",
+      "darkMode": "Donkere modus",
+      "toggle": "Thema wisselen"
+    }
+  },
+  "pages": {
+    "overview": {
+      "title": "Overzicht",
+      "description": "Uw Claude-gebruiksdashboard in één oogopslag",
+      "realTimeMonitoring": "Real-time monitoring",
+      "loadingOverview": "Overzicht laden...",
+      "loadingUsageData": "Gebruiksgegevens laden...",
+      "loadingSession": "Sessie laden...",
+      "stats": {
+        "totalCost": "Totale kosten",
+        "totalSessions": "Totale sessies",
+        "averageCostPerSession": "Gemiddelde kosten/Sessie",
+        "totalTokens": "Totale tokens",
+        "status": "Status",
+        "activeDays": "Actieve dagen",
+        "modelsUsed": "Gebruikte modellen",
+        "tokens": "tokens",
+        "fiveHourWindows": "5-uur vensters",
+        "daysWithUsage": "Dagen met gebruik"
+      },
+      "currentSession": {
+        "title": "Huidige sessie",
+        "started": "Gestart",
+        "duration": "Duur",
+        "cost": "Kosten",
+        "timeLeft": "Resterende tijd",
+        "sessionId": "Sessie-ID",
+        "noActiveSession": "Geen actieve sessie",
+        "startUsingClaude": "Begin Claude te gebruiken om sessiegegevens te zien",
+        "unknown": "Onbekend"
+      },
+      "quickStats": {
+        "title": "Snelle statistieken",
+        "totalCost": "Totale kosten",
+        "totalTokens": "Totale tokens",
+        "sessions": "Sessies",
+        "avgTokensPerSession": "Gem. Tokens/Sessie"
+      },
+      "activity": {
+        "title": "Activiteit (Laatste 7 dagen)",
+        "total": "Totaal"
+      },
+      "lastActivity": "Laatste",
+      "noActivity": "Geen activiteit"
+    },
+    "projects": {
+      "title": "Projecten",
+      "description": "Gebruiksanalyse per project",
+      "loadingProjects": "Projecten laden...",
+      "noProjectData": "Geen projectgegevens beschikbaar",
+      "projectDataWillAppear": "Projectgegevens verschijnen hier wanneer u Claude gebruikt met verschillende projecten",
+      "projects": "projecten",
+      "mostActive": "Meest actief",
+      "stats": {
+        "totalProjects": "Totale projecten",
+        "totalCost": "Totale kosten",
+        "mostActive": "Meest actief",
+        "sessions": "Sessies",
+        "tokensUsed": "Gebruikte tokens",
+        "avgCostPerSession": "Gem. kosten/Sessie"
+      },
+      "insights": {
+        "title": "Project inzichten",
+        "mostActiveProject": "Meest actieve project",
+        "portfolio": "Portfolio",
+        "projectsTracked": "gevolgde projecten",
+        "avgPerProject": "Gemiddeld per project"
+      },
+      "breakdown": {
+        "title": "Project uitsplitsing",
+        "lastActivity": "Laatste activiteit",
+        "noRecentActivity": "Geen recente activiteit",
+        "top": "Top",
+        "ofTotal": "van totaal",
+        "costPer1MTokens": "Kosten per 1M tokens",
+        "models": "modellen",
+        "tokensPerSession": "Tokens per sessie"
+      }
+    },
+    "sessions": {
+      "title": "Sessies",
+      "description": "5-uur gebruiksvensters",
+      "loadingSessions": "Sessies laden...",
+      "noSessionData": "Geen sessiegegevens beschikbaar",
+      "sessionDataWillAppear": "Sessiegegevens verschijnen hier wanneer u Claude gebruikt",
+      "sessions": "sessies",
+      "validSessions": "geldig",
+      "stats": {
+        "total": "Totaal",
+        "valid": "Geldig",
+        "totalSessions": "Totaal aantal sessies",
+        "validSessions": "Geldige sessies",
+        "totalCost": "Totale kosten",
+        "cost": "Kosten",
+        "tokens": "Tokens",
+        "duration": "Duur",
+        "conversations": "Gesprekken",
+        "fiveHourMax": "5-uur maximum",
+        "messages": "Berichten",
+        "startTime": "Starttijd",
+        "lastActivity": "Laatste activiteit",
+        "active": "Actief",
+        "completed": "Voltooid"
+      },
+      "insights": {
+        "title": "Sessie-inzichten",
+        "avgSessionCost": "Gemiddelde sessiekosten",
+        "avgTokens": "Gemiddelde tokens",
+        "mostRecentSession": "Meest recente sessie",
+        "noSessionsYet": "Nog geen sessies"
+      },
+      "history": {
+        "title": "Sessiegeschiedenis",
+        "session": "Sessie",
+        "started": "Gestart",
+        "unknownStartTime": "Onbekende starttijd",
+        "recent": "Recent",
+        "active": "Actief",
+        "models": "modellen",
+        "ended": "Beëindigd",
+        "activeNow": "Nu actief",
+        "noEndTime": "Geen eindtijd",
+        "unknown": "Onbekend"
+      }
+    },
+    "monthlyUsage": {
+      "title": "Maandelijks gebruik",
+      "description": "Maandelijkse trends en budgettracking",
+      "loadingMonthlyData": "Maandelijkse gegevens laden...",
+      "noMonthlyData": "Geen maandelijkse gegevens beschikbaar",
+      "monthlyDataWillAppear": "Maandelijkse gebruiksgegevens verschijnen hier wanneer u Claude in de loop van de tijd gebruikt",
+      "stats": {
+        "monthsTracked": "gevolgde maanden",
+        "budgetTracking": "Budgettracking",
+        "currentMonth": "Huidige maand",
+        "thisMonth": "Deze maand",
+        "monthlyAverage": "Maandelijks gemiddelde",
+        "perMonth": "per maand",
+        "totalCost": "Totale kosten",
+        "allMonths": "alle maanden",
+        "projectedYearly": "Jaarlijkse projectie",
+        "basedOnAverage": "gebaseerd op gemiddelde"
+      },
+      "breakdown": {
+        "title": "Maandelijkse uitsplitsing",
+        "current": "Huidig",
+        "days": "dagen",
+        "sessions": "sessies",
+        "dayAvg": "dag gem.",
+        "totalTokens": "Totale tokens",
+        "activeDays": "Actieve dagen",
+        "avgSessionCost": "Gem. sessiekosten",
+        "tokensPerSession": "Tokens/Sessie",
+        "costPer1MTokens": "Kosten per 1M tokens",
+        "vsAvg": "vs gem.",
+        "firstMonth": "Eerste maand",
+        "sameAsAvg": "Hetzelfde als gem."
+      },
+      "trends": {
+        "title": "Uitgaventrends",
+        "highestSpending": "Hoogste uitgaven",
+        "mostActive": "Meest actief",
+        "noData": "Geen gegevens",
+        "sessions": "sessies",
+        "growthTrend": "Groeitrend",
+        "firstMonth": "Eerste maand",
+        "mom": "MoM",
+        "increasing": "Toenemend",
+        "decreasing": "Afnemend",
+        "usage": "gebruik",
+        "noPreviousData": "Geen eerdere gegevens"
+      },
+      "budget": {
+        "title": "Budgetplanning",
+        "monthlyAverage": "Maandelijks gemiddelde",
+        "perMonth": "Per maand",
+        "quarterly": "Kwartaal",
+        "next3Months": "Komende 3 maanden",
+        "yearly": "Jaarlijks",
+        "twelveMonths": "12 maanden",
+        "runRate": "Uitvoeringssnelheid",
+        "perYear": "Per jaar"
+      }
+    },
+    "dailyUsage": {
+      "title": "Dagelijks gebruik",
+      "description": "Gedetailleerde dagelijkse uitsplitsing en patronen",
+      "loadingDailyData": "Dagelijkse gegevens laden...",
+      "noDailyData": "Geen dagelijkse gegevens beschikbaar",
+      "dailyDataWillAppear": "Dagelijkse gebruiksgegevens verschijnen hier wanneer u Claude gebruikt",
+      "stats": {
+        "daysTracked": "gevolgde dagen",
+        "activeDays": "actieve dagen"
+      },
+      "today": {
+        "title": "Vandaag",
+        "live": "Live",
+        "tokens": "Tokens",
+        "sessions": "Sessies",
+        "models": "Modellen",
+        "noUsageYet": "Nog geen gebruik vandaag"
+      },
+      "yesterday": {
+        "title": "Gisteren",
+        "lastActive": "Laatst actief",
+        "tokens": "Tokens",
+        "sessions": "Sessies",
+        "models": "Modellen",
+        "noPreviousData": "Geen eerdere gegevens"
+      },
+      "summary": {
+        "title": "Gebruikssamenvatting",
+        "totalCost": "Totale kosten",
+        "sessions": "sessies",
+        "allTime": "Alle tijd",
+        "dailyAverage": "Dagelijks gemiddelde",
+        "perActiveDay": "Per actieve dag",
+        "active": "actief",
+        "activityRate": "Activiteitsgraad",
+        "days": "dagen"
+      },
+      "history": {
+        "title": "Dagelijkse geschiedenis",
+        "last": "Laatste",
+        "days": "dagen",
+        "today": "Vandaag",
+        "yesterday": "Gisteren",
+        "activeNow": "Nu actief",
+        "tokens": "tokens",
+        "sessions": "sessies",
+        "models": "modellen",
+        "noModels": "Geen modellen"
+      }
+    },
+    "activeSession": {
+      "title": "Actieve sessie",
+      "description": "Real-time sessiemonitoring",
+      "loadingActiveSession": "Actieve sessie laden...",
+      "noActiveSessionData": "Geen actieve sessiegegevens",
+      "sessionDataWillAppear": "Sessiegegevens verschijnen wanneer u Claude begint te gebruiken",
+      "refresh": "Vernieuwen",
+      "status": {
+        "active": "Actief",
+        "idle": "Inactief"
+      },
+      "progress": {
+        "session": "SESSIE",
+        "started": "Gestart",
+        "remaining": "Resterend",
+        "unknown": "Onbekend",
+        "usage": "GEBRUIK",
+        "tokens": "Tokens",
+        "burnRate": "Verbruikssnelheid",
+        "tokenPerMin": "token/min",
+        "high": "HOOG",
+        "normal": "NORMAAL",
+        "cost": "Kosten",
+        "projection": "PROJECTIE",
+        "status": "Status",
+        "highBurn": "HOOG VERBRUIK",
+        "onTrack": "OP KOERS"
+      },
+      "overview": {
+        "title": "Sessieoverzicht",
+        "sessionCost": "Sessiekosten",
+        "tokensUsed": "Gebruikte tokens",
+        "sessionProgress": "Sessievoortgang",
+        "used": "gebruikt",
+        "left": "resterend",
+        "status": "Status",
+        "sessionId": "Sessie-ID",
+        "lastActivity": "Laatste activiteit"
+      },
+      "performance": {
+        "title": "Prestaties en projecties",
+        "tokenBurnRate": "Token verbruikssnelheid",
+        "high": "HOOG",
+        "normal": "NORMAAL",
+        "tokensPerMin": "tokens/min",
+        "fullSessionProjection": "Volledige sessieprojectie",
+        "projectedTokens": "Geprojecteerde tokens",
+        "projectedCost": "Geprojecteerde kosten",
+        "costVsCurrent": "Kosten vs. huidig",
+        "sessionPerformance": "Sessieprestaties",
+        "highIntensity": "Hoge intensiteit",
+        "normalUsage": "Normaal gebruik"
+      },
+      "noSession": {
+        "title": "Geen actieve sessie",
+        "description": "Begin Claude te gebruiken om sessiegegevens te zien"
+      },
+      "realTime": {
+        "updates": "Real-time updates elke 5 seconden",
+        "lastUpdated": "Laatst bijgewerkt",
+        "never": "Nooit"
+      }
+    },
+    "settings": {
+      "title": "Instellingen",
+      "description": "Pas uw Dragon UI-ervaring aan",
+      "version": "v1.0.0",
+      "appearance": {
+        "title": "Uiterlijk",
+        "theme": {
+          "title": "Thema",
+          "description": "Schakel tussen lichte en donkere modi"
+        },
+        "compactMode": {
+          "title": "Compacte modus",
+          "description": "Verminder afstand en componentgroottes",
+          "enabled": "Ingeschakeld",
+          "disabled": "Uitgeschakeld"
+        },
+        "animations": {
+          "title": "Animaties",
+          "description": "Schakel draak-geïnspireerde animaties en overgangen in",
+          "enabled": "Ingeschakeld",
+          "disabled": "Uitgeschakeld"
+        }
+      },
+      "billingCycle": {
+        "title": "Factureringscyclus",
+        "billingCycleStartDay": {
+          "title": "Startdag factureringscyclus",
+          "description": "Dag van de maand waarop uw Claude-abonnement wordt vernieuwd (beïnvloedt maandelijkse gebruiksberekeningen)"
+        },
+        "currentBillingPeriod": "Huidige factureringsperiode",
+        "billingPeriodNote": "Dit beïnvloedt maandelijkse gebruikstracking, sessielimieten en kostenprojecties",
+        "options": {
+          "firstOfMonth": "1e van elke maand",
+          "secondOfMonth": "2e van elke maand",
+          "thirdOfMonth": "3e van elke maand",
+          "nthOfMonth": "e van elke maand"
+        }
+      },
+      "dataRefresh": {
+        "title": "Gegevens en vernieuwing",
+        "autoRefresh": {
+          "title": "Automatisch vernieuwen",
+          "description": "Gegevens automatisch op de achtergrond vernieuwen",
+          "on": "Aan",
+          "off": "Uit"
+        },
+        "refreshInterval": {
+          "title": "Vernieuwingsinterval"
+        },
+        "manualRefresh": {
+          "title": "Handmatig vernieuwen",
+          "description": "Cache wissen en alle gegevens opnieuw laden",
+          "refreshNow": "Nu vernieuwen"
+        },
+        "lastUpdated": "Laatst bijgewerkt"
+      },
+      "databaseManagement": {
+        "title": "Databasebeheer",
+        "databaseOperations": {
+          "title": "Database-operaties",
+          "description": "Alle gegevens wissen en database vernieuwen met nieuwe gegevens",
+          "clearDatabase": "Database wissen",
+          "refreshDatabase": "Database vernieuwen"
+        },
+        "confirmClear": "Weet u zeker dat u ALLE gegevens uit de database wilt wissen? Deze actie kan niet ongedaan worden gemaakt.",
+        "clearedSuccess": "Database succesvol gewist!",
+        "clearFailed": "Fout bij het wissen van de database.",
+        "clearFirst": "Wis eerst de database.",
+        "refreshedSuccess": "Database succesvol vernieuwd!",
+        "refreshFailed": "Fout bij het vernieuwen van de database."
+      },
+      "dataExport": {
+        "title": "Gegevensexport",
+        "exportUsageData": {
+          "title": "Gebruiksgegevens exporteren",
+          "description": "Download uw gebruiksgegevens voor backup of analyse",
+          "exportCsv": "CSV exporteren",
+          "exportJson": "JSON exporteren"
+        },
+        "exportFailed": "Export mislukt. Probeer het opnieuw."
+      },
+      "advanced": {
+        "title": "Geavanceerd",
+        "language": {
+          "title": "Taal",
+          "description": "Kies uw voorkeurstaal voor de interface",
+          "interfaceLanguage": "Interface-taal"
+        },
+        "timeFormat": {
+          "title": "Tijdformaat",
+          "description": "Kies tussen 12-uurs en 24-uurs tijdformaat",
+          "12hour": "12 uur",
+          "24hour": "24 uur"
+        },
+        "timezone": {
+          "title": "Tijdzone",
+          "description": "Kies uw voorkeurstijdzone voor datum- en tijdweergave",
+          "auto": "Automatisch"
+        },
+        "currency": {
+          "title": "Valuta",
+          "description": "Weergavevaluta voor kostenberekeningen (omgerekend van USD)",
+          "changeFailed": "Fout bij het wijzigen van valuta. Probeer het opnieuw."
+        }
+      },
+      "claudeProjects": {
+        "title": "Claude-projecten",
+        "projectPaths": {
+          "title": "Projectpaden",
+          "description": "Configureer waar Dragon UI zoekt naar Claude-projectgegevens",
+          "refresh": "Vernieuwen"
+        },
+        "standardPaths": {
+          "title": "Standaardpaden (Automatisch gedetecteerd)",
+          "noStandardPaths": "Geen standaard Claude-paden gevonden",
+          "expectedPaths": "Verwacht: ~/.config/claude/projects of ~/.claude/projects",
+          "newFormat": "Nieuw formaat (v1.0.30+)",
+          "legacyFormat": "Legacy-formaat",
+          "active": "Actief"
+        },
+        "customPaths": {
+          "title": "Aangepaste paden",
+          "placeholder": "/pad/naar/uw/claude/projecten",
+          "noCustomPaths": "Geen aangepaste paden geconfigureerd",
+          "customPath": "Aangepast pad",
+          "addFailed": "Fout bij het toevoegen van pad. Controleer of de directory bestaat."
+        },
+        "activePathsSummary": {
+          "totalActivePaths": "Totaal actieve paden",
+          "monitoring": "Monitoren",
+          "noPaths": "Geen paden"
+        }
+      },
+      "about": {
+        "title": "Over Dragon UI",
+        "features": {
+          "title": "Functies",
+          "realTimeMonitoring": "Real-time gebruiksmonitoring",
+          "backgroundServices": "Geavanceerde achtergrondservices",
+          "multiCurrencySupport": "Multi-valutaondersteuning (12 valuta's)",
+          "ramCaching": "RAM-caching en directe gegevenstoegang",
+          "multiLanguageSupport": "Meertalige ondersteuning (9 talen)",
+          "databaseManagement": "Volledige databasebeheer",
+          "dataExport": "Data-export (CSV/JSON)",
+          "liveLanguageSwitching": "Live taalwisseling"
+        },
+        "technology": {
+          "title": "Technologie",
+          "electronReact": "Gebouwd met Electron + React",
+          "typescript": "TypeScript voor typeveiligheid",
+          "backgroundCollector": "Geavanceerde achtergrondgegevensverzamelaar",
+          "dragonDesign": "Draak-geïnspireerd ontwerpsysteem",
+          "crossPlatform": "Cross-platform desktop-app",
+          "i18nSystem": "React i18n internationalisatie",
+          "zustandStore": "Zustand state management",
+          "tailwindCSS": "TailwindCSS styling"
+        },
+        "builtWith": "Gebouwd met",
+        "and": "en",
+        "by": "door"
+      }
+    }
+  }
+}

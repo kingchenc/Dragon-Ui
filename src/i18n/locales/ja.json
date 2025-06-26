@@ -1,0 +1,495 @@
+{
+  "app": {
+    "loading": "Dragon UIを読み込み中...",
+    "subtitle": "Claude Code Max使用状況ダッシュボード",
+    "updated": "更新済み",
+    "refresh": "更新",
+    "dismiss": "閉じる",
+    "navigation": {
+      "overview": "概要",
+      "projects": "プロジェクト", 
+      "sessions": "セッション",
+      "monthly": "月次",
+      "daily": "日次",
+      "active": "アクティブ",
+      "settings": "設定"
+    },
+    "lastUpdate": {
+      "justNow": "たった今",
+      "minutesAgo": "分前"
+    },
+    "footer": {
+      "builtWith": "構築技術",
+      "and": "と",
+      "by": "製作者",
+      "features": "超高速 • クロスプラットフォーム • ドラゴンインスパイア"
+    },
+    "theme": {
+      "light": "ライト",
+      "dark": "ダーク",
+      "lightMode": "ライトモード",
+      "darkMode": "ダークモード",
+      "toggle": "テーマを切り替え"
+    }
+  },
+  "pages": {
+    "overview": {
+      "title": "概要",
+      "description": "Claudeの使用状況ダッシュボードを一目で確認",
+      "realTimeMonitoring": "リアルタイム監視",
+      "loadingOverview": "概要を読み込み中...",
+      "loadingUsageData": "使用状況データを読み込み中...",
+      "loadingSession": "セッションを読み込み中...",
+      "stats": {
+        "totalCost": "総コスト",
+        "totalSessions": "総セッション数",
+        "averageCostPerSession": "セッションあたりの平均コスト",
+        "totalTokens": "総トークン数",
+        "status": "ステータス",
+        "activeDays": "アクティブ日数",
+        "modelsUsed": "使用モデル",
+        "tokens": "トークン",
+        "fiveHourWindows": "5時間ウィンドウ",
+        "daysWithUsage": "使用日数"
+      },
+      "currentSession": {
+        "title": "現在のセッション",
+        "started": "開始",
+        "duration": "継続時間",
+        "cost": "コスト",
+        "timeLeft": "残り時間",
+        "sessionId": "セッションID",
+        "noActiveSession": "アクティブなセッションなし",
+        "startUsingClaude": "Claudeの使用を開始してセッションデータを表示",
+        "unknown": "不明"
+      },
+      "quickStats": {
+        "title": "クイック統計",
+        "totalCost": "総コスト",
+        "totalTokens": "総トークン数",
+        "sessions": "セッション",
+        "avgTokensPerSession": "平均トークン/セッション"
+      },
+      "activity": {
+        "title": "アクティビティ（過去7日間）",
+        "total": "合計"
+      },
+      "lastActivity": "最後",
+      "noActivity": "アクティビティなし"
+    },
+    "projects": {
+      "title": "プロジェクト",
+      "description": "プロジェクト別使用状況分析",
+      "loadingProjects": "プロジェクトを読み込み中...",
+      "noProjectData": "プロジェクトデータがありません",
+      "projectDataWillAppear": "異なるプロジェクトでClaudeを使用すると、プロジェクトデータがここに表示されます",
+      "projects": "プロジェクト",
+      "mostActive": "最もアクティブ",
+      "stats": {
+        "totalProjects": "総プロジェクト数",
+        "totalCost": "総コスト",
+        "mostActive": "最もアクティブ",
+        "sessions": "セッション",
+        "tokensUsed": "使用トークン数",
+        "avgCostPerSession": "セッションあたり平均コスト"
+      },
+      "insights": {
+        "title": "プロジェクト洞察",
+        "mostActiveProject": "最もアクティブなプロジェクト",
+        "portfolio": "ポートフォリオ",
+        "projectsTracked": "追跡されたプロジェクト",
+        "avgPerProject": "プロジェクトあたり平均"
+      },
+      "breakdown": {
+        "title": "プロジェクト内訳",
+        "lastActivity": "最終アクティビティ",
+        "noRecentActivity": "最近のアクティビティなし",
+        "top": "トップ",
+        "ofTotal": "全体の",
+        "costPer1MTokens": "100万トークンあたりのコスト",
+        "models": "モデル",
+        "tokensPerSession": "セッションあたりトークン数"
+      }
+    },
+    "sessions": {
+      "title": "セッション",
+      "description": "5時間使用ウィンドウ",
+      "loadingSessions": "セッションを読み込み中...",
+      "noSessionData": "セッションデータがありません",
+      "sessionDataWillAppear": "Claudeを使用するとセッションデータがここに表示されます",
+      "sessions": "セッション",
+      "validSessions": "有効",
+      "stats": {
+        "total": "合計",
+        "valid": "有効",
+        "totalSessions": "総セッション数",
+        "validSessions": "有効セッション数",
+        "totalCost": "総コスト",
+        "cost": "コスト",
+        "tokens": "トークン",
+        "duration": "継続時間",
+        "conversations": "会話",
+        "fiveHourMax": "5時間最大",
+        "messages": "メッセージ",
+        "startTime": "開始時刻",
+        "lastActivity": "最終アクティビティ",
+        "active": "アクティブ",
+        "completed": "完了"
+      },
+      "insights": {
+        "title": "セッション分析",
+        "avgSessionCost": "平均セッションコスト",
+        "avgTokens": "平均トークン数",
+        "mostRecentSession": "最新セッション",
+        "noSessionsYet": "まだセッションがありません"
+      },
+      "history": {
+        "title": "セッション履歴",
+        "session": "セッション",
+        "started": "開始",
+        "unknownStartTime": "開始時刻不明",
+        "recent": "最近",
+        "active": "アクティブ",
+        "models": "モデル",
+        "ended": "終了",
+        "activeNow": "現在アクティブ",
+        "noEndTime": "終了時刻なし",
+        "unknown": "不明"
+      }
+    },
+    "monthlyUsage": {
+      "title": "月間使用状況",
+      "description": "月間トレンドと予算追跡",
+      "loadingMonthlyData": "月間データを読み込み中...",
+      "noMonthlyData": "月間データがありません",
+      "monthlyDataWillAppear": "時間の経過とともにClaudeを使用すると、月間使用状況データがここに表示されます",
+      "stats": {
+        "monthsTracked": "追跡済み月数",
+        "budgetTracking": "予算追跡",
+        "currentMonth": "今月",
+        "thisMonth": "今月",
+        "monthlyAverage": "月間平均",
+        "perMonth": "月当たり",
+        "totalCost": "総コスト",
+        "allMonths": "全月",
+        "projectedYearly": "年間予測",
+        "basedOnAverage": "平均に基づく"
+      },
+      "breakdown": {
+        "title": "月間内訳",
+        "current": "現在",
+        "days": "日",
+        "sessions": "セッション",
+        "dayAvg": "日平均",
+        "totalTokens": "総トークン数",
+        "activeDays": "アクティブ日数",
+        "avgSessionCost": "平均セッションコスト",
+        "tokensPerSession": "トークン/セッション",
+        "costPer1MTokens": "100万トークン当たりコスト",
+        "vsAvg": "対平均",
+        "firstMonth": "初月",
+        "sameAsAvg": "平均と同じ"
+      },
+      "trends": {
+        "title": "支出トレンド",
+        "highestSpending": "最高支出",
+        "mostActive": "最もアクティブ",
+        "noData": "データなし",
+        "sessions": "セッション",
+        "growthTrend": "成長トレンド",
+        "firstMonth": "初月",
+        "mom": "月比",
+        "increasing": "増加",
+        "decreasing": "減少",
+        "usage": "使用",
+        "noPreviousData": "以前のデータなし"
+      },
+      "budget": {
+        "title": "予算計画",
+        "monthlyAverage": "月間平均",
+        "perMonth": "月当たり",
+        "quarterly": "四半期",
+        "next3Months": "今後3ヶ月",
+        "yearly": "年間",
+        "twelveMonths": "12ヶ月",
+        "runRate": "実行レート",
+        "perYear": "年当たり"
+      }
+    },
+    "dailyUsage": {
+      "title": "日次使用状況",
+      "description": "詳細な日次内訳とパターン",
+      "loadingDailyData": "日次データを読み込み中...",
+      "noDailyData": "日次データがありません",
+      "dailyDataWillAppear": "Claudeを使用すると日次使用状況データがここに表示されます",
+      "stats": {
+        "daysTracked": "追跡済み日数",
+        "activeDays": "アクティブ日数"
+      },
+      "today": {
+        "title": "今日",
+        "live": "ライブ",
+        "tokens": "トークン",
+        "sessions": "セッション",
+        "models": "モデル",
+        "noUsageYet": "今日はまだ使用なし"
+      },
+      "yesterday": {
+        "title": "昨日",
+        "lastActive": "最後のアクティビティ",
+        "tokens": "トークン",
+        "sessions": "セッション",
+        "models": "モデル",
+        "noPreviousData": "以前のデータなし"
+      },
+      "summary": {
+        "title": "使用状況サマリー",
+        "totalCost": "総コスト",
+        "sessions": "セッション",
+        "allTime": "全期間",
+        "dailyAverage": "日平均",
+        "perActiveDay": "アクティブ日あたり",
+        "active": "アクティブ",
+        "activityRate": "活動率",
+        "days": "日"
+      },
+      "history": {
+        "title": "日次履歴",
+        "last": "過去",
+        "days": "日",
+        "today": "今日",
+        "yesterday": "昨日",
+        "activeNow": "現在アクティブ",
+        "tokens": "トークン",
+        "sessions": "セッション",
+        "models": "モデル",
+        "noModels": "モデルなし"
+      }
+    },
+    "activeSession": {
+      "title": "アクティブセッション",
+      "description": "リアルタイムセッション監視",
+      "loadingActiveSession": "アクティブセッションを読み込み中...",
+      "noActiveSessionData": "アクティブセッションデータなし",
+      "sessionDataWillAppear": "Claudeの使用を開始するとセッションデータが表示されます",
+      "refresh": "更新",
+      "status": {
+        "active": "アクティブ",
+        "idle": "アイドル"
+      },
+      "progress": {
+        "session": "セッション",
+        "started": "開始",
+        "remaining": "残り",
+        "unknown": "不明",
+        "usage": "使用状況",
+        "tokens": "トークン",
+        "burnRate": "消費率",
+        "tokenPerMin": "トークン/分",
+        "high": "高",
+        "normal": "通常",
+        "cost": "コスト",
+        "projection": "予測",
+        "status": "ステータス",
+        "highBurn": "高消費",
+        "onTrack": "順調"
+      },
+      "overview": {
+        "title": "セッション概要",
+        "sessionCost": "セッションコスト",
+        "tokensUsed": "使用トークン数",
+        "sessionProgress": "セッション進捗",
+        "used": "使用済み",
+        "left": "残り",
+        "status": "ステータス",
+        "sessionId": "セッションID",
+        "lastActivity": "最終アクティビティ"
+      },
+      "performance": {
+        "title": "パフォーマンスと予測",
+        "tokenBurnRate": "トークン消費率",
+        "high": "高",
+        "normal": "通常",
+        "tokensPerMin": "トークン/分",
+        "fullSessionProjection": "フルセッション予測",
+        "projectedTokens": "予測トークン数",
+        "projectedCost": "予測コスト",
+        "costVsCurrent": "コスト対現在",
+        "sessionPerformance": "セッションパフォーマンス",
+        "highIntensity": "高強度",
+        "normalUsage": "通常使用"
+      },
+      "noSession": {
+        "title": "アクティブセッションなし",
+        "description": "Claudeの使用を開始してセッションデータを表示"
+      },
+      "realTime": {
+        "updates": "5秒ごとのリアルタイム更新",
+        "lastUpdated": "最終更新",
+        "never": "なし"
+      }
+    },
+    "settings": {
+      "title": "設定",
+      "description": "Dragon UIエクスペリエンスをカスタマイズ",
+      "version": "v1.0.0",
+      "appearance": {
+        "title": "外観",
+        "theme": {
+          "title": "テーマ",
+          "description": "ライトモードとダークモードを切り替え"
+        },
+        "compactMode": {
+          "title": "コンパクトモード",
+          "description": "スペーシングとコンポーネントサイズを縮小",
+          "enabled": "有効",
+          "disabled": "無効"
+        },
+        "animations": {
+          "title": "アニメーション",
+          "description": "ドラゴンテーマのアニメーションとトランジションを有効化",
+          "enabled": "有効",
+          "disabled": "無効"
+        }
+      },
+      "billingCycle": {
+        "title": "請求サイクル",
+        "billingCycleStartDay": {
+          "title": "請求サイクル開始日",
+          "description": "Claudeサブスクリプションがリセットされる月の日（月間使用状況計算に影響）"
+        },
+        "currentBillingPeriod": "現在の請求期間",
+        "billingPeriodNote": "これは月間使用状況トラッキング、セッション制限、コスト予測に影響します",
+        "options": {
+          "firstOfMonth": "毎月1日",
+          "secondOfMonth": "毎月2日",
+          "thirdOfMonth": "毎月3日",
+          "nthOfMonth": "日"
+        }
+      },
+      "dataRefresh": {
+        "title": "データと更新",
+        "autoRefresh": {
+          "title": "自動更新",
+          "description": "バックグラウンドでデータを自動更新",
+          "on": "オン",
+          "off": "オフ"
+        },
+        "refreshInterval": {
+          "title": "更新間隔"
+        },
+        "manualRefresh": {
+          "title": "手動更新",
+          "description": "キャッシュをクリアして全データを再読み込み",
+          "refreshNow": "今すぐ更新"
+        },
+        "lastUpdated": "最終更新"
+      },
+      "databaseManagement": {
+        "title": "データベース管理",
+        "databaseOperations": {
+          "title": "データベース操作",
+          "description": "全データをクリアして新しいデータでデータベースを更新",
+          "clearDatabase": "データベースをクリア",
+          "refreshDatabase": "データベースを更新"
+        },
+        "confirmClear": "データベースから全データを削除してもよろしいですか？この操作は元に戻せません。",
+        "clearedSuccess": "データベースのクリアが成功しました！",
+        "clearFailed": "データベースのクリアに失敗しました。",
+        "clearFirst": "まずデータベースをクリアしてください。",
+        "refreshedSuccess": "データベースの更新が成功しました！",
+        "refreshFailed": "データベースの更新に失敗しました。"
+      },
+      "dataExport": {
+        "title": "データエクスポート",
+        "exportUsageData": {
+          "title": "使用状況データをエクスポート",
+          "description": "バックアップや分析のために使用状況データをダウンロード",
+          "exportCsv": "CSV エクスポート",
+          "exportJson": "JSON エクスポート"
+        },
+        "exportFailed": "エクスポートに失敗しました。再試行してください。"
+      },
+      "advanced": {
+        "title": "詳細設定",
+        "language": {
+          "title": "言語",
+          "description": "インターフェースの優先言語を選択",
+          "interfaceLanguage": "インターフェース言語"
+        },
+        "timeFormat": {
+          "title": "時刻フォーマット",
+          "description": "12時間形式と24時間形式を選択",
+          "12hour": "12時間",
+          "24hour": "24時間"
+        },
+        "timezone": {
+          "title": "タイムゾーン",
+          "description": "日付と時刻表示の優先タイムゾーンを選択",
+          "auto": "自動"
+        },
+        "currency": {
+          "title": "通貨",
+          "description": "コスト計算の表示通貨（USDから変換）",
+          "changeFailed": "通貨の変更に失敗しました。再試行してください。"
+        }
+      },
+      "claudeProjects": {
+        "title": "Claudeプロジェクト",
+        "projectPaths": {
+          "title": "プロジェクトパス",
+          "description": "Dragon UIがClaudeプロジェクトデータを検索する場所を設定",
+          "refresh": "更新"
+        },
+        "standardPaths": {
+          "title": "標準パス（自動検出）",
+          "noStandardPaths": "標準Claudeパスが見つかりません",
+          "expectedPaths": "期待値: ~/.config/claude/projects または ~/.claude/projects",
+          "newFormat": "新フォーマット（v1.0.30+）",
+          "legacyFormat": "レガシーフォーマット",
+          "active": "アクティブ"
+        },
+        "customPaths": {
+          "title": "カスタムパス",
+          "placeholder": "/あなたの/claude/プロジェクト/パス",
+          "noCustomPaths": "カスタムパスが設定されていません",
+          "customPath": "カスタムパス",
+          "addFailed": "パスの追加に失敗しました。ディレクトリが存在するか確認してください。"
+        },
+        "activePathsSummary": {
+          "totalActivePaths": "アクティブパス総数",
+          "monitoring": "監視中",
+          "noPaths": "パスなし"
+        }
+      },
+      "about": {
+        "title": "Dragon UIについて",
+        "features": {
+          "title": "機能",
+          "realTimeMonitoring": "リアルタイム使用状況監視",
+          "backgroundServices": "高度なバックグラウンドサービス",
+          "multiCurrencySupport": "マルチ通貨サポート（12通貨）",
+          "ramCaching": "RAMキャッシュと即座のデータアクセス",
+          "multiLanguageSupport": "多言語サポート（9言語）",
+          "databaseManagement": "完全なデータベース管理",
+          "dataExport": "データエクスポート（CSV/JSON）",
+          "liveLanguageSwitching": "ライブ言語切り替え"
+        },
+        "technology": {
+          "title": "技術",
+          "electronReact": "Electron + Reactで構築",
+          "typescript": "タイプセーフティのためのTypeScript",
+          "backgroundCollector": "高度なバックグラウンドデータコレクター",
+          "dragonDesign": "ドラゴンインスパイアデザインシステム",
+          "crossPlatform": "クロスプラットフォームデスクトップアプリ",
+          "i18nSystem": "React i18n国際化",
+          "zustandStore": "Zustand状態管理",
+          "tailwindCSS": "TailwindCSSスタイリング"
+        },
+        "builtWith": "構築技術",
+        "and": "と",
+        "by": "製作者"
+      }
+    }
+  }
+}

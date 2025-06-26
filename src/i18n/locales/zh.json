@@ -1,0 +1,495 @@
+{
+  "app": {
+    "loading": "正在加载Dragon UI...",
+    "subtitle": "Claude Code Max使用仪表板",
+    "updated": "已更新",
+    "refresh": "刷新",
+    "dismiss": "关闭",
+    "navigation": {
+      "overview": "概览",
+      "projects": "项目", 
+      "sessions": "会话",
+      "monthly": "月度",
+      "daily": "日常",
+      "active": "活跃",
+      "settings": "设置"
+    },
+    "lastUpdate": {
+      "justNow": "刚刚",
+      "minutesAgo": "分钟前"
+    },
+    "footer": {
+      "builtWith": "构建技术",
+      "and": "和",
+      "by": "开发者",
+      "features": "超快速 • 跨平台 • 龙主题设计"
+    },
+    "theme": {
+      "light": "明亮",
+      "dark": "暗黑",
+      "lightMode": "明亮模式",
+      "darkMode": "暗黑模式",
+      "toggle": "切换主题"
+    }
+  },
+  "pages": {
+    "overview": {
+      "title": "概览",
+      "description": "您的Claude使用仪表板一览",
+      "realTimeMonitoring": "实时监控",
+      "loadingOverview": "正在加载概览...",
+      "loadingUsageData": "正在加载使用数据...",
+      "loadingSession": "正在加载会话...",
+      "stats": {
+        "totalCost": "总成本",
+        "totalSessions": "总会话数",
+        "averageCostPerSession": "每会话平均成本",
+        "totalTokens": "总令牌数",
+        "status": "状态",
+        "activeDays": "活跃天数",
+        "modelsUsed": "使用的模型",
+        "tokens": "令牌",
+        "fiveHourWindows": "5小时窗口",
+        "daysWithUsage": "使用天数"
+      },
+      "currentSession": {
+        "title": "当前会话",
+        "started": "开始时间",
+        "duration": "持续时间",
+        "cost": "成本",
+        "timeLeft": "剩余时间",
+        "sessionId": "会话ID",
+        "noActiveSession": "无活跃会话",
+        "startUsingClaude": "开始使用Claude以查看会话数据",
+        "unknown": "未知"
+      },
+      "quickStats": {
+        "title": "快速统计",
+        "totalCost": "总成本",
+        "totalTokens": "总令牌数",
+        "sessions": "会话",
+        "avgTokensPerSession": "平均令牌/会话"
+      },
+      "activity": {
+        "title": "活动（最近7天）",
+        "total": "总计"
+      },
+      "lastActivity": "最后",
+      "noActivity": "无活动"
+    },
+    "projects": {
+      "title": "项目",
+      "description": "按项目的使用分析",
+      "loadingProjects": "正在加载项目...",
+      "noProjectData": "无项目数据可用",
+      "projectDataWillAppear": "当您在不同项目中使用Claude时，项目数据将在此处显示",
+      "projects": "项目",
+      "mostActive": "最活跃",
+      "stats": {
+        "totalProjects": "项目总数",
+        "totalCost": "总成本",
+        "mostActive": "最活跃",
+        "sessions": "会话",
+        "tokensUsed": "使用的令牌",
+        "avgCostPerSession": "每会话平均成本"
+      },
+      "insights": {
+        "title": "项目洞察",
+        "mostActiveProject": "最活跃项目",
+        "portfolio": "投资组合",
+        "projectsTracked": "已跟踪项目",
+        "avgPerProject": "每项目平均"
+      },
+      "breakdown": {
+        "title": "项目细分",
+        "lastActivity": "最后活动",
+        "noRecentActivity": "无最近活动",
+        "top": "前",
+        "ofTotal": "占总数",
+        "costPer1MTokens": "每100万令牌成本",
+        "models": "模型",
+        "tokensPerSession": "每会话令牌数"
+      }
+    },
+    "sessions": {
+      "title": "会话",
+      "description": "5小时使用窗口",
+      "loadingSessions": "正在加载会话...",
+      "noSessionData": "无会话数据可用",
+      "sessionDataWillAppear": "当您使用Claude时，会话数据将在此处显示",
+      "sessions": "会话",
+      "validSessions": "有效",
+      "stats": {
+        "total": "总计",
+        "valid": "有效",
+        "totalSessions": "总会话数",
+        "validSessions": "有效会话数",
+        "totalCost": "总成本",
+        "cost": "成本",
+        "tokens": "令牌",
+        "duration": "持续时间",
+        "conversations": "对话",
+        "fiveHourMax": "5小时最大值",
+        "messages": "消息",
+        "startTime": "开始时间",
+        "lastActivity": "最后活动",
+        "active": "活跃",
+        "completed": "已完成"
+      },
+      "insights": {
+        "title": "会话洞察",
+        "avgSessionCost": "平均会话成本",
+        "avgTokens": "平均令牌数",
+        "mostRecentSession": "最近会话",
+        "noSessionsYet": "暂无会话"
+      },
+      "history": {
+        "title": "会话历史",
+        "session": "会话",
+        "started": "已开始",
+        "unknownStartTime": "未知开始时间",
+        "recent": "最近",
+        "active": "活跃",
+        "models": "模型",
+        "ended": "已结束",
+        "activeNow": "当前活跃",
+        "noEndTime": "无结束时间",
+        "unknown": "未知"
+      }
+    },
+    "monthlyUsage": {
+      "title": "月度使用",
+      "description": "月度趋势和预算跟踪",
+      "loadingMonthlyData": "正在加载月度数据...",
+      "noMonthlyData": "无月度数据可用",
+      "monthlyDataWillAppear": "随着时间推移使用Claude时，月度使用数据将在此处显示",
+      "stats": {
+        "monthsTracked": "已跟踪月份",
+        "budgetTracking": "预算跟踪",
+        "currentMonth": "当前月份",
+        "thisMonth": "本月",
+        "monthlyAverage": "月平均",
+        "perMonth": "每月",
+        "totalCost": "总成本",
+        "allMonths": "所有月份",
+        "projectedYearly": "年度预测",
+        "basedOnAverage": "基于平均值"
+      },
+      "breakdown": {
+        "title": "月度明细",
+        "current": "当前",
+        "days": "天",
+        "sessions": "会话",
+        "dayAvg": "日平均",
+        "totalTokens": "总令牌数",
+        "activeDays": "活跃天数",
+        "avgSessionCost": "平均会话成本",
+        "tokensPerSession": "令牌/会话",
+        "costPer1MTokens": "每100万令牌成本",
+        "vsAvg": "与平均值比较",
+        "firstMonth": "首月",
+        "sameAsAvg": "与平均值相同"
+      },
+      "trends": {
+        "title": "支出趋势",
+        "highestSpending": "最高支出",
+        "mostActive": "最活跃",
+        "noData": "无数据",
+        "sessions": "会话",
+        "growthTrend": "增长趋势",
+        "firstMonth": "首月",
+        "mom": "环比",
+        "increasing": "增长",
+        "decreasing": "下降",
+        "usage": "使用",
+        "noPreviousData": "无历史数据"
+      },
+      "budget": {
+        "title": "预算规划",
+        "monthlyAverage": "月平均",
+        "perMonth": "每月",
+        "quarterly": "季度",
+        "next3Months": "未来3个月",
+        "yearly": "年度",
+        "twelveMonths": "12个月",
+        "runRate": "运行率",
+        "perYear": "每年"
+      }
+    },
+    "dailyUsage": {
+      "title": "日常使用",
+      "description": "细分日常分析和模式",
+      "loadingDailyData": "正在加载日常数据...",
+      "noDailyData": "无日常数据可用",
+      "dailyDataWillAppear": "当您使用Claude时，日常使用数据将在此处显示",
+      "stats": {
+        "daysTracked": "已跟踪天数",
+        "activeDays": "活跃天数"
+      },
+      "today": {
+        "title": "今天",
+        "live": "实时",
+        "tokens": "令牌",
+        "sessions": "会话",
+        "models": "模型",
+        "noUsageYet": "今天尚未使用"
+      },
+      "yesterday": {
+        "title": "昨天",
+        "lastActive": "最后活跃",
+        "tokens": "令牌",
+        "sessions": "会话",
+        "models": "模型",
+        "noPreviousData": "无历史数据"
+      },
+      "summary": {
+        "title": "使用概要",
+        "totalCost": "总成本",
+        "sessions": "会话",
+        "allTime": "全部时间",
+        "dailyAverage": "日平均",
+        "perActiveDay": "每活跃日",
+        "active": "活跃",
+        "activityRate": "活跃率",
+        "days": "天"
+      },
+      "history": {
+        "title": "日常历史",
+        "last": "最近",
+        "days": "天",
+        "today": "今天",
+        "yesterday": "昨天",
+        "activeNow": "当前活跃",
+        "tokens": "令牌",
+        "sessions": "会话",
+        "models": "模型",
+        "noModels": "无模型"
+      }
+    },
+    "activeSession": {
+      "title": "活跃会话",
+      "description": "实时会话监控",
+      "loadingActiveSession": "正在加载活跃会话...",
+      "noActiveSessionData": "无活跃会话数据",
+      "sessionDataWillAppear": "当您开始使用Claude时，会话数据将显示",
+      "refresh": "刷新",
+      "status": {
+        "active": "活跃",
+        "idle": "空闲"
+      },
+      "progress": {
+        "session": "会话",
+        "started": "已开始",
+        "remaining": "剩余",
+        "unknown": "未知",
+        "usage": "使用情况",
+        "tokens": "令牌",
+        "burnRate": "消费率",
+        "tokenPerMin": "令牌/分钟",
+        "high": "高",
+        "normal": "正常",
+        "cost": "成本",
+        "projection": "预测",
+        "status": "状态",
+        "highBurn": "高消费",
+        "onTrack": "正常轨道"
+      },
+      "overview": {
+        "title": "会话概览",
+        "sessionCost": "会话成本",
+        "tokensUsed": "已使用令牌",
+        "sessionProgress": "会话进度",
+        "used": "已使用",
+        "left": "剩余",
+        "status": "状态",
+        "sessionId": "会话ID",
+        "lastActivity": "最后活动"
+      },
+      "performance": {
+        "title": "性能与预测",
+        "tokenBurnRate": "令牌消费率",
+        "high": "高",
+        "normal": "正常",
+        "tokensPerMin": "令牌/分钟",
+        "fullSessionProjection": "完整会话预测",
+        "projectedTokens": "预测令牌数",
+        "projectedCost": "预测成本",
+        "costVsCurrent": "成本对比当前",
+        "sessionPerformance": "会话性能",
+        "highIntensity": "高强度",
+        "normalUsage": "正常使用"
+      },
+      "noSession": {
+        "title": "无活跃会话",
+        "description": "开始使用Claude以查看会话数据"
+      },
+      "realTime": {
+        "updates": "每5秒实时更新",
+        "lastUpdated": "最后更新",
+        "never": "从未"
+      }
+    },
+    "settings": {
+      "title": "设置",
+      "description": "自定义您的Dragon UI体验",
+      "version": "v1.0.0",
+      "appearance": {
+        "title": "外观",
+        "theme": {
+          "title": "主题",
+          "description": "在明暗模式之间切换"
+        },
+        "compactMode": {
+          "title": "紧凑模式",
+          "description": "减少间距和组件大小",
+          "enabled": "已启用",
+          "disabled": "已禁用"
+        },
+        "animations": {
+          "title": "动画",
+          "description": "启用龙主题动画和过渡效果",
+          "enabled": "已启用",
+          "disabled": "已禁用"
+        }
+      },
+      "billingCycle": {
+        "title": "计费周期",
+        "billingCycleStartDay": {
+          "title": "计费周期开始日",
+          "description": "Claude订阅重置的月份日期（影响月度使用计算）"
+        },
+        "currentBillingPeriod": "当前计费周期",
+        "billingPeriodNote": "这会影响月度使用跟踪、会话限制和成本预测",
+        "options": {
+          "firstOfMonth": "每月1日",
+          "secondOfMonth": "每月2日",
+          "thirdOfMonth": "每月3日",
+          "nthOfMonth": "日"
+        }
+      },
+      "dataRefresh": {
+        "title": "数据和刷新",
+        "autoRefresh": {
+          "title": "自动刷新",
+          "description": "在后台自动刷新数据",
+          "on": "开启",
+          "off": "关闭"
+        },
+        "refreshInterval": {
+          "title": "刷新间隔"
+        },
+        "manualRefresh": {
+          "title": "手动刷新",
+          "description": "清除缓存并重新加载所有数据",
+          "refreshNow": "立即刷新"
+        },
+        "lastUpdated": "最后更新"
+      },
+      "databaseManagement": {
+        "title": "数据库管理",
+        "databaseOperations": {
+          "title": "数据库操作",
+          "description": "清除所有数据并用新数据刷新数据库",
+          "clearDatabase": "清除数据库",
+          "refreshDatabase": "刷新数据库"
+        },
+        "confirmClear": "您确定要清除数据库中的所有数据吗？此操作无法撤销。",
+        "clearedSuccess": "数据库清除成功！",
+        "clearFailed": "数据库清除失败。",
+        "clearFirst": "请先清除数据库。",
+        "refreshedSuccess": "数据库刷新成功！",
+        "refreshFailed": "数据库刷新失败。"
+      },
+      "dataExport": {
+        "title": "数据导出",
+        "exportUsageData": {
+          "title": "导出使用数据",
+          "description": "下载您的使用数据用于备份或分析",
+          "exportCsv": "导出CSV",
+          "exportJson": "导出JSON"
+        },
+        "exportFailed": "导出失败。请重试。"
+      },
+      "advanced": {
+        "title": "高级",
+        "language": {
+          "title": "语言",
+          "description": "选择您首选的界面语言",
+          "interfaceLanguage": "界面语言"
+        },
+        "timeFormat": {
+          "title": "时间格式",
+          "description": "在12小时和24小时时间格式之间选择",
+          "12hour": "12小时",
+          "24hour": "24小时"
+        },
+        "timezone": {
+          "title": "时区",
+          "description": "选择您首选的日期和时间显示时区",
+          "auto": "自动"
+        },
+        "currency": {
+          "title": "货币",
+          "description": "成本计算的显示货币（从USD转换）",
+          "changeFailed": "货币更改失败。请重试。"
+        }
+      },
+      "claudeProjects": {
+        "title": "Claude项目",
+        "projectPaths": {
+          "title": "项目路径",
+          "description": "配置Dragon UI查找Claude项目数据的位置",
+          "refresh": "刷新"
+        },
+        "standardPaths": {
+          "title": "标准路径（自动检测）",
+          "noStandardPaths": "未找到标准Claude路径",
+          "expectedPaths": "预期：~/.config/claude/projects 或 ~/.claude/projects",
+          "newFormat": "新格式（v1.0.30+）",
+          "legacyFormat": "旧格式",
+          "active": "活跃"
+        },
+        "customPaths": {
+          "title": "自定义路径",
+          "placeholder": "/您的/claude/项目路径",
+          "noCustomPaths": "未配置自定义路径",
+          "customPath": "自定义路径",
+          "addFailed": "添加路径失败。请检查目录是否存在。"
+        },
+        "activePathsSummary": {
+          "totalActivePaths": "活跃路径总数",
+          "monitoring": "监控中",
+          "noPaths": "无路径"
+        }
+      },
+      "about": {
+        "title": "关于Dragon UI",
+        "features": {
+          "title": "功能",
+          "realTimeMonitoring": "实时使用监控",
+          "backgroundServices": "高级后台服务",
+          "multiCurrencySupport": "多货币支持（12种货币）",
+          "ramCaching": "RAM缓存和即时数据访问",
+          "multiLanguageSupport": "多语言支持（9种语言）",
+          "databaseManagement": "完整数据库管理",
+          "dataExport": "数据导出（CSV/JSON）",
+          "liveLanguageSwitching": "实时语言切换"
+        },
+        "technology": {
+          "title": "技术",
+          "electronReact": "使用Electron + React构建",
+          "typescript": "TypeScript类型安全",
+          "backgroundCollector": "高级后台数据收集器",
+          "dragonDesign": "龙主题设计系统",
+          "crossPlatform": "跨平台桌面应用",
+          "i18nSystem": "React i18n国际化",
+          "zustandStore": "Zustand状态管理",
+          "tailwindCSS": "TailwindCSS样式"
+        },
+        "builtWith": "构建技术",
+        "and": "和",
+        "by": "开发者"
+      }
+    }
+  }
+}

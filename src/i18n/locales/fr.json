@@ -1,0 +1,495 @@
+{
+  "app": {
+    "loading": "Chargement de Dragon UI...",
+    "subtitle": "Tableau de bord d'utilisation maximale Claude Code",
+    "updated": "Mis à jour",
+    "refresh": "Actualiser",
+    "dismiss": "Ignorer",
+    "navigation": {
+      "overview": "Aperçu",
+      "projects": "Projets", 
+      "sessions": "Sessions",
+      "monthly": "Mensuel",
+      "daily": "Quotidien",
+      "active": "Actif",
+      "settings": "Paramètres"
+    },
+    "lastUpdate": {
+      "justNow": "À l'instant",
+      "minutesAgo": "min"
+    },
+    "footer": {
+      "builtWith": "Construit avec",
+      "and": "et",
+      "by": "par",
+      "features": "Ultra-rapide • Multiplateforme • Inspiré du dragon"
+    },
+    "theme": {
+      "light": "Clair",
+      "dark": "Sombre",
+      "lightMode": "Mode clair",
+      "darkMode": "Mode sombre",
+      "toggle": "Changer le thème"
+    }
+  },
+  "pages": {
+    "overview": {
+      "title": "Aperçu",
+      "description": "Votre tableau de bord d'utilisation Claude en un coup d'œil",
+      "realTimeMonitoring": "Surveillance en temps réel",
+      "loadingOverview": "Chargement de l'aperçu...",
+      "loadingUsageData": "Chargement des données d'utilisation...",
+      "loadingSession": "Chargement de la session...",
+      "stats": {
+        "totalCost": "Coût total",
+        "totalSessions": "Sessions totales",
+        "averageCostPerSession": "Coût moyen/Session",
+        "totalTokens": "Tokens totaux",
+        "status": "Statut",
+        "activeDays": "Jours actifs",
+        "modelsUsed": "Modèles utilisés",
+        "tokens": "tokens",
+        "fiveHourWindows": "Fenêtres de 5h",
+        "daysWithUsage": "Jours avec utilisation"
+      },
+      "currentSession": {
+        "title": "Session actuelle",
+        "started": "Démarrée",
+        "duration": "Durée",
+        "cost": "Coût",
+        "timeLeft": "Temps restant",
+        "sessionId": "ID de session",
+        "noActiveSession": "Aucune session active",
+        "startUsingClaude": "Commencez à utiliser Claude pour voir les données de session",
+        "unknown": "Inconnu"
+      },
+      "quickStats": {
+        "title": "Statistiques rapides",
+        "totalCost": "Coût total",
+        "totalTokens": "Tokens totaux",
+        "sessions": "Sessions",
+        "avgTokensPerSession": "Moy. Tokens/Session"
+      },
+      "activity": {
+        "title": "Activité (7 derniers jours)",
+        "total": "Total"
+      },
+      "lastActivity": "Dernière",
+      "noActivity": "Aucune activité"
+    },
+    "projects": {
+      "title": "Projets",
+      "description": "Analytiques d'utilisation par projet",
+      "loadingProjects": "Chargement des projets...",
+      "noProjectData": "Aucune donnée de projet disponible",
+      "projectDataWillAppear": "Les données de projet apparaîtront ici lorsque vous utiliserez Claude avec différents projets",
+      "projects": "projets",
+      "mostActive": "Le plus actif",
+      "stats": {
+        "totalProjects": "Projets totaux",
+        "totalCost": "Coût total",
+        "mostActive": "Le plus actif",
+        "sessions": "Sessions",
+        "tokensUsed": "Tokens utilisés",
+        "avgCostPerSession": "Coût moyen/Session"
+      },
+      "insights": {
+        "title": "Informations sur les projets",
+        "mostActiveProject": "Projet le plus actif",
+        "portfolio": "Portfolio",
+        "projectsTracked": "projets suivis",
+        "avgPerProject": "Moyenne par projet"
+      },
+      "breakdown": {
+        "title": "Répartition des projets",
+        "lastActivity": "Dernière activité",
+        "noRecentActivity": "Aucune activité récente",
+        "top": "Top",
+        "ofTotal": "du total",
+        "costPer1MTokens": "Coût par 1M tokens",
+        "models": "modèles",
+        "tokensPerSession": "Tokens par session"
+      }
+    },
+    "sessions": {
+      "title": "Sessions",
+      "description": "Fenêtres d'utilisation de 5 heures",
+      "loadingSessions": "Chargement des sessions...",
+      "noSessionData": "Aucune donnée de session disponible",
+      "sessionDataWillAppear": "Les données de session apparaîtront ici lorsque vous utiliserez Claude",
+      "sessions": "sessions",
+      "validSessions": "valides",
+      "stats": {
+        "total": "Total",
+        "valid": "Valides",
+        "totalSessions": "Total des sessions",
+        "validSessions": "Sessions valides",
+        "totalCost": "Coût total",
+        "cost": "Coût",
+        "tokens": "Tokens",
+        "duration": "Durée",
+        "conversations": "Conversations",
+        "fiveHourMax": "Maximum 5 heures",
+        "messages": "Messages",
+        "startTime": "Heure de début",
+        "lastActivity": "Dernière activité",
+        "active": "Actif",
+        "completed": "Terminé"
+      },
+      "insights": {
+        "title": "Aperçus des sessions",
+        "avgSessionCost": "Coût moyen par session",
+        "avgTokens": "Tokens moyens",
+        "mostRecentSession": "Session la plus récente",
+        "noSessionsYet": "Aucune session pour le moment"
+      },
+      "history": {
+        "title": "Historique des sessions",
+        "session": "Session",
+        "started": "Démarrée",
+        "unknownStartTime": "Heure de début inconnue",
+        "recent": "Récente",
+        "active": "Active",
+        "models": "modèles",
+        "ended": "Terminée",
+        "activeNow": "Active maintenant",
+        "noEndTime": "Pas d'heure de fin",
+        "unknown": "Inconnu"
+      }
+    },
+    "monthlyUsage": {
+      "title": "Utilisation mensuelle",
+      "description": "Tendances mensuelles et suivi budgétaire",
+      "loadingMonthlyData": "Chargement des données mensuelles...",
+      "noMonthlyData": "Aucune donnée mensuelle disponible",
+      "monthlyDataWillAppear": "Les données d'utilisation mensuelle apparaîtront ici lorsque vous utiliserez Claude au fil du temps",
+      "stats": {
+        "monthsTracked": "mois suivis",
+        "budgetTracking": "Suivi budgétaire",
+        "currentMonth": "Mois actuel",
+        "thisMonth": "Ce mois",
+        "monthlyAverage": "Moyenne mensuelle",
+        "perMonth": "par mois",
+        "totalCost": "Coût total",
+        "allMonths": "tous les mois",
+        "projectedYearly": "Projection annuelle",
+        "basedOnAverage": "basé sur la moyenne"
+      },
+      "breakdown": {
+        "title": "Répartition mensuelle",
+        "current": "Actuel",
+        "days": "jours",
+        "sessions": "sessions",
+        "dayAvg": "moy. jour",
+        "totalTokens": "Tokens totaux",
+        "activeDays": "Jours actifs",
+        "avgSessionCost": "Coût moy. par session",
+        "tokensPerSession": "Tokens/Session",
+        "costPer1MTokens": "Coût par 1M tokens",
+        "vsAvg": "vs moy.",
+        "firstMonth": "Premier mois",
+        "sameAsAvg": "Même que moy."
+      },
+      "trends": {
+        "title": "Tendances de dépenses",
+        "highestSpending": "Dépenses les plus élevées",
+        "mostActive": "Le plus actif",
+        "noData": "Aucune donnée",
+        "sessions": "sessions",
+        "growthTrend": "Tendance de croissance",
+        "firstMonth": "Premier mois",
+        "mom": "MsM",
+        "increasing": "En augmentation",
+        "decreasing": "En diminution",
+        "usage": "utilisation",
+        "noPreviousData": "Aucune donnée précédente"
+      },
+      "budget": {
+        "title": "Planification budgétaire",
+        "monthlyAverage": "Moyenne mensuelle",
+        "perMonth": "Par mois",
+        "quarterly": "Trimestriel",
+        "next3Months": "3 prochains mois",
+        "yearly": "Annuel",
+        "twelveMonths": "12 mois",
+        "runRate": "Taux d'exécution",
+        "perYear": "Par an"
+      }
+    },
+    "dailyUsage": {
+      "title": "Utilisation quotidienne",
+      "description": "Répartition quotidienne granulaire et tendances",
+      "loadingDailyData": "Chargement des données quotidiennes...",
+      "noDailyData": "Aucune donnée quotidienne disponible",
+      "dailyDataWillAppear": "Les données d'utilisation quotidienne apparaîtront ici lorsque vous utiliserez Claude",
+      "stats": {
+        "daysTracked": "jours suivis",
+        "activeDays": "jours actifs"
+      },
+      "today": {
+        "title": "Aujourd'hui",
+        "live": "En direct",
+        "tokens": "Tokens",
+        "sessions": "Sessions",
+        "models": "Modèles",
+        "noUsageYet": "Aucune utilisation aujourd'hui"
+      },
+      "yesterday": {
+        "title": "Hier",
+        "lastActive": "Dernière activité",
+        "tokens": "Tokens",
+        "sessions": "Sessions",
+        "models": "Modèles",
+        "noPreviousData": "Aucune donnée précédente"
+      },
+      "summary": {
+        "title": "Résumé d'utilisation",
+        "totalCost": "Coût total",
+        "sessions": "sessions",
+        "allTime": "Tout le temps",
+        "dailyAverage": "Moyenne quotidienne",
+        "perActiveDay": "Par jour actif",
+        "active": "actif",
+        "activityRate": "Taux d'activité",
+        "days": "jours"
+      },
+      "history": {
+        "title": "Historique quotidien",
+        "last": "Derniers",
+        "days": "jours",
+        "today": "Aujourd'hui",
+        "yesterday": "Hier",
+        "activeNow": "Actif maintenant",
+        "tokens": "tokens",
+        "sessions": "sessions",
+        "models": "modèles",
+        "noModels": "Aucun modèle"
+      }
+    },
+    "activeSession": {
+      "title": "Session active",
+      "description": "Surveillance de session en temps réel",
+      "loadingActiveSession": "Chargement de la session active...",
+      "noActiveSessionData": "Aucune donnée de session active",
+      "sessionDataWillAppear": "Les données de session apparaîtront lorsque vous commencerez à utiliser Claude",
+      "refresh": "Actualiser",
+      "status": {
+        "active": "Actif",
+        "idle": "Inactif"
+      },
+      "progress": {
+        "session": "SESSION",
+        "started": "Démarrée",
+        "remaining": "Restant",
+        "unknown": "Inconnu",
+        "usage": "UTILISATION",
+        "tokens": "Tokens",
+        "burnRate": "Taux de consommation",
+        "tokenPerMin": "token/min",
+        "high": "ÉLEVÉ",
+        "normal": "NORMAL",
+        "cost": "Coût",
+        "projection": "PROJECTION",
+        "status": "Statut",
+        "highBurn": "CONSOMMATION ÉLEVÉE",
+        "onTrack": "SUR LA BONNE VOIE"
+      },
+      "overview": {
+        "title": "Aperçu de session",
+        "sessionCost": "Coût de session",
+        "tokensUsed": "Tokens utilisés",
+        "sessionProgress": "Progression de session",
+        "used": "utilisé",
+        "left": "restant",
+        "status": "Statut",
+        "sessionId": "ID de session",
+        "lastActivity": "Dernière activité"
+      },
+      "performance": {
+        "title": "Performance et projections",
+        "tokenBurnRate": "Taux de consommation de tokens",
+        "high": "ÉLEVÉ",
+        "normal": "NORMAL",
+        "tokensPerMin": "tokens/min",
+        "fullSessionProjection": "Projection de session complète",
+        "projectedTokens": "Tokens projetés",
+        "projectedCost": "Coût projeté",
+        "costVsCurrent": "Coût vs. actuel",
+        "sessionPerformance": "Performance de session",
+        "highIntensity": "Haute intensité",
+        "normalUsage": "Utilisation normale"
+      },
+      "noSession": {
+        "title": "Aucune session active",
+        "description": "Commencez à utiliser Claude pour voir les données de session"
+      },
+      "realTime": {
+        "updates": "Mises à jour en temps réel toutes les 5 secondes",
+        "lastUpdated": "Dernière mise à jour",
+        "never": "Jamais"
+      }
+    },
+    "settings": {
+      "title": "Paramètres",
+      "description": "Personnalisez votre expérience Dragon UI",
+      "version": "v1.0.0",
+      "appearance": {
+        "title": "Apparence",
+        "theme": {
+          "title": "Thème",
+          "description": "Basculer entre les modes clair et sombre"
+        },
+        "compactMode": {
+          "title": "Mode compact",
+          "description": "Réduire l'espacement et la taille des composants",
+          "enabled": "Activé",
+          "disabled": "Désactivé"
+        },
+        "animations": {
+          "title": "Animations",
+          "description": "Activer les animations et transitions inspirées du dragon",
+          "enabled": "Activé",
+          "disabled": "Désactivé"
+        }
+      },
+      "billingCycle": {
+        "title": "Cycle de facturation",
+        "billingCycleStartDay": {
+          "title": "Jour de début du cycle de facturation",
+          "description": "Jour du mois où votre abonnement Claude se renouvelle (affecte les calculs d'utilisation mensuelle)"
+        },
+        "currentBillingPeriod": "Période de facturation actuelle",
+        "billingPeriodNote": "Cela affecte le suivi de l'utilisation mensuelle, les limites de session et les projections de coûts",
+        "options": {
+          "firstOfMonth": "1er de chaque mois",
+          "secondOfMonth": "2 de chaque mois",
+          "thirdOfMonth": "3 de chaque mois",
+          "nthOfMonth": "e de chaque mois"
+        }
+      },
+      "dataRefresh": {
+        "title": "Données & Actualisation",
+        "autoRefresh": {
+          "title": "Actualisation automatique",
+          "description": "Actualiser automatiquement les données en arrière-plan",
+          "on": "Activé",
+          "off": "Désactivé"
+        },
+        "refreshInterval": {
+          "title": "Intervalle d'actualisation"
+        },
+        "manualRefresh": {
+          "title": "Actualisation manuelle",
+          "description": "Vider le cache et recharger toutes les données",
+          "refreshNow": "Actualiser maintenant"
+        },
+        "lastUpdated": "Dernière mise à jour"
+      },
+      "databaseManagement": {
+        "title": "Gestion de la base de données",
+        "databaseOperations": {
+          "title": "Opérations de base de données",
+          "description": "Effacer toutes les données et actualiser la base de données avec de nouvelles données",
+          "clearDatabase": "Effacer la base de données",
+          "refreshDatabase": "Actualiser la base de données"
+        },
+        "confirmClear": "Êtes-vous sûr de vouloir effacer TOUTES les données de la base de données ? Cette action ne peut pas être annulée.",
+        "clearedSuccess": "Base de données effacée avec succès !",
+        "clearFailed": "Échec de l'effacement de la base de données.",
+        "clearFirst": "Veuillez d'abord effacer la base de données.",
+        "refreshedSuccess": "Base de données actualisée avec succès !",
+        "refreshFailed": "Échec de l'actualisation de la base de données."
+      },
+      "dataExport": {
+        "title": "Export de données",
+        "exportUsageData": {
+          "title": "Exporter les données d'utilisation",
+          "description": "Téléchargez vos données d'utilisation pour sauvegarde ou analyse",
+          "exportCsv": "Exporter CSV",
+          "exportJson": "Exporter JSON"
+        },
+        "exportFailed": "Échec de l'export. Veuillez réessayer."
+      },
+      "advanced": {
+        "title": "Avancé",
+        "language": {
+          "title": "Langue",
+          "description": "Choisissez votre langue préférée pour l'interface",
+          "interfaceLanguage": "Langue de l'interface"
+        },
+        "timeFormat": {
+          "title": "Format d'heure",
+          "description": "Choisir entre le format d'heure 12 heures et 24 heures",
+          "12hour": "12 heures",
+          "24hour": "24 heures"
+        },
+        "timezone": {
+          "title": "Fuseau horaire",
+          "description": "Choisissez votre fuseau horaire préféré pour l'affichage de la date et de l'heure",
+          "auto": "Automatique"
+        },
+        "currency": {
+          "title": "Devise",
+          "description": "Devise d'affichage pour les calculs de coûts (convertie depuis USD)",
+          "changeFailed": "Échec du changement de devise. Veuillez réessayer."
+        }
+      },
+      "claudeProjects": {
+        "title": "Projets Claude",
+        "projectPaths": {
+          "title": "Chemins de projet",
+          "description": "Configurez où Dragon UI recherche les données de projet Claude",
+          "refresh": "Actualiser"
+        },
+        "standardPaths": {
+          "title": "Chemins standard (Détectés automatiquement)",
+          "noStandardPaths": "Aucun chemin Claude standard trouvé",
+          "expectedPaths": "Attendu : ~/.config/claude/projects ou ~/.claude/projects",
+          "newFormat": "Nouveau format (v1.0.30+)",
+          "legacyFormat": "Format hérité",
+          "active": "Actif"
+        },
+        "customPaths": {
+          "title": "Chemins personnalisés",
+          "placeholder": "/chemin/vers/vos/projets/claude",
+          "noCustomPaths": "Aucun chemin personnalisé configuré",
+          "customPath": "Chemin personnalisé",
+          "addFailed": "Échec de l'ajout du chemin. Veuillez vérifier si le répertoire existe."
+        },
+        "activePathsSummary": {
+          "totalActivePaths": "Chemins actifs totaux",
+          "monitoring": "Surveillance",
+          "noPaths": "Aucun chemin"
+        }
+      },
+      "about": {
+        "title": "À propos de Dragon UI",
+        "features": {
+          "title": "Fonctionnalités",
+          "realTimeMonitoring": "Surveillance d'utilisation en temps réel",
+          "backgroundServices": "Services d'arrière-plan avancés",
+          "multiCurrencySupport": "Support multi-devises (12 devises)",
+          "ramCaching": "Mise en cache RAM & accès instantané aux données",
+          "multiLanguageSupport": "Support multilingue (9 langues)",
+          "databaseManagement": "Gestion complète de base de données",
+          "dataExport": "Export de données (CSV/JSON)",
+          "liveLanguageSwitching": "Changement de langue en direct"
+        },
+        "technology": {
+          "title": "Technologie",
+          "electronReact": "Construit avec Electron + React",
+          "typescript": "TypeScript pour la sécurité des types",
+          "backgroundCollector": "Collecteur de données d'arrière-plan avancé",
+          "dragonDesign": "Système de design inspiré du dragon",
+          "crossPlatform": "Application de bureau multiplateforme",
+          "i18nSystem": "Internationalisation React i18n",
+          "zustandStore": "Gestion d'état Zustand",
+          "tailwindCSS": "Stylisation TailwindCSS"
+        },
+        "builtWith": "Construit avec",
+        "and": "et",
+        "by": "par"
+      }
+    }
+  }
+}
