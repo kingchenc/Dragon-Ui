@@ -1,4 +1,4 @@
-{
+﻿{
   "app": {
     "loading": "Chargement de Dragon UI...",
     "subtitle": "Tableau de bord d'utilisation maximale Claude Code",
@@ -332,7 +332,6 @@
     "settings": {
       "title": "Paramètres",
       "description": "Personnalisez votre expérience Dragon UI",
-      "version": "v1.0.0",
       "appearance": {
         "title": "Apparence",
         "theme": {

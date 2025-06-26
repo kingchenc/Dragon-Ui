@@ -8,19 +8,19 @@ import { fileURLToPath } from 'url';
 // Get the package root directory (ES module equivalent of __dirname)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const packageRoot = path.dirname(__dirname);
+const packageRoot = __dirname;
 
-console.log('🐲 Starting Dragon UI - Claude Code Max Usage Dashboard...');
+console.log('🐲 Dragon UI Development Mode - Checking setup...');
 
-// Check if better-sqlite3 needs rebuilding
+// Check if better-sqlite3 needs rebuilding for development
 const needsRebuild = checkIfRebuildNeeded();
 if (needsRebuild) {
-  console.log('🔧 Rebuilding native modules for Electron...');
+  console.log('🔧 Rebuilding native modules for Electron development...');
   rebuildNativeModules(() => {
-    checkAndStart();
+    startElectronDev();
   });
 } else {
-  checkAndStart();
+  startElectronDev();
 }
 
 function checkIfRebuildNeeded() {
@@ -32,10 +32,10 @@ function checkIfRebuildNeeded() {
       return false; // Module not installed
     }
     
-    console.log('🔍 Checking if native modules need rebuilding...');
+    console.log('🔍 Checking if native modules need rebuilding for development...');
     
     // Check for rebuild cache file
-    const cacheFile = path.join(packageRoot, '.dragon-ui-rebuild-cache');
+    const cacheFile = path.join(packageRoot, '.dragon-ui-rebuild-cache-dev');
     const electronPackageJson = path.join(packageRoot, 'node_modules', 'electron', 'package.json');
     
     if (fs.existsSync(cacheFile) && fs.existsSync(electronPackageJson)) {
@@ -45,27 +45,30 @@ function checkIfRebuildNeeded() {
         
         // Check if electron version matches cached version
         if (cacheData.electronVersion === electronPkg.version) {
-          // Check if better-sqlite3 binary exists and is newer than cache
+          // Check if better-sqlite3 binary exists
           const bindingPath = path.join(sqlitePath, 'build', 'Release', 'better_sqlite3.node');
           if (fs.existsSync(bindingPath)) {
-            const bindingStat = fs.statSync(bindingPath);
-            const cacheTime = new Date(cacheData.timestamp);
-            
-            if (bindingStat.mtime > cacheTime) {
-              console.log('✅ Native modules are up to date');
-              return false;
-            }
+            console.log('✅ Native modules are up to date for development');
+            return false;
+          } else {
+            console.log('🔧 Native binary missing, rebuild needed for development');
+            return true;
           }
         } else {
-          console.log('🔄 Electron version changed, rebuild needed');
+          console.log('🔄 Electron version changed, rebuild needed for development');
+          return true;
         }
       } catch (error) {
-        console.log('⚠️ Cache file corrupted, will rebuild');
+        console.log('⚠️ Development cache file corrupted, will rebuild');
+        return true;
       }
+    } else {
+      console.log('🔧 No development cache found, rebuild needed');
+      return true;
     }
     
     // Rebuild needed
-    console.log('🔧 Native modules need rebuilding');
+    console.log('🔧 Native modules need rebuilding for development');
     return true;
   } catch (error) {
     console.log('⚠️ Error checking rebuild status:', error.message);
@@ -82,9 +85,9 @@ function rebuildNativeModules(callback) {
   
   rebuildProcess.on('close', (code) => {
     if (code === 0) {
-      console.log('✅ Native modules rebuilt successfully!');
+      console.log('✅ Native modules rebuilt successfully for development!');
       
-      // Create cache file to avoid unnecessary rebuilds
+      // Create development cache file to avoid unnecessary rebuilds
       try {
         const electronPackageJson = path.join(packageRoot, 'node_modules', 'electron', 'package.json');
         if (fs.existsSync(electronPackageJson)) {
@@ -94,18 +97,18 @@ function rebuildNativeModules(callback) {
             electronVersion: electronPkg.version
           };
           
-          const cacheFile = path.join(packageRoot, '.dragon-ui-rebuild-cache');
+          const cacheFile = path.join(packageRoot, '.dragon-ui-rebuild-cache-dev');
           fs.writeFileSync(cacheFile, JSON.stringify(cacheData, null, 2));
-          console.log('💾 Rebuild cache updated');
+          console.log('💾 Development rebuild cache updated');
         }
       } catch (error) {
-        console.log('⚠️ Could not create rebuild cache:', error.message);
+        console.log('⚠️ Could not create development rebuild cache:', error.message);
       }
       
       callback();
     } else {
-      console.error('❌ Failed to rebuild native modules!');
-      console.log('💡 Try running: npm install --global electron-rebuild');
+      console.error('❌ Failed to rebuild native modules for development!');
+      console.log('💡 Try running: npm install electron-rebuild');
       process.exit(1);
     }
   });
@@ -114,8 +117,8 @@ function rebuildNativeModules(callback) {
     console.error('❌ Rebuild failed:', err.message);
     console.log('💡 Installing electron-rebuild...');
     
-    // Try to install electron-rebuild
-    const installProcess = spawn('npm', ['install', '-g', 'electron-rebuild'], {
+    // Try to install electron-rebuild locally
+    const installProcess = spawn('npm', ['install', 'electron-rebuild'], {
       cwd: packageRoot,
       stdio: 'inherit',
       shell: true
@@ -132,33 +135,8 @@ function rebuildNativeModules(callback) {
   });
 }
 
-function checkAndStart() {
-const distPath = path.join(packageRoot, 'dist');
-if (!fs.existsSync(distPath)) {
-  console.log('📦 Building Dragon UI for first time...');
-  
-  // Run build first
-  const buildProcess = spawn('npm', ['run', 'build'], {
-    cwd: packageRoot,
-    stdio: 'inherit',
-    shell: true
-  });
-  
-  buildProcess.on('close', (code) => {
-    if (code === 0) {
-      console.log('✅ Build completed successfully!');
-      startElectron();
-    } else {
-      console.error('❌ Build failed!');
-      process.exit(1);
-    }
-  });
-} else {
-  startElectron();
-}
-
-function startElectron() {
-  console.log('🚀 Launching Dragon UI...');
+function startElectronDev() {
+  console.log('🚀 Starting Electron in development mode...');
   
   // Find the local electron executable
   const electronPath = path.join(packageRoot, 'node_modules', '.bin', 'electron');
@@ -172,12 +150,11 @@ function startElectron() {
   });
   
   electronProcess.on('close', (code) => {
-    console.log(`🐲 Dragon UI closed with code ${code}`);
+    console.log(`🐲 Dragon UI development closed with code ${code}`);
   });
   
   electronProcess.on('error', (err) => {
-    console.error('❌ Failed to start Dragon UI:', err.message);
+    console.error('❌ Failed to start Dragon UI development:', err.message);
     console.log('💡 Electron path:', electronCmd);
   });
-}
 }

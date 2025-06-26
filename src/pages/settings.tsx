@@ -5,6 +5,7 @@ import { DragonBadge } from '@/components/ui/badge'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { useAppStore } from '@/lib/store'
 import { useTranslation } from '@/i18n'
+import { getAppVersion } from '@/lib/utils'
 import { 
   Settings as SettingsIcon, 
   Palette, 
@@ -315,7 +316,7 @@ export default function SettingsPage() {
           </p>
         </div>
         <DragonBadge variant="dragon">
-          {t('pages.settings.version')}
+          v{getAppVersion()}
         </DragonBadge>
       </div>
 
@@ -930,7 +931,7 @@ export default function SettingsPage() {
 
           <div className="pt-4 border-t border-white/10">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Dragon UI {t('pages.settings.version')}</span>
+              <span className="text-muted-foreground">Dragon UI v{getAppVersion()}</span>
               <span className="text-muted-foreground">{t('pages.settings.about.builtWith')} <img src="Dragon-Ui (1).svg" alt="Dragon UI" className="w-4 h-4 inline mx-1" /> {t('pages.settings.about.and')} ❤️ {t('pages.settings.about.by')} KingchenC</span>
             </div>
           </div>

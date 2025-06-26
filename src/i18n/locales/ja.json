@@ -1,4 +1,4 @@
-{
+﻿{
   "app": {
     "loading": "Dragon UIを読み込み中...",
     "subtitle": "Claude Code Max使用状況ダッシュボード",
@@ -332,7 +332,6 @@
     "settings": {
       "title": "設定",
       "description": "Dragon UIエクスペリエンスをカスタマイズ",
-      "version": "v1.0.0",
       "appearance": {
         "title": "外観",
         "theme": {

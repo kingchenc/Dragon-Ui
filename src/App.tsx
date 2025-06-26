@@ -7,6 +7,7 @@ import { DragonCard } from '@/components/ui/card'
 import { useAppStore } from '@/lib/store'
 import { useTimeFormatting } from '@/lib/hooks'
 import { useTranslation, initializeLanguage, changeLanguage } from '@/i18n'
+import { getAppVersion } from '@/lib/utils'
 import { 
   BarChart3, 
   Zap, 
@@ -259,7 +260,7 @@ function App() {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <div className="flex items-center space-x-2">
-              <span><img src="Dragon-Ui (1).svg" alt="Dragon UI" className="w-4 h-4 inline mr-1" />Dragon UI v1.0.0</span>
+              <span><img src="Dragon-Ui (1).svg" alt="Dragon UI" className="w-4 h-4 inline mr-1" />Dragon UI v{getAppVersion()}</span>
               <span>•</span>
               <span>{t('app.footer.builtWith')} <img src="Dragon-Ui (1).svg" alt="Dragon UI" className="w-4 h-4 inline mx-1" /> {t('app.footer.and')} ❤️ {t('app.footer.by')} KingchenC</span>
             </div>

@@ -1,4 +1,4 @@
-{
+﻿{
   "app": {
     "loading": "Carregando Dragon UI...",
     "subtitle": "Painel de Uso Máximo Claude Code",
@@ -332,7 +332,6 @@
     "settings": {
       "title": "Configurações",
       "description": "Personalize sua experiência Dragon UI",
-      "version": "v1.0.0",
       "appearance": {
         "title": "Aparência",
         "theme": {

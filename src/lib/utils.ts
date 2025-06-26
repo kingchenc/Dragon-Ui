@@ -5,6 +5,12 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+// Get app version from Vite build-time constant
+export function getAppVersion(): string {
+  // @ts-ignore - Vite build-time constant
+  return typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.0.0';
+}
+
 export function formatCurrency(amount: number, currency: string = 'USD'): string {
   // Safety check for null/undefined/NaN
   if (!amount || typeof amount !== 'number' || isNaN(amount) || !isFinite(amount)) {

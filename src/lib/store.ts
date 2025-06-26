@@ -309,7 +309,7 @@ export const useAppStore = create<AppState>()(
       language: DEFAULT_LANGUAGE,
       timezone: 'auto',
       timeFormat: '24h',
-      compactMode: false,
+      compactMode: true,
       showAnimations: true,
       billingCycleDay: 1, // Default to 1st of each month
       claudePaths: {

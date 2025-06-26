@@ -1,4 +1,4 @@
-{
+﻿{
   "app": {
     "loading": "正在加载Dragon UI...",
     "subtitle": "Claude Code Max使用仪表板",
@@ -332,7 +332,6 @@
     "settings": {
       "title": "设置",
       "description": "自定义您的Dragon UI体验",
-      "version": "v1.0.0",
       "appearance": {
         "title": "外观",
         "theme": {

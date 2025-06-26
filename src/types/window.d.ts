@@ -1,5 +1,8 @@
 // Global window interface extensions for Dragon UI
 
+// Vite build-time constants
+declare const __APP_VERSION__: string;
+
 declare global {
   interface Window {
     // Claude Projects API (Claude Code Max)
