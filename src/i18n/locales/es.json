@@ -423,6 +423,38 @@
         "refreshFailed": "Error al actualizar la base de datos.",
         "databaseCleared": "¡La base de datos ha sido limpiada!"
       },
+      "database": {
+        "title": "Gestión de Base de Datos",
+        "status": {
+          "title": "Estado de la Base de Datos",
+          "processing": "Procesando...",
+          "ready": "Listo",
+          "busy": "Ocupado",
+          "online": "En línea"
+        },
+        "cleanup": {
+          "title": "Limpieza de Datos",
+          "description": "Eliminar marcas de tiempo corruptas y entradas fantasma",
+          "action": "Limpiar Base de Datos",
+          "confirmTitle": "Limpiar Base de Datos",
+          "confirmMessage": "Esto eliminará marcas de tiempo corruptas y entradas fantasma de la base de datos. Esta acción no se puede deshacer.",
+          "cancel": "Cancelar",
+          "confirm": "Limpiar Base de Datos"
+        },
+        "refresh": {
+          "title": "Actualización Completa",
+          "description": "Limpiar y recargar todos los datos desde archivos",
+          "action": "Actualizar Base de Datos",
+          "confirmTitle": "Actualizar Base de Datos",
+          "confirmMessage": "Esto limpiará TODOS los datos de la base de datos y los recargará desde archivos. Este proceso puede tomar varios minutos y no se puede deshacer.",
+          "cancel": "Cancelar",
+          "confirm": "Actualizar Base de Datos"
+        },
+        "warning": {
+          "title": "Advertencia",
+          "message": "Las operaciones de base de datos pueden tomar tiempo y interrumpirán temporalmente la recolección de datos."
+        }
+      },
       "dataExport": {
         "title": "Exportación de datos",
         "exportUsageData": {

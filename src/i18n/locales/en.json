@@ -423,6 +423,38 @@
         "refreshFailed": "Failed to refresh database.",
         "databaseCleared": "Database has been cleared!"
       },
+      "database": {
+        "title": "Database Management",
+        "status": {
+          "title": "Database Status",
+          "processing": "Processing...",
+          "ready": "Ready",
+          "busy": "Busy",
+          "online": "Online"
+        },
+        "cleanup": {
+          "title": "Data Cleanup",
+          "description": "Remove corrupted timestamps and phantom entries",
+          "action": "Clean Database",
+          "confirmTitle": "Clean Database",
+          "confirmMessage": "This will remove corrupted timestamps and phantom entries from the database. This action cannot be undone.",
+          "cancel": "Cancel",
+          "confirm": "Clean Database"
+        },
+        "refresh": {
+          "title": "Full Refresh",
+          "description": "Clear and reload all data from files",
+          "action": "Refresh Database",
+          "confirmTitle": "Refresh Database",
+          "confirmMessage": "This will clear ALL data from the database and reload it from files. This process may take several minutes and cannot be undone.",
+          "cancel": "Cancel",
+          "confirm": "Refresh Database"
+        },
+        "warning": {
+          "title": "Warning",
+          "message": "Database operations may take time and will temporarily interrupt data collection."
+        }
+      },
       "dataExport": {
         "title": "Data Export",
         "exportUsageData": {

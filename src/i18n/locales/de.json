@@ -423,6 +423,38 @@
         "refreshFailed": "Fehler beim Aktualisieren der Datenbank.",
         "databaseCleared": "Datenbank wurde gelöscht!"
       },
+      "database": {
+        "title": "Datenbankverwaltung",
+        "status": {
+          "title": "Datenbankstatus",
+          "processing": "Verarbeitung...",
+          "ready": "Bereit",
+          "busy": "Beschäftigt",
+          "online": "Online"
+        },
+        "cleanup": {
+          "title": "Datenbereinigung",
+          "description": "Korrupte Zeitstempel und Phantom-Einträge entfernen",
+          "action": "Datenbank bereinigen",
+          "confirmTitle": "Datenbank bereinigen",
+          "confirmMessage": "Dies entfernt korrupte Zeitstempel und Phantom-Einträge aus der Datenbank. Diese Aktion kann nicht rückgängig gemacht werden.",
+          "cancel": "Abbrechen",
+          "confirm": "Datenbank bereinigen"
+        },
+        "refresh": {
+          "title": "Vollständige Aktualisierung",
+          "description": "Alle Daten löschen und aus Dateien neu laden",
+          "action": "Datenbank aktualisieren",
+          "confirmTitle": "Datenbank aktualisieren",
+          "confirmMessage": "Dies löscht ALLE Daten aus der Datenbank und lädt sie aus Dateien neu. Dieser Vorgang kann mehrere Minuten dauern und kann nicht rückgängig gemacht werden.",
+          "cancel": "Abbrechen",
+          "confirm": "Datenbank aktualisieren"
+        },
+        "warning": {
+          "title": "Warnung",
+          "message": "Datenbankoperationen können Zeit in Anspruch nehmen und unterbrechen vorübergehend die Datensammlung."
+        }
+      },
       "dataExport": {
         "title": "Datenexport",
         "exportUsageData": {

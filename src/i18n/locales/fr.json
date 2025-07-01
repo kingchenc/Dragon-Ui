@@ -423,6 +423,38 @@
         "refreshFailed": "Échec de l'actualisation de la base de données.",
         "databaseCleared": "La base de données a été effacée !"
       },
+      "database": {
+        "title": "Gestion de Base de Données",
+        "status": {
+          "title": "État de la Base de Données",
+          "processing": "Traitement...",
+          "ready": "Prêt",
+          "busy": "Occupé",
+          "online": "En ligne"
+        },
+        "cleanup": {
+          "title": "Nettoyage des Données",
+          "description": "Supprimer les horodatages corrompus et les entrées fantômes",
+          "action": "Nettoyer la Base de Données",
+          "confirmTitle": "Nettoyer la Base de Données",
+          "confirmMessage": "Ceci supprimera les horodatages corrompus et les entrées fantômes de la base de données. Cette action ne peut pas être annulée.",
+          "cancel": "Annuler",
+          "confirm": "Nettoyer la Base de Données"
+        },
+        "refresh": {
+          "title": "Actualisation Complète",
+          "description": "Effacer et recharger toutes les données depuis les fichiers",
+          "action": "Actualiser la Base de Données",
+          "confirmTitle": "Actualiser la Base de Données",
+          "confirmMessage": "Ceci effacera TOUTES les données de la base de données et les rechargera depuis les fichiers. Ce processus peut prendre plusieurs minutes et ne peut pas être annulé.",
+          "cancel": "Annuler",
+          "confirm": "Actualiser la Base de Données"
+        },
+        "warning": {
+          "title": "Avertissement",
+          "message": "Les opérations de base de données peuvent prendre du temps et interrompront temporairement la collecte de données."
+        }
+      },
       "dataExport": {
         "title": "Export de données",
         "exportUsageData": {

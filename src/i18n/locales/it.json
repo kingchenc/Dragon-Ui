@@ -423,6 +423,38 @@
         "refreshFailed": "Errore nell'aggiornamento del database.",
         "databaseCleared": "Il database è stato cancellato!"
       },
+      "database": {
+        "title": "Gestione Database",
+        "status": {
+          "title": "Stato Database",
+          "processing": "Elaborazione...",
+          "ready": "Pronto",
+          "busy": "Occupato",
+          "online": "Online"
+        },
+        "cleanup": {
+          "title": "Pulizia Dati",
+          "description": "Rimuovere timestamp corrotti e voci fantasma",
+          "action": "Pulisci Database",
+          "confirmTitle": "Pulisci Database",
+          "confirmMessage": "Questo rimuoverà timestamp corrotti e voci fantasma dal database. Questa azione non può essere annullata.",
+          "cancel": "Annulla",
+          "confirm": "Pulisci Database"
+        },
+        "refresh": {
+          "title": "Aggiornamento Completo",
+          "description": "Cancellare e ricaricare tutti i dati dai file",
+          "action": "Aggiorna Database",
+          "confirmTitle": "Aggiorna Database",
+          "confirmMessage": "Questo cancellerà TUTTI i dati dal database e li ricaricherà dai file. Questo processo può richiedere diversi minuti e non può essere annullato.",
+          "cancel": "Annulla",
+          "confirm": "Aggiorna Database"
+        },
+        "warning": {
+          "title": "Avviso",
+          "message": "Le operazioni del database possono richiedere tempo e interromperanno temporaneamente la raccolta dati."
+        }
+      },
       "dataExport": {
         "title": "Esportazione dati",
         "exportUsageData": {

@@ -423,6 +423,38 @@
         "refreshFailed": "Falha ao atualizar banco de dados.",
         "databaseCleared": "Banco de dados foi limpo!"
       },
+      "database": {
+        "title": "Gerenciamento de Banco de Dados",
+        "status": {
+          "title": "Status do Banco de Dados",
+          "processing": "Processando...",
+          "ready": "Pronto",
+          "busy": "Ocupado",
+          "online": "Online"
+        },
+        "cleanup": {
+          "title": "Limpeza de Dados",
+          "description": "Remover timestamps corrompidos e entradas fantasma",
+          "action": "Limpar Banco de Dados",
+          "confirmTitle": "Limpar Banco de Dados",
+          "confirmMessage": "Isso removerá timestamps corrompidos e entradas fantasma do banco de dados. Esta ação não pode ser desfeita.",
+          "cancel": "Cancelar",
+          "confirm": "Limpar Banco de Dados"
+        },
+        "refresh": {
+          "title": "Atualização Completa",
+          "description": "Limpar e recarregar todos os dados dos arquivos",
+          "action": "Atualizar Banco de Dados",
+          "confirmTitle": "Atualizar Banco de Dados",
+          "confirmMessage": "Isso limpará TODOS os dados do banco de dados e os recarregará dos arquivos. Este processo pode levar vários minutos e não pode ser desfeito.",
+          "cancel": "Cancelar",
+          "confirm": "Atualizar Banco de Dados"
+        },
+        "warning": {
+          "title": "Aviso",
+          "message": "Operações de banco de dados podem levar tempo e interromperão temporariamente a coleta de dados."
+        }
+      },
       "dataExport": {
         "title": "Exportação de dados",
         "exportUsageData": {

@@ -3,6 +3,7 @@ import { DragonCard, CardHeader, CardTitle, CardContent } from '@/components/ui/
 import { Button } from '@/components/ui/button'
 import { DragonBadge } from '@/components/ui/badge'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { useAppStore } from '@/lib/store'
 import { useTranslation } from '@/i18n'
 import { getAppVersion } from '@/lib/utils'
@@ -98,8 +99,10 @@ export default function SettingsPage() {
   // Live currency rate display
   const [currentRate, setCurrentRate] = useState<number | null>(null)
   
-  // Database management state
-  const [databaseCleared, setDatabaseCleared] = useState(false)
+  // Dialog states
+  const [cleanupDialogOpen, setCleanupDialogOpen] = useState(false)
+  const [refreshDialogOpen, setRefreshDialogOpen] = useState(false)
+  
   
   // Update current time every second
   useEffect(() => {
@@ -274,47 +277,6 @@ export default function SettingsPage() {
     }
   }
 
-  const handleClearDatabase = async () => {
-    const confirmed = window.confirm(
-      t('pages.settings.databaseManagement.confirmClear')
-    )
-    
-    if (!confirmed) return
-    
-    try {
-      const success = await window.claudeMaxAPI.clearDatabase()
-      if (success) {
-        setDatabaseCleared(true)
-        alert(t('pages.settings.databaseManagement.clearSuccess'))
-      } else {
-        alert(t('pages.settings.databaseManagement.clearFailed'))
-      }
-    } catch (error) {
-      console.error('Error clearing database:', error)
-      alert('Failed to clear database.')
-    }
-  }
-
-  const handleRefreshDatabase = async () => {
-    if (!databaseCleared) {
-      alert(t('pages.settings.databaseManagement.clearDatabaseFirst'))
-      return
-    }
-    
-    try {
-      const success = await window.claudeMaxAPI.refreshDatabase()
-      if (success) {
-        setDatabaseCleared(false)
-        await refreshCoreData()
-        alert(t('pages.settings.databaseManagement.refreshSuccess'))
-      } else {
-        alert(t('pages.settings.databaseManagement.refreshFailed'))
-      }
-    } catch (error) {
-      console.error('Error refreshing database:', error)
-      alert('Failed to refresh database.')
-    }
-  }
 
   // SSH Configuration handlers
   const updateSshSettings = (updates: Partial<NonNullable<typeof settings.sshConfig>>) => {
@@ -999,97 +961,6 @@ export default function SettingsPage() {
         </CardContent>
       </DragonCard>
 
-      {/* Database Management */}
-      <DragonCard 
-        variant="flame"
-        className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
-      >
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2 text-white">
-            <Database className="h-5 w-5" />
-            <span>{t('pages.settings.databaseManagement.title')}</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h4 className="font-semibold text-white mb-2">{t('pages.settings.databaseManagement.databaseOperations.title')}</h4>
-            <p className="text-sm text-white/80 mb-4">
-              {t('pages.settings.databaseManagement.databaseOperations.description')}
-            </p>
-            <div className="flex space-x-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleClearDatabase}
-                className="bg-red-500/20 border-red-500/30 text-white hover:bg-red-500/30"
-              >
-                <AlertTriangle className="h-4 w-4 mr-2" />
-                {t('pages.settings.databaseManagement.databaseOperations.clearDatabase')}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRefreshDatabase}
-                disabled={!databaseCleared}
-                className={`${
-                  databaseCleared 
-                    ? 'bg-red-500/20 border-red-500/30 text-white hover:bg-red-500/30' 
-                    : 'bg-white/5 border-white/10 text-white/50 cursor-not-allowed'
-                }`}
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                {t('pages.settings.databaseManagement.databaseOperations.refreshDatabase')}
-              </Button>
-            </div>
-            {databaseCleared && (
-              <div className="mt-3 p-3 bg-yellow-500/20 border border-yellow-500/30 rounded-md">
-                <p className="text-sm text-yellow-100">
-                  {t('pages.settings.databaseManagement.databaseCleared')}
-                </p>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </DragonCard>
-
-      {/* Data Export */}
-      <DragonCard 
-        variant="scales"
-        className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
-      >
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Download className="h-5 w-5 text-dragon-secondary" />
-            <span>{t('pages.settings.dataExport.title')}</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h4 className="font-semibold mb-2">{t('pages.settings.dataExport.exportUsageData.title')}</h4>
-            <p className="text-sm text-muted-foreground mb-4">
-              {t('pages.settings.dataExport.exportUsageData.description')}
-            </p>
-            <div className="flex space-x-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleExportData('csv')}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                {t('pages.settings.dataExport.exportUsageData.exportCsv')}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleExportData('json')}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                {t('pages.settings.dataExport.exportUsageData.exportJson')}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </DragonCard>
 
       {/* Database Management */}
       <DragonCard 
@@ -1155,7 +1026,7 @@ export default function SettingsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={cleanupDatabase}
+                onClick={() => setCleanupDialogOpen(true)}
                 disabled={isLoadingDatabase}
                 className="w-full"
               >
@@ -1176,7 +1047,7 @@ export default function SettingsPage() {
               <Button
                 variant="destructive"
                 size="sm"
-                onClick={refreshDatabase}
+                onClick={() => setRefreshDialogOpen(true)}
                 disabled={isLoadingDatabase}
                 className="w-full"
               >
@@ -1200,6 +1071,45 @@ export default function SettingsPage() {
               <p className="text-orange-700 dark:text-orange-300">
                 {t('pages.settings.database.warning.message', 'Database operations may take time and will temporarily interrupt data collection.')}
               </p>
+            </div>
+          </div>
+        </CardContent>
+      </DragonCard>
+
+      {/* Data Export */}
+      <DragonCard 
+        variant="scales"
+        className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+      >
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Download className="h-5 w-5 text-dragon-secondary" />
+            <span>{t('pages.settings.dataExport.title')}</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <h4 className="font-semibold mb-2">{t('pages.settings.dataExport.exportUsageData.title')}</h4>
+            <p className="text-sm text-muted-foreground mb-4">
+              {t('pages.settings.dataExport.exportUsageData.description')}
+            </p>
+            <div className="flex space-x-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleExportData('csv')}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                {t('pages.settings.dataExport.exportUsageData.exportCsv')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleExportData('json')}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                {t('pages.settings.dataExport.exportUsageData.exportJson')}
+              </Button>
             </div>
           </div>
         </CardContent>
@@ -1281,6 +1191,75 @@ export default function SettingsPage() {
       </DragonCard>
 
       {/* SSH Support */}
+
+      {/* Cleanup Database Dialog */}
+      <Dialog open={cleanupDialogOpen} onOpenChange={setCleanupDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Trash2 className="h-5 w-5 text-orange-500" />
+              <span>{t('pages.settings.database.cleanup.confirmTitle', 'Clean Database')}</span>
+            </DialogTitle>
+            <DialogDescription>
+              {t('pages.settings.database.cleanup.confirmMessage', 'This will remove corrupted timestamps and phantom entries from the database. This action cannot be undone.')}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-6">
+            <Button
+              variant="outline"
+              onClick={() => setCleanupDialogOpen(false)}
+              className="mr-2"
+            >
+              {t('pages.settings.database.cleanup.cancel', 'Cancel')}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                cleanupDatabase()
+                setCleanupDialogOpen(false)
+              }}
+              className="bg-orange-500 hover:bg-orange-600"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              {t('pages.settings.database.cleanup.confirm', 'Clean Database')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Refresh Database Dialog */}
+      <Dialog open={refreshDialogOpen} onOpenChange={setRefreshDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <RefreshCw className="h-5 w-5 text-red-500" />
+              <span>{t('pages.settings.database.refresh.confirmTitle', 'Refresh Database')}</span>
+            </DialogTitle>
+            <DialogDescription>
+              {t('pages.settings.database.refresh.confirmMessage', 'This will clear ALL data from the database and reload it from files. This process may take several minutes and cannot be undone.')}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-6">
+            <Button
+              variant="outline"
+              onClick={() => setRefreshDialogOpen(false)}
+              className="mr-2"
+            >
+              {t('pages.settings.database.refresh.cancel', 'Cancel')}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                refreshDatabase()
+                setRefreshDialogOpen(false)
+              }}
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              {t('pages.settings.database.refresh.confirm', 'Refresh Database')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
   )

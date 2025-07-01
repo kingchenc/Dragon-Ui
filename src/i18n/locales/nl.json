@@ -423,6 +423,38 @@
         "refreshFailed": "Fout bij het vernieuwen van de database.",
         "databaseCleared": "Database is gewist!"
       },
+      "database": {
+        "title": "Databasebeheer",
+        "status": {
+          "title": "Databasestatus",
+          "processing": "Verwerking...",
+          "ready": "Klaar",
+          "busy": "Bezig",
+          "online": "Online"
+        },
+        "cleanup": {
+          "title": "Gegevensopschoning",
+          "description": "Corrupte tijdstempels en spookentries verwijderen",
+          "action": "Database Opschonen",
+          "confirmTitle": "Database Opschonen",
+          "confirmMessage": "Dit zal corrupte tijdstempels en spookentries uit de database verwijderen. Deze actie kan niet ongedaan worden gemaakt.",
+          "cancel": "Annuleren",
+          "confirm": "Database Opschonen"
+        },
+        "refresh": {
+          "title": "Volledige Vernieuwing",
+          "description": "Alle gegevens wissen en opnieuw laden vanuit bestanden",
+          "action": "Database Vernieuwen",
+          "confirmTitle": "Database Vernieuwen",
+          "confirmMessage": "Dit zal ALLE gegevens uit de database wissen en opnieuw laden vanuit bestanden. Dit proces kan enkele minuten duren en kan niet ongedaan worden gemaakt.",
+          "cancel": "Annuleren",
+          "confirm": "Database Vernieuwen"
+        },
+        "warning": {
+          "title": "Waarschuwing",
+          "message": "Database-operaties kunnen tijd kosten en zullen tijdelijk de gegevensverzameling onderbreken."
+        }
+      },
       "dataExport": {
         "title": "Gegevensexport",
         "exportUsageData": {

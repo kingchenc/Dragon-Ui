@@ -423,6 +423,38 @@
         "refreshFailed": "数据库刷新失败。",
         "databaseCleared": "数据库已清除！"
       },
+      "database": {
+        "title": "数据库管理",
+        "status": {
+          "title": "数据库状态",
+          "processing": "处理中...",
+          "ready": "就绪",
+          "busy": "忙碌",
+          "online": "在线"
+        },
+        "cleanup": {
+          "title": "数据清理",
+          "description": "移除损坏的时间戳和幻象条目",
+          "action": "清理数据库",
+          "confirmTitle": "清理数据库",
+          "confirmMessage": "这将从数据库中移除损坏的时间戳和幻象条目。此操作无法撤销。",
+          "cancel": "取消",
+          "confirm": "清理数据库"
+        },
+        "refresh": {
+          "title": "完全刷新",
+          "description": "清除并从文件重新加载所有数据",
+          "action": "刷新数据库",
+          "confirmTitle": "刷新数据库",
+          "confirmMessage": "这将清除数据库中的所有数据并从文件重新加载。此过程可能需要几分钟时间且无法撤销。",
+          "cancel": "取消",
+          "confirm": "刷新数据库"
+        },
+        "warning": {
+          "title": "警告",
+          "message": "数据库操作可能需要时间，并会暂时中断数据收集。"
+        }
+      },
       "dataExport": {
         "title": "数据导出",
         "exportUsageData": {
