@@ -26,49 +26,49 @@ npm install -g dragon-ui-claude
 <details open>
 <summary>🏠 <strong>Dashboard Overview</strong></summary>
 <p align="center">
-  <img src="public/Overview.png?v=1.1.0" alt="Dragon UI Overview Page" />
+  <img src="public/Overview.png" alt="Dragon UI Overview Page" />
 </p>
 </details>
 
 <details>
 <summary>📊 <strong>Projects Analytics</strong></summary>
 <p align="center">
-  <img src="public/Projects.png?v=1.1.0" alt="Dragon UI Projects Page" />
+  <img src="public/Projects.png" alt="Dragon UI Projects Page" />
 </p>
 </details>
 
 <details>
 <summary>⚡ <strong>Sessions Monitoring</strong></summary>
 <p align="center">
-  <img src="public/Sessions.png?v=1.1.0" alt="Dragon UI Sessions Page" />
+  <img src="public/Sessions.png" alt="Dragon UI Sessions Page" />
 </p>
 </details>
 
 <details>
 <summary>📅 <strong>Monthly Usage Tracking</strong></summary>
 <p align="center">
-  <img src="public/Monthly.png?v=1.1.0" alt="Dragon UI Monthly Usage Page" />
+  <img src="public/Monthly.png" alt="Dragon UI Monthly Usage Page" />
 </p>
 </details>
 
 <details>
 <summary>📆 <strong>Daily Usage Analytics</strong></summary>
 <p align="center">
-  <img src="public/Daily.png?v=1.1.0" alt="Dragon UI Daily Usage Page" />
+  <img src="public/Daily.png" alt="Dragon UI Daily Usage Page" />
 </p>
 </details>
 
 <details>
 <summary>🔴 <strong>Live Session Monitoring</strong></summary>
 <p align="center">
-  <img src="public/Active.png?v=1.1.0" alt="Dragon UI Active Session Page" />
+  <img src="public/Active.png" alt="Dragon UI Active Session Page" />
 </p>
 </details>
 
 <details>
 <summary>⚙️ <strong>Advanced Settings & Configuration</strong></summary>
 <p align="center">
-  <img src="public/Settings.png?v=1.1.0" alt="Dragon UI Settings Page" />
+  <img src="public/Settings.png" alt="Dragon UI Settings Page" />
 </p>
 </details>
 
