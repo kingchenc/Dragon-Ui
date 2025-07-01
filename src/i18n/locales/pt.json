@@ -56,6 +56,7 @@
         "title": "Sessão atual",
         "started": "Iniciada",
         "duration": "Duração",
+        "lastActivity": "Última atividade",
         "cost": "Custo",
         "timeLeft": "Tempo restante",
         "sessionId": "ID da sessão",
@@ -73,6 +74,16 @@
       "activity": {
         "title": "Atividade (Últimos 7 dias)",
         "total": "Total"
+      },
+      "financialChart": {
+        "title": "Todas as Sessões",
+        "total": "Total"
+      },
+      "database": {
+        "refreshing": "Atualizando banco de dados...",
+        "cleaning": "Limpando dados corrompidos...",
+        "timeRemaining": "Tempo restante",
+        "completed": "Concluído"
       },
       "lastActivity": "Última",
       "noActivity": "Sem atividade"
@@ -200,6 +211,7 @@
         "firstMonth": "Primeiro mês",
         "mom": "MaM",
         "increasing": "Aumentando",
+        "stable": "Estável",
         "decreasing": "Diminuindo",
         "usage": "uso",
         "noPreviousData": "Sem dados anteriores"
@@ -246,7 +258,7 @@
         "title": "Resumo de uso",
         "totalCost": "Custo total",
         "sessions": "sessões",
-        "allTime": "Todo o tempo",
+        "last7Days": "Últimos 7 dias",
         "dailyAverage": "Média diária",
         "perActiveDay": "Por dia ativo",
         "active": "ativo",

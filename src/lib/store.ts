@@ -127,6 +127,7 @@ interface CoreData {
   projectsData: any[]
   monthlyData: any[]
   dailyData: any[]
+  dailyFinancialData: any[]
   currentTokens: number
   
   // Daily specific data
@@ -169,10 +170,17 @@ interface AppState {
   // Loading states
   isLoading: boolean
   isLoadingCurrency: boolean
+  isLoadingDatabase: boolean
   loadingProgress: {
     step: string
     progress: number
     message: string
+  } | null
+  databaseProgress: {
+    step: string
+    progress: number
+    message: string
+    timeRemaining?: number
   } | null
   
   // Core data - ALL 75+ values stored in RAM here!
@@ -189,6 +197,7 @@ interface AppState {
   sessionsData: any
   monthlyData: any
   dailyData: any
+  dailyFinancialData: any
   activeData: any
   
   // Settings (for compatibility)
@@ -234,6 +243,8 @@ interface AppState {
   initializeStore: () => Promise<void>
   refreshCoreData: () => Promise<void>
   refreshCurrency: () => Promise<void>
+  refreshDatabase: () => Promise<void>
+  cleanupDatabase: () => Promise<void>
   changeCurrency: (newCurrency: string) => Promise<void>
   changeLanguage: (newLanguage: LanguageCode) => Promise<void>
   exportData: (dataType: string, format?: string, options?: any) => Promise<string>
@@ -277,7 +288,9 @@ export const useAppStore = create<AppState>()(
     // Initial state
     isLoading: false,
     isLoadingCurrency: false,
+    isLoadingDatabase: false,
     loadingProgress: null,
+    databaseProgress: null,
     
     // Core data - ALL 75+ values stored here in RAM
     coreData: {
@@ -298,7 +311,7 @@ export const useAppStore = create<AppState>()(
       monthsTracked: 0, totalMonths: 0, currentMonth: null, currentMonthCost: 0, currentPeriod: 0,
       monthlyAverage: 0, averageMonthlySpend: 0, projectedMonthly: 0, quarterlyProjection: 0, yearlyProjection: 0, projectedYearlySpend: 0,
       currentRunRate: 0, highestSpendingMonth: null, mostActiveMonth: null, growthTrend: 0, monthlyGrowth: 0,
-      sessionsData: [], projectsData: [], monthlyData: [], dailyData: [], currentTokens: 0,
+      sessionsData: [], projectsData: [], monthlyData: [], dailyData: [], dailyFinancialData: [], currentTokens: 0,
       todayData: null, yesterdayData: null, lastSessionData: null, avgDailyCost: 0,
       activityData: [], dailyBreakdown: [], last7DaysTotal: 0,
       liveMetrics: null, activityWindows: [], peakActivity: 0, averageActivity: 0,
@@ -317,6 +330,7 @@ export const useAppStore = create<AppState>()(
     sessionsData: null,
     monthlyData: null,
     dailyData: null,
+    dailyFinancialData: null,
     activeData: null,
     
     // Settings (default values for compatibility)
@@ -469,6 +483,143 @@ export const useAppStore = create<AppState>()(
         set({ isLoadingCurrency: false, error: errorMessage })
       }
     },
+
+    // Refresh database (clear and reload)
+    refreshDatabase: async () => {
+      try {
+        const startTime = Date.now()
+        set({ 
+          isLoadingDatabase: true, 
+          databaseProgress: { 
+            step: 'Initializing database refresh...', 
+            progress: 0, 
+            message: 'Starting database cleanup',
+            timeRemaining: 30000 // Estimate 30 seconds
+          } 
+        })
+        
+        console.log('[DB] Store: Starting database refresh...')
+        
+        // Step 1: Refresh database
+        set({ 
+          databaseProgress: { 
+            step: 'Clearing database...', 
+            progress: 25, 
+            message: 'Removing old data',
+            timeRemaining: 20000
+          } 
+        })
+        
+        const refreshResult = await window.electronAPI.invoke('claude-projects-refresh-database')
+        
+        if (!refreshResult.success) {
+          throw new Error(refreshResult.error || 'Database refresh failed')
+        }
+        
+        // Step 2: Reload data
+        set({ 
+          databaseProgress: { 
+            step: 'Reloading data...', 
+            progress: 75, 
+            message: 'Loading fresh data',
+            timeRemaining: 5000
+          } 
+        })
+        
+        // Wait a moment for backend to process
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        // Refresh core data
+        await get().refreshCoreData()
+        
+        const endTime = Date.now()
+        const totalTime = endTime - startTime
+        
+        set({ 
+          isLoadingDatabase: false,
+          databaseProgress: null
+        })
+        
+        console.log(`[OK] Store: Database refresh completed in ${(totalTime/1000).toFixed(1)}s`)
+        
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        console.error('[ERR] Store: Database refresh failed:', errorMessage)
+        set({ 
+          isLoadingDatabase: false, 
+          databaseProgress: null,
+          error: errorMessage 
+        })
+        throw error
+      }
+    },
+
+    // Cleanup corrupted timestamps
+    cleanupDatabase: async () => {
+      try {
+        const startTime = Date.now()
+        set({ 
+          isLoadingDatabase: true, 
+          databaseProgress: { 
+            step: 'Cleaning corrupted data...', 
+            progress: 0, 
+            message: 'Scanning for corrupted timestamps',
+            timeRemaining: 15000 // Estimate 15 seconds
+          } 
+        })
+        
+        console.log('[DB] Store: Starting database cleanup...')
+        
+        // Step 1: Cleanup corrupted timestamps
+        set({ 
+          databaseProgress: { 
+            step: 'Removing corrupted entries...', 
+            progress: 50, 
+            message: 'Deleting January 2001 phantom entries',
+            timeRemaining: 8000
+          } 
+        })
+        
+        const cleanupResult = await window.electronAPI.invoke('claude-projects-cleanup-timestamps')
+        
+        if (!cleanupResult.success) {
+          throw new Error(cleanupResult.error || 'Database cleanup failed')
+        }
+        
+        // Step 2: Reload data
+        set({ 
+          databaseProgress: { 
+            step: 'Reloading clean data...', 
+            progress: 90, 
+            message: `Cleaned ${cleanupResult.cleaned || 0} corrupted entries`,
+            timeRemaining: 2000
+          } 
+        })
+        
+        // Refresh core data to see clean results
+        await get().refreshCoreData()
+        
+        const endTime = Date.now()
+        const totalTime = endTime - startTime
+        
+        set({ 
+          isLoadingDatabase: false,
+          databaseProgress: null
+        })
+        
+        console.log(`[OK] Store: Database cleanup completed in ${(totalTime/1000).toFixed(1)}s, cleaned ${cleanupResult.cleaned || 0} entries`)
+        
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        console.error('[ERR] Store: Database cleanup failed:', errorMessage)
+        set({ 
+          isLoadingDatabase: false, 
+          databaseProgress: null,
+          error: errorMessage 
+        })
+        throw error
+      }
+    },
     
     // Calculate tab-specific views from core data
     calculateTabViews: () => {
@@ -502,6 +653,14 @@ export const useAppStore = create<AppState>()(
         dailyBreakdown: (coreData.dailyBreakdown || []).map((day: any) => ({
           ...day,
           totalCost: convertCost(day.totalCost || 0)
+        })),
+        // Daily financial chart data (30 days) with running total
+        dailyFinancialData: (coreData.dailyFinancialData || []).map((day: any) => ({
+          ...day,
+          totalCost: convertCost(day.totalCost || 0),
+          runningTotal: convertCost(day.runningTotal || 0),
+          money: convertCost(day.money || 0),
+          cumulativeMoney: convertCost(day.cumulativeMoney || 0)
         })),
         last7DaysTotal: convertCost(coreData.last7DaysTotal || 0)
       }
@@ -559,12 +718,23 @@ export const useAppStore = create<AppState>()(
       }
       
       // Daily data
+      const processedDailyData = coreData.dailyData.map((d: any) => ({
+        ...d,
+        totalCost: convertCost(d.totalCost || 0),
+        costPer1KTokens: d.costPer1KTokens || 0
+      }))
+      
+      // Calculate active days correctly for daily page (last 7 days with sessions > 0)
+      const activeDaysInLast7 = processedDailyData.filter(day => day.sessionCount > 0).length
+      
+      // Calculate total cost for last 7 days
+      const totalCostLast7Days = processedDailyData.reduce((sum, day) => sum + (day.totalCost || 0), 0)
+      
+      // Calculate average daily cost for last 7 days (only active days)
+      const averageDailyCostLast7Days = activeDaysInLast7 > 0 ? totalCostLast7Days / activeDaysInLast7 : 0
+      
       const dailyData = {
-        dailyData: coreData.dailyData.map((d: any) => ({
-          ...d,
-          totalCost: convertCost(d.totalCost || 0),
-          costPer1KTokens: d.costPer1KTokens || 0
-        })),
+        dailyData: processedDailyData,
         todayData: coreData.todayData ? {
           ...coreData.todayData,
           totalCost: convertCost(coreData.todayData.totalCost || 0)
@@ -577,10 +747,10 @@ export const useAppStore = create<AppState>()(
           ...coreData.lastSessionData,
           totalCost: convertCost(coreData.lastSessionData.totalCost || 0)
         } : null,
-        totalDays: coreData.daysTracked || 0,
-        activeDays: coreData.activeDays || 0,
-        totalCost: convertCost(coreData.totalCost || 0),
-        averageDailyCost: convertCost(coreData.avgDailyCost || 0),
+        totalDays: 7, // Always 7 days for daily page
+        activeDays: activeDaysInLast7, // Only days with actual sessions
+        totalCost: totalCostLast7Days, // Total cost for last 7 days, not global total
+        averageDailyCost: averageDailyCostLast7Days, // Average for last 7 days only
         totalSessions: coreData.totalSessions || 0,
         currency: currency
       }
@@ -596,6 +766,7 @@ export const useAppStore = create<AppState>()(
         duration: coreData.duration,
         timeLeft: coreData.timeLeft,
         lastActivity: coreData.lastActivity,
+        started: coreData.started, // Session start time
         currentTokens: coreData.currentTokens || 0, // Current session tokens for burn rate calculation
         currency: currency
       }
@@ -607,6 +778,7 @@ export const useAppStore = create<AppState>()(
         sessionsData,
         monthlyData,
         dailyData,
+        dailyFinancialData: overviewData.dailyFinancialData,
         activeData
       })
       

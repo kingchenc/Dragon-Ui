@@ -126,8 +126,23 @@ class DatabaseService {
   // INSERT operations
   insertEntry(entry) {
     try {
+      // Final timestamp validation before database insert
+      let validatedTimestamp = entry.timestamp;
+      if (!entry.timestamp || typeof entry.timestamp !== 'string') {
+        console.log(`[DB] 🚨 Invalid timestamp at insert, using current time: ${entry.timestamp}`);
+        validatedTimestamp = new Date().toISOString();
+      } else {
+        const date = new Date(entry.timestamp);
+        if (isNaN(date.getTime()) || date.getFullYear() < 2020) {
+          console.log(`[DB] 🚨 Corrupt timestamp at insert, using current time: ${entry.timestamp} -> ${validatedTimestamp}`);
+          validatedTimestamp = new Date().toISOString();
+        } else if (entry.timestamp !== validatedTimestamp) {
+          console.log(`[DB] ✅ Valid timestamp: ${entry.timestamp}`);
+        }
+      }
+      
       this.insertStmt.run(
-        entry.timestamp,
+        validatedTimestamp,
         entry.sessionId,
         entry.fullSessionId,
         entry.model,
@@ -281,10 +296,28 @@ class DatabaseService {
           AND timestamp != '' 
           AND date(timestamp) >= '2020-01-01'
           AND date(timestamp) <= date('now', '+1 day')
+          AND strftime('%Y-%m', timestamp) IS NOT NULL
+          AND strftime('%Y-%m', timestamp) != ''
+          AND CAST(strftime('%Y', timestamp) AS INTEGER) >= 2020
         GROUP BY strftime('%Y-%m', timestamp)
         ORDER BY month DESC
       `);
-      return stmt.all();
+      const result = stmt.all();
+      console.log(`[DB] Monthly stats query returned ${result.length} periods:`, result.map(r => ({ month: r.month, cost: r.total_cost, entries: r.entry_count })));
+      
+      // Debug: Check for any suspicious timestamps in the database
+      const debugStmt = this.db.prepare(`
+        SELECT strftime('%Y-%m', timestamp) as month, COUNT(*) as count, MIN(timestamp) as first_ts, MAX(timestamp) as last_ts
+        FROM usage_entries 
+        GROUP BY strftime('%Y-%m', timestamp)
+        HAVING strftime('%Y-%m', timestamp) LIKE '2001%' OR strftime('%Y-%m', timestamp) LIKE '1970%'
+      `);
+      const suspiciousEntries = debugStmt.all();
+      if (suspiciousEntries.length > 0) {
+        console.log(`[DB] 🚨 FOUND SUSPICIOUS ENTRIES:`, suspiciousEntries);
+      }
+      
+      return result;
     } else {
       // Use custom billing cycle logic
       return this.getBillingPeriodStats(billingCycleDay);
@@ -302,7 +335,7 @@ class DatabaseService {
       FROM usage_entries 
       WHERE timestamp IS NOT NULL 
         AND timestamp != '' 
-        AND date(timestamp) >= date('now', '-2 years')
+        AND date(timestamp) >= '2020-01-01'
         AND date(timestamp) <= date('now', '+1 day')
       ORDER BY timestamp DESC
     `).all();
@@ -312,6 +345,12 @@ class DatabaseService {
     
     for (const entry of allEntries) {
       const entryDate = new Date(entry.timestamp);
+      
+      // Skip entries with invalid dates or dates before 2020
+      if (isNaN(entryDate.getTime()) || entryDate.getFullYear() < 2020) {
+        continue;
+      }
+      
       const billingPeriod = this.getBillingPeriodForDate(entryDate, billingCycleDay);
       
       if (!periodMap.has(billingPeriod.key)) {
@@ -391,6 +430,40 @@ class DatabaseService {
       key: `${periodStart.getFullYear()}-${String(periodStart.getMonth() + 1).padStart(2, '0')}-${String(billingCycleDay).padStart(2, '0')}`,
       label: `${periodStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${periodEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
     };
+  }
+
+  getDailyFinancialStats(days = 30) {
+    const stmt = this.db.prepare(`
+      SELECT 
+        date(timestamp) as date,
+        SUM(cost) as total_cost,
+        COUNT(DISTINCT session_id) as session_count,
+        COUNT(*) as entry_count,
+        MIN(timestamp) as first_activity,
+        MAX(timestamp) as last_activity
+      FROM usage_entries 
+      WHERE timestamp IS NOT NULL 
+        AND timestamp != '' 
+        AND date(timestamp) >= '2020-01-01'
+        AND timestamp >= datetime('now', '-${days} days')
+      GROUP BY date(timestamp)
+      ORDER BY date ASC
+    `);
+    const result = stmt.all();
+    console.log(`[DB] Daily financial stats for last ${days} days: ${result.length} entries`);
+    
+    // Calculate running total for enhanced chart
+    let runningTotal = 0;
+    const enhancedResult = result.map(day => {
+      runningTotal += day.total_cost || 0;
+      return {
+        ...day,
+        running_total: runningTotal
+      };
+    });
+    
+    console.log(`[DB] Enhanced with running totals: $0 -> $${runningTotal.toFixed(2)}`);
+    return enhancedResult;
   }
 
   getDailyStats(days = 7) {
@@ -749,6 +822,26 @@ class DatabaseService {
     
     console.log('[DATABASE] All data cleared from database');
     return true;
+  }
+
+  cleanupCorruptedTimestamps() {
+    try {
+      const stmt = this.db.prepare(`
+        DELETE FROM usage_entries 
+        WHERE timestamp IS NULL 
+           OR timestamp = '' 
+           OR date(timestamp) < '2020-01-01'
+           OR date(timestamp) IS NULL
+           OR strftime('%Y', timestamp) = '1970'
+           OR strftime('%Y', timestamp) = '2001'
+      `);
+      const result = stmt.run();
+      console.log(`[DB] Cleaned up ${result.changes} corrupted timestamp entries`);
+      return result.changes;
+    } catch (error) {
+      console.error('[ERR] Failed to cleanup corrupted timestamps:', error);
+      return 0;
+    }
   }
 
   // Refresh database by clearing and reloading data

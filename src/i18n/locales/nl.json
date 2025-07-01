@@ -56,6 +56,7 @@
         "title": "Huidige sessie",
         "started": "Gestart",
         "duration": "Duur",
+        "lastActivity": "Laatste activiteit",
         "cost": "Kosten",
         "timeLeft": "Resterende tijd",
         "sessionId": "Sessie-ID",
@@ -73,6 +74,16 @@
       "activity": {
         "title": "Activiteit (Laatste 7 dagen)",
         "total": "Totaal"
+      },
+      "financialChart": {
+        "title": "Alle Sessies",
+        "total": "Totaal"
+      },
+      "database": {
+        "refreshing": "Database vernieuwen...",
+        "cleaning": "Corrupte data opschonen...",
+        "timeRemaining": "Resterende tijd",
+        "completed": "Voltooid"
       },
       "lastActivity": "Laatste",
       "noActivity": "Geen activiteit"
@@ -200,6 +211,7 @@
         "firstMonth": "Eerste maand",
         "mom": "MoM",
         "increasing": "Toenemend",
+        "stable": "Stabiel",
         "decreasing": "Afnemend",
         "usage": "gebruik",
         "noPreviousData": "Geen eerdere gegevens"
@@ -246,7 +258,7 @@
         "title": "Gebruikssamenvatting",
         "totalCost": "Totale kosten",
         "sessions": "sessies",
-        "allTime": "Alle tijd",
+        "last7Days": "Laatste 7 dagen",
         "dailyAverage": "Dagelijks gemiddelde",
         "perActiveDay": "Per actieve dag",
         "active": "actief",

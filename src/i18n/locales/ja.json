@@ -56,6 +56,7 @@
         "title": "現在のセッション",
         "started": "開始",
         "duration": "継続時間",
+        "lastActivity": "最終アクティビティ",
         "cost": "コスト",
         "timeLeft": "残り時間",
         "sessionId": "セッションID",
@@ -73,6 +74,16 @@
       "activity": {
         "title": "アクティビティ（過去7日間）",
         "total": "合計"
+      },
+      "financialChart": {
+        "title": "全セッション",
+        "total": "合計"
+      },
+      "database": {
+        "refreshing": "データベース更新中...",
+        "cleaning": "破損データ清掃中...",
+        "timeRemaining": "残り時間",
+        "completed": "完了"
       },
       "lastActivity": "最後",
       "noActivity": "アクティビティなし"
@@ -200,6 +211,7 @@
         "firstMonth": "初月",
         "mom": "月比",
         "increasing": "増加",
+        "stable": "安定",
         "decreasing": "減少",
         "usage": "使用",
         "noPreviousData": "以前のデータなし"
@@ -246,7 +258,7 @@
         "title": "使用状況サマリー",
         "totalCost": "総コスト",
         "sessions": "セッション",
-        "allTime": "全期間",
+        "last7Days": "過去7日",
         "dailyAverage": "日平均",
         "perActiveDay": "アクティブ日あたり",
         "active": "アクティブ",

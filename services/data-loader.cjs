@@ -183,8 +183,21 @@ class DataLoaderService {
     // Truncate session ID for consistent display format
     const sessionId = this.truncateSessionId(entry.sessionId);
     
+    // Validate and fix timestamp
+    let validatedTimestamp = entry.timestamp;
+    if (!entry.timestamp || typeof entry.timestamp !== 'string') {
+      console.log(`[TIMESTAMP] Invalid timestamp detected, using current time: ${entry.timestamp}`);
+      validatedTimestamp = new Date().toISOString();
+    } else {
+      const date = new Date(entry.timestamp);
+      if (isNaN(date.getTime()) || date.getFullYear() < 2020) {
+        console.log(`[TIMESTAMP] Corrupt timestamp detected, using current time: ${entry.timestamp}`);
+        validatedTimestamp = new Date().toISOString();
+      }
+    }
+    
     const usageEntry = {
-      timestamp: entry.timestamp,
+      timestamp: validatedTimestamp,
       sessionId: sessionId,
       fullSessionId: entry.sessionId, // Keep full ID for debugging
       model: entry.message.model || 'unknown',

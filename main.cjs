@@ -561,6 +561,24 @@ ipcMain.handle('claude-projects-refresh-database', async () => {
   }
 });
 
+ipcMain.handle('claude-projects-cleanup-timestamps', async () => {
+  try {
+    console.log('[DB] Cleaning up corrupted timestamps...');
+    const cleaned = dataLoader.db.cleanupCorruptedTimestamps();
+    if (cleaned > 0) {
+      console.log(`[OK] Cleaned up ${cleaned} corrupted entries, reloading data...`);
+      await coordinator.forceReload();
+      return { success: true, cleaned };
+    } else {
+      console.log('[OK] No corrupted timestamps found');
+      return { success: true, cleaned: 0 };
+    }
+  } catch (error) {
+    console.error('[ERR] Cleanup timestamps error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
 // Full-page screenshot handler with hotkey L
 ipcMain.handle('take-full-page-screenshot', async () => {
   try {

@@ -96,6 +96,7 @@ class CoreDataWorker {
     const projectStats = this.db.getProjectStats();
     const monthlyStats = this.db.getMonthlyStats(billingCycleDay); // Use billing cycle
     const dailyStats = this.db.getDailyStatsBySessionStart(7); // Use session-start-date grouping
+    const dailyFinancialStats = this.db.getDailyFinancialStats(30); // Last 30 days for chart
     
     // Lightning-fast DB calculations
     const totalCost = this.convertCurrency(this.db.getTotalCost());
@@ -126,6 +127,7 @@ class CoreDataWorker {
       projectsData: [],
       dailyData: [],
       monthlyData: [],
+      dailyFinancialData: [],
       
       // Additional fields
       currentMonth: null,
@@ -349,7 +351,38 @@ class CoreDataWorker {
     // Don't add empty current periods - only show periods with actual data
     // This prevents confusing empty "Current" entries in the UI
     
-    result.monthlyData = monthlyStats.map(period => {
+    console.log(`[MONTH] Monthly stats from DB:`, monthlyStats.map(m => ({ month: m.month, cost: m.total_cost, tokens: m.total_tokens })));
+    
+    result.monthlyData = monthlyStats
+      .filter(period => {
+        // Filter out invalid months before processing
+        if (!period.month || typeof period.month !== 'string') {
+          console.log(`[MONTH] ❌ Filtering out invalid month: ${period.month}`);
+          return false;
+        }
+        
+        // For calendar months (billingCycleDay === 1), validate YYYY-MM format
+        if (billingCycleDay === 1 && period.month.includes('-')) {
+          const [year, monthNum] = period.month.split('-').map(Number);
+          if (isNaN(year) || isNaN(monthNum) || year < 2020 || monthNum < 1 || monthNum > 12) {
+            console.log(`[MONTH] ❌ Filtering out corrupted calendar month: ${period.month} (year: ${year}, month: ${monthNum})`);
+            return false;
+          }
+        }
+        
+        // For custom billing periods, check if the month key contains a valid year
+        if (billingCycleDay !== 1) {
+          const yearMatch = period.month.match(/(\d{4})/);
+          if (!yearMatch || parseInt(yearMatch[1]) < 2020) {
+            console.log(`[MONTH] ❌ Filtering out corrupted billing period: ${period.month}`);
+            return false;
+          }
+        }
+        
+        console.log(`[MONTH] ✅ Valid period: ${period.month} ($${period.total_cost}, ${period.total_tokens} tokens)`);
+        return true;
+      })
+      .map(period => {
       const periodCost = this.convertCurrency(period.total_cost);
       const costPer1MTokens = period.total_tokens > 0 ? 
         (periodCost / period.total_tokens) * 1000000 : 0;
@@ -361,9 +394,19 @@ class CoreDataWorker {
         const end = new Date(period.billing_period_end);
         totalDaysInPeriod = Math.ceil((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)) + 1;
       } else if (billingCycleDay === 1) {
-        // For calendar months, calculate normally
-        const [year, monthNum] = period.month.split('-').map(Number);
-        totalDaysInPeriod = new Date(year, monthNum, 0).getDate();
+        // For calendar months, calculate normally (with validation)
+        if (period.month && typeof period.month === 'string' && period.month.includes('-')) {
+          const [year, monthNum] = period.month.split('-').map(Number);
+          if (!isNaN(year) && !isNaN(monthNum) && year >= 2020 && monthNum >= 1 && monthNum <= 12) {
+            totalDaysInPeriod = new Date(year, monthNum, 0).getDate();
+          } else {
+            console.log(`[MONTH] Invalid month format detected: ${period.month}, using default 30 days`);
+            totalDaysInPeriod = 30;
+          }
+        } else {
+          console.log(`[MONTH] Invalid month string detected: ${period.month}, using default 30 days`);
+          totalDaysInPeriod = 30;
+        }
       }
       
       // Only calculate vs avg if we have more than 1 period
@@ -488,9 +531,9 @@ class CoreDataWorker {
     const last7Days = dailyStats.reduce((sum, day) => sum + day.total_cost, 0);
     result.last7DaysTotal = this.convertCurrency(last7Days);
     
-    // Daily usage specific data - USE SESSION-START-DATE GROUPING
-    const todayData = this.db.getTodayDataBySessionStart();
-    const yesterdayData = this.db.getYesterdayDataBySessionStart();
+    // Daily usage specific data - USE ENTRY-DATE GROUPING for today/yesterday
+    const todayData = this.db.getTodayData();
+    const yesterdayData = this.db.getYesterdayData();
     const lastSessionData = this.db.getLastSessionData();
     
     // Add daily data to result
@@ -545,6 +588,31 @@ class CoreDataWorker {
       };
     });
     
+    // Daily financial data for line chart (30 days) with running total
+    result.dailyFinancialData = dailyFinancialStats.map(day => {
+      const cost = this.convertCurrency(day.total_cost);
+      const runningTotal = this.convertCurrency(day.running_total);
+      return {
+        date: day.date,
+        totalCost: cost,
+        runningTotal: runningTotal,
+        sessionCount: day.session_count || 0,
+        entryCount: day.entry_count || 0,
+        firstActivity: day.first_activity,
+        lastActivity: day.last_activity,
+        // Format for chart display
+        datetime: new Date(day.date).toISOString(),
+        formattedDate: new Date(day.date).toLocaleDateString('en-US', { 
+          month: 'short', 
+          day: 'numeric' 
+        }),
+        money: cost,
+        cumulativeMoney: runningTotal
+      };
+    });
+    
+    console.log(`[CHART] Daily financial data: ${result.dailyFinancialData.length} days, total: $${result.dailyFinancialData.reduce((sum, d) => sum + d.money, 0).toFixed(2)}`);
+    
     // Average daily cost calculation
     result.avgDailyCost = result.activeDays > 0 ? result.totalCost / result.activeDays : 0;
     
@@ -566,16 +634,24 @@ class CoreDataWorker {
         console.log(`[DEBUG] Using most recent period as current: ${currentMonthData.date}, cost: $${currentMonthData.totalCost}`);
       }
       
-      // Set current month values
+      // Set current month values with proper fallback
       if (currentMonthData) {
-        result.currentMonth = currentMonthData.date || currentMonthData.billing_period_label;
+        // Fix: Ensure month name is always valid - check properties in correct order
+        const monthName = currentMonthData.month || currentMonthData.date || currentMonthData.billing_period_label;
+        if (monthName && monthName !== 'undefined') {
+          result.currentMonth = monthName;
+        } else {
+          // Fallback to current month if data is corrupted
+          result.currentMonth = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+          console.log(`[MONTH FIX] Corrupted month data detected, using current month: ${result.currentMonth}`);
+        }
         result.currentMonthCost = currentMonthData.totalCost;
         console.log(`[DEBUG] Current month set: ${result.currentMonth}, cost: $${result.currentMonthCost}`);
       } else {
         // No period data with cost - use defaults
         result.currentMonth = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
         result.currentMonthCost = 0;
-        console.log(`[DEBUG] No current period data found, using defaults`);
+        console.log(`[DEBUG] No current period data found, using defaults: ${result.currentMonth}`);
       }
       
       const totalMonthlySpend = result.monthlyData.reduce((sum, m) => sum + m.totalCost, 0);

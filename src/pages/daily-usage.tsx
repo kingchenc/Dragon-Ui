@@ -183,7 +183,7 @@ export default function DailyUsagePage() {
                 <div className="flex items-center space-x-3 text-sm text-white/70">
                   <span>{totalSessions || 0} {t('pages.dailyUsage.summary.sessions')}</span>
                   <span>•</span>
-                  <span>{t('pages.dailyUsage.summary.allTime')}</span>
+                  <span>{t('pages.dailyUsage.summary.last7Days')}</span>
                 </div>
               </div>
             </CardContent>

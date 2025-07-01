@@ -1077,10 +1077,20 @@ class CoreDataService {
   async calculateTimePeriods(usageEntries) {
     this.coreData.daysTracked = this.coreData.activeDays;
     
-    // Calculate months - ensure at least 1 month if we have any data
-    const uniqueMonths = new Set(usageEntries.map(e => e.timestamp.substr(0, 7))); // YYYY-MM
+    // Calculate months - ensure at least 1 month if we have any data (with validation)
+    const uniqueMonths = new Set();
+    usageEntries.forEach(e => {
+      if (e.timestamp && typeof e.timestamp === 'string' && e.timestamp.length >= 7) {
+        const monthStr = e.timestamp.substr(0, 7); // YYYY-MM
+        const date = new Date(monthStr + '-01');
+        // Only add valid months from 2020 onwards
+        if (!isNaN(date.getTime()) && date.getFullYear() >= 2020) {
+          uniqueMonths.add(monthStr);
+        }
+      }
+    });
     
-    // If we have any usage data but no months detected, add current month
+    // If we have any usage data but no valid months detected, add current month
     if (usageEntries.length > 0 && uniqueMonths.size === 0) {
       const currentMonth = new Date().toISOString().slice(0, 7);
       uniqueMonths.add(currentMonth);
@@ -1164,16 +1174,22 @@ class CoreDataService {
   }
   
   async calculateAdditionalAnalysis(usageEntries) {
-    // Group by month for spending analysis
+    // Group by month for spending analysis (with validation)
     const monthlyMap = new Map();
     
     usageEntries.forEach(entry => {
-      const month = entry.timestamp.substr(0, 7); // YYYY-MM
-      if (!monthlyMap.has(month)) {
-        monthlyMap.set(month, { cost: 0, sessions: 0 });
+      if (entry.timestamp && typeof entry.timestamp === 'string' && entry.timestamp.length >= 7) {
+        const month = entry.timestamp.substr(0, 7); // YYYY-MM
+        const date = new Date(month + '-01');
+        // Only process valid months from 2020 onwards
+        if (!isNaN(date.getTime()) && date.getFullYear() >= 2020) {
+          if (!monthlyMap.has(month)) {
+            monthlyMap.set(month, { cost: 0, sessions: 0 });
+          }
+          monthlyMap.get(month).cost += entry.cost || 0;
+          monthlyMap.get(month).sessions += 1;
+        }
       }
-      monthlyMap.get(month).cost += entry.cost || 0;
-      monthlyMap.get(month).sessions += 1;
     });
     
     // Ensure current month exists if we have any data

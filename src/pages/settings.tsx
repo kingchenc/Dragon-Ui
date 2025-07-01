@@ -68,6 +68,10 @@ export default function SettingsPage() {
     settings, 
     updateSettings, 
     refreshCoreData,
+    refreshDatabase,
+    cleanupDatabase,
+    isLoadingDatabase,
+    databaseProgress,
     lastRefresh,
     currency,
     changeCurrency,
@@ -1082,6 +1086,120 @@ export default function SettingsPage() {
                 <Download className="h-4 w-4 mr-2" />
                 {t('pages.settings.dataExport.exportUsageData.exportJson')}
               </Button>
+            </div>
+          </div>
+        </CardContent>
+      </DragonCard>
+
+      {/* Database Management */}
+      <DragonCard 
+        variant="flame"
+        className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-orange-500/20 dragon-flame-border relative z-10 hover:z-20"
+      >
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Database className="h-5 w-5 text-dragon-flame" />
+            <span>{t('pages.settings.database.title', 'Database Management')}</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Database Status */}
+          <div className="p-4 bg-muted/30 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-semibold">{t('pages.settings.database.status.title', 'Database Status')}</h4>
+                <p className="text-sm text-muted-foreground">
+                  {isLoadingDatabase ? 
+                    t('pages.settings.database.status.processing', 'Processing...') : 
+                    t('pages.settings.database.status.ready', 'Ready')
+                  }
+                </p>
+              </div>
+              <DragonBadge variant={isLoadingDatabase ? "outline" : "dragon"}>
+                {isLoadingDatabase ? t('pages.settings.database.status.busy', 'Busy') : t('pages.settings.database.status.online', 'Online')}
+              </DragonBadge>
+            </div>
+            
+            {/* Progress Indicator */}
+            {isLoadingDatabase && databaseProgress && (
+              <div className="mt-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>{databaseProgress.step}</span>
+                  <span>{databaseProgress.progress}%</span>
+                </div>
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div 
+                    className="bg-dragon-flame h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${databaseProgress.progress}%` }}
+                  />
+                </div>
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>{databaseProgress.message}</span>
+                  {databaseProgress.timeRemaining && (
+                    <span>
+                      {t('pages.overview.database.timeRemaining', 'Time remaining')}: {Math.ceil(databaseProgress.timeRemaining / 1000)}s
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Database Actions */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <h4 className="font-semibold mb-2">{t('pages.settings.database.cleanup.title', 'Data Cleanup')}</h4>
+              <p className="text-sm text-muted-foreground mb-3">
+                {t('pages.settings.database.cleanup.description', 'Remove corrupted timestamps and phantom entries')}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={cleanupDatabase}
+                disabled={isLoadingDatabase}
+                className="w-full"
+              >
+                {isLoadingDatabase ? (
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4 mr-2" />
+                )}
+                {t('pages.settings.database.cleanup.action', 'Clean Database')}
+              </Button>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold mb-2">{t('pages.settings.database.refresh.title', 'Full Refresh')}</h4>
+              <p className="text-sm text-muted-foreground mb-3">
+                {t('pages.settings.database.refresh.description', 'Clear and reload all data from files')}
+              </p>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={refreshDatabase}
+                disabled={isLoadingDatabase}
+                className="w-full"
+              >
+                {isLoadingDatabase ? (
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                )}
+                {t('pages.settings.database.refresh.action', 'Refresh Database')}
+              </Button>
+            </div>
+          </div>
+
+          {/* Warning */}
+          <div className="flex items-start space-x-3 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+            <AlertTriangle className="h-5 w-5 text-orange-500 flex-shrink-0 mt-0.5" />
+            <div className="text-sm">
+              <p className="font-medium text-orange-800 dark:text-orange-200">
+                {t('pages.settings.database.warning.title', 'Warning')}
+              </p>
+              <p className="text-orange-700 dark:text-orange-300">
+                {t('pages.settings.database.warning.message', 'Database operations may take time and will temporarily interrupt data collection.')}
+              </p>
             </div>
           </div>
         </CardContent>

@@ -319,7 +319,7 @@ export default function MonthlyUsagePage() {
                 <div className="flex items-center space-x-3 text-sm text-muted-foreground">
                   <span>
                     {monthlyGrowth !== null && monthlyGrowth !== undefined && totalMonths > 1 ? 
-                      `${monthlyGrowth >= 0 ? t('pages.monthlyUsage.trends.increasing') : t('pages.monthlyUsage.trends.decreasing')} ${t('pages.monthlyUsage.trends.usage')}` :
+                      `${monthlyGrowth > 0 ? t('pages.monthlyUsage.trends.increasing') : monthlyGrowth < 0 ? t('pages.monthlyUsage.trends.decreasing') : t('pages.monthlyUsage.trends.stable')} ${t('pages.monthlyUsage.trends.usage')}` :
                       t('pages.monthlyUsage.trends.noPreviousData')
                     }
                   </span>

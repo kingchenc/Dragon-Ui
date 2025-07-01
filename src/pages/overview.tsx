@@ -16,6 +16,7 @@ import {
 import { formatCurrency, formatNumber, getRelativeTime, formatTime, formatDate } from '@/lib/utils'
 import { useTimeFormatting } from '@/lib/hooks'
 import { ActivityChart } from '@/components/charts/activity-chart'
+import { DailyFinancialChart } from '@/components/charts/daily-financial-chart'
 
 export default function OverviewPage() {
   // Simple store reads - no calculations needed!
@@ -127,22 +128,22 @@ export default function OverviewPage() {
           variant="scales"
           className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
         >
-          <CardHeader>
+          <CardHeader className="pb-3">
             <CardTitle className="flex items-center space-x-2">
               <Zap className="h-5 w-5 text-dragon-primary" />
               <span>{t('pages.overview.currentSession.title')}</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             {isLoadingActive ? (
               <DragonLoading size="sm" text={t('pages.overview.loadingSession')} />
             ) : activeData?.sessionActive ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-muted-foreground">{t('pages.overview.currentSession.started')}</p>
                     <p className="font-bold text-xl">
-                      {activeData.lastActivity ? getRelativeTime(activeData.lastActivity) : t('pages.overview.currentSession.unknown')}
+                      {activeData.started ? getRelativeTime(activeData.started) : t('pages.overview.currentSession.unknown')}
                     </p>
                   </div>
                   <div>
@@ -163,13 +164,19 @@ export default function OverviewPage() {
                       {activeData.timeLeft ? `${Math.floor(activeData.timeLeft / 60)}h ${activeData.timeLeft % 60}m` : 'N/A'}
                     </p>
                   </div>
-                </div>
-                {activeData.sessionId && (
                   <div>
-                    <p className="text-muted-foreground text-sm">{t('pages.overview.currentSession.sessionId')}</p>
-                    <p className="font-mono font-bold text-xl">{activeData.sessionId}</p>
+                    <p className="text-muted-foreground">{t('pages.overview.currentSession.lastActivity')}</p>
+                    <p className="font-bold text-xl">
+                      {activeData.lastActivity ? new Date(activeData.lastActivity).toLocaleTimeString() : t('pages.overview.currentSession.unknown')}
+                    </p>
                   </div>
-                )}
+                  {activeData.sessionId && (
+                    <div>
+                      <p className="text-muted-foreground">{t('pages.overview.currentSession.sessionId')}</p>
+                      <p className="font-mono font-bold text-xl">{activeData.sessionId}</p>
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="text-center py-6 text-muted-foreground">
@@ -186,13 +193,13 @@ export default function OverviewPage() {
           variant="gradient"
           className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
         >
-          <CardHeader>
+          <CardHeader className="pb-3">
             <CardTitle className="flex items-center space-x-2">
               <BarChart3 className="h-5 w-5 text-dragon-secondary" />
               <span>{t('pages.overview.quickStats.title')}</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">{t('pages.overview.quickStats.totalCost')}</span>
@@ -247,6 +254,33 @@ export default function OverviewPage() {
         <CardContent>
           <ActivityChart 
             data={overviewData.activityData ? [...overviewData.activityData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) : []} 
+            currency={overviewData.currency}
+          />
+        </CardContent>
+      </DragonCard>
+
+      {/* Daily Financial Chart - All Sessions */}
+      <DragonCard 
+        variant="scales"
+        className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-purple-500/20 dragon-flame-border relative z-10 hover:z-20"
+      >
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <TrendingUp className="h-5 w-5 text-dragon-primary" />
+            <span>{t('pages.overview.financialChart.title', 'All Sessions')}</span>
+            {overviewData.dailyFinancialData && overviewData.dailyFinancialData.length > 0 && (
+              <span className="text-sm text-muted-foreground ml-auto">
+                {t('pages.overview.financialChart.total', 'Total')}: {formatCurrency(
+                  overviewData.dailyFinancialData.length > 0 ? overviewData.dailyFinancialData[overviewData.dailyFinancialData.length - 1].cumulativeMoney : 0, 
+                  overviewData.currency
+                )}
+              </span>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <DailyFinancialChart 
+            data={overviewData.dailyFinancialData ? [...overviewData.dailyFinancialData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) : []} 
             currency={overviewData.currency}
           />
         </CardContent>
