@@ -393,6 +393,35 @@ export default function SettingsPage() {
 
           <div className="flex items-center justify-between">
             <div>
+              <h4 className="font-semibold">Compact Scale</h4>
+              <p className="text-sm text-muted-foreground">
+                Adjust the overall size scale of the interface (30% - 100%)
+              </p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="relative">
+                <input
+                  type="range"
+                  min="30"
+                  max="100"
+                  value={settings.compactScale}
+                  onChange={(e) => updateSettings({ compactScale: parseInt(e.target.value) })}
+                  className="w-24 h-2 rounded-lg appearance-none cursor-pointer compact-slider"
+                  style={{
+                    background: `linear-gradient(to right, hsl(var(--dragon-primary)) 0%, hsl(var(--dragon-primary)) ${((settings.compactScale - 30) / 70) * 100}%, hsl(var(--muted)) ${((settings.compactScale - 30) / 70) * 100}%, hsl(var(--muted)) 100%)`
+                  }}
+                />
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <span className="text-xs font-mono text-white bg-dragon-primary/80 px-1 rounded backdrop-blur-sm">
+                    {settings.compactScale}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
               <h4 className="font-semibold">{t('pages.settings.appearance.animations.title')}</h4>
               <p className="text-sm text-muted-foreground">
                 {t('pages.settings.appearance.animations.description')}

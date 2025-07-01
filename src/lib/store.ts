@@ -200,6 +200,7 @@ interface AppState {
     timezone: string
     timeFormat: '12h' | '24h'
     compactMode: boolean
+    compactScale: number // 30% - 100% scale
     showAnimations: boolean
     billingCycleDay: number
     claudePaths: {
@@ -326,6 +327,7 @@ export const useAppStore = create<AppState>()(
       timezone: 'auto',
       timeFormat: '24h',
       compactMode: true,
+      compactScale: 100, // Default 100% (normal size)
       showAnimations: true,
       billingCycleDay: 1, // Default to 1st of each month
       claudePaths: {

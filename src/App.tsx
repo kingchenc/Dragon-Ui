@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { LoadingOverlay, DragonLoading } from '@/components/ui/loading'
@@ -48,6 +48,7 @@ function App() {
   
   const { t } = useTranslation()
   const { formatTime } = useTimeFormatting()
+  const appRef = useRef<HTMLDivElement>(null)
 
   // Screenshot functionality with hotkey L (DISABLED)
   const handleScreenshot = async () => {
@@ -76,6 +77,14 @@ function App() {
       // Cleanup if needed
     }
   }, [])
+
+  // Apply compact scale to CSS custom property
+  useEffect(() => {
+    if (appRef.current) {
+      const scaleValue = Math.max(0.3, Math.min(1.0, settings.compactScale / 100));
+      appRef.current.style.setProperty('--compact-scale', scaleValue.toString());
+    }
+  }, [settings.compactScale]);
 
   // Initialize language on settings change
   useEffect(() => {
@@ -129,7 +138,10 @@ function App() {
   }
 
   return (
-    <div className={`min-h-screen bg-background ${settings.showAnimations ? 'transition-colors duration-300' : 'no-animations'} ${theme} ${settings.compactMode ? 'compact-mode' : ''}`}>
+    <div 
+      ref={appRef}
+      className={`min-h-screen bg-background ${settings.showAnimations ? 'transition-colors duration-300' : 'no-animations'} ${theme} ${settings.compactMode ? 'compact-mode' : ''} compact-scale`}
+    >
       <LoadingOverlay 
         visible={isLoading} 
         text={loadingProgress ? `${loadingProgress.message} (${loadingProgress.progress.toFixed(1)}%)` : t('app.loading')} 
