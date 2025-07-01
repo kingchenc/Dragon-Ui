@@ -344,9 +344,20 @@
           "enabled": "有効",
           "disabled": "無効"
         },
+        "compactScale": {
+          "title": "コンパクトスケール",
+          "description": "インターフェイスの全体サイズを調整 (50% - 100%)",
+          "requiresCompactMode": "(コンパクトモードの有効化が必要)"
+        },
         "animations": {
           "title": "アニメーション",
           "description": "ドラゴンテーマのアニメーションとトランジションを有効化",
+          "enabled": "有効",
+          "disabled": "無効"
+        },
+        "dragonEffects": {
+          "title": "ドラゴンフレイムエフェクト",
+          "description": "カードにドラゴンフレイムボーダーとホバーエフェクトを有効にする",
           "enabled": "有効",
           "disabled": "無効"
         }

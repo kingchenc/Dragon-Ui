@@ -4,6 +4,7 @@ import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { LoadingOverlay, DragonLoading } from '@/components/ui/loading'
 import { Button } from '@/components/ui/button'
 import { DragonCard } from '@/components/ui/card'
+import { DragonBadge } from '@/components/ui/badge'
 import { useAppStore } from '@/lib/store'
 import { useTimeFormatting } from '@/lib/hooks'
 import { useTranslation, initializeLanguage, changeLanguage } from '@/i18n'
@@ -78,13 +79,16 @@ function App() {
     }
   }, [])
 
-  // Apply compact scale to CSS custom property
+  // Apply compact scale to CSS custom property (only when compactMode is enabled)
   useEffect(() => {
     if (appRef.current) {
-      const scaleValue = Math.max(0.3, Math.min(1.0, settings.compactScale / 100));
+      // If compactMode is disabled, always use 100% scale
+      const scaleValue = settings.compactMode 
+        ? Math.max(0.5, Math.min(1.0, settings.compactScale / 100))
+        : 1.0;
       appRef.current.style.setProperty('--compact-scale', scaleValue.toString());
     }
-  }, [settings.compactScale]);
+  }, [settings.compactScale, settings.compactMode]);
 
   // Initialize language on settings change
   useEffect(() => {
@@ -140,7 +144,7 @@ function App() {
   return (
     <div 
       ref={appRef}
-      className={`min-h-screen bg-background ${settings.showAnimations ? 'transition-colors duration-300' : 'no-animations'} ${theme} ${settings.compactMode ? 'compact-mode' : ''} compact-scale`}
+      className={`min-h-screen bg-background ${settings.showAnimations ? 'transition-colors duration-300' : 'no-animations'} ${theme} ${settings.compactMode ? 'compact-mode' : ''} ${settings.dragonEffects ? 'dragon-effects' : 'no-dragon-effects'} compact-scale`}
     >
       <LoadingOverlay 
         visible={isLoading} 
@@ -157,9 +161,14 @@ function App() {
                   <img src="Dragon-Ui (1).svg" alt="Dragon UI" className="w-6 h-6" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-dragon-primary to-dragon-secondary bg-clip-text text-transparent">
-                    Dragon UI
-                  </h1>
+                  <div className="flex items-center space-x-2">
+                    <h1 className="text-2xl font-bold bg-gradient-to-r from-dragon-primary to-dragon-secondary bg-clip-text text-transparent">
+                      Dragon UI
+                    </h1>
+                    <DragonBadge variant="dragon" className="text-xs">
+                      v{getAppVersion()}
+                    </DragonBadge>
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     {t('app.subtitle')}
                   </p>

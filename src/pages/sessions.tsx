@@ -61,7 +61,10 @@ export default function SessionsPage() {
 
       {/* Summary Stats - Direct from store! */}
       <div className="grid gap-4 md:grid-cols-3">
-        <DragonCard variant="gradient">
+        <DragonCard 
+          variant="gradient"
+          className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+        >
           <CardContent className="p-6">
             <div className="flex items-center space-x-2">
               <Zap className="h-5 w-5 text-dragon-primary" />
@@ -73,7 +76,10 @@ export default function SessionsPage() {
           </CardContent>
         </DragonCard>
 
-        <DragonCard variant="scales">
+        <DragonCard 
+          variant="scales"
+          className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+        >
           <CardContent className="p-6">
             <div className="flex items-center space-x-2">
               <Clock className="h-5 w-5 text-dragon-accent" />
@@ -85,7 +91,10 @@ export default function SessionsPage() {
           </CardContent>
         </DragonCard>
 
-        <DragonCard variant="flame">
+        <DragonCard 
+          variant="flame"
+          className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+        >
           <CardContent className="p-6">
             <div className="flex items-center space-x-2">
               <DollarSign className="h-5 w-5 text-white" />
@@ -101,7 +110,10 @@ export default function SessionsPage() {
       </div>
 
       {/* Session Insights - From store data! */}
-      <DragonCard variant="gradient">
+      <DragonCard 
+        variant="gradient"
+        className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+      >
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Calendar className="h-5 w-5" />
@@ -157,7 +169,7 @@ export default function SessionsPage() {
               <DragonCard
                 key={session.sessionId || session.id || index}
                 variant={isRecentSession ? 'scales' : 'default'}
-                className="transition-all duration-300 hover:scale-[1.02]"
+                className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
               >
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">

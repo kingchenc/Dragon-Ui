@@ -123,7 +123,10 @@ export default function OverviewPage() {
       {/* Detailed Cards */}
       <div className="grid gap-6 md:grid-cols-2">
         {/* Current Session Details */}
-        <DragonCard variant="scales">
+        <DragonCard 
+          variant="scales"
+          className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+        >
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Zap className="h-5 w-5 text-dragon-primary" />
@@ -138,25 +141,25 @@ export default function OverviewPage() {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-muted-foreground">{t('pages.overview.currentSession.started')}</p>
-                    <p className="font-medium">
+                    <p className="font-bold text-xl">
                       {activeData.lastActivity ? getRelativeTime(activeData.lastActivity) : t('pages.overview.currentSession.unknown')}
                     </p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">{t('pages.overview.currentSession.duration')}</p>
-                    <p className="font-medium">
+                    <p className="font-bold text-xl">
                       {activeData.duration ? `${Math.floor(activeData.duration / 60)}h ${activeData.duration % 60}m` : '0m'}
                     </p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">{t('pages.overview.currentSession.cost')}</p>
-                    <p className="font-medium text-dragon-accent">
+                    <p className="font-bold text-xl text-dragon-accent">
                       {formatCurrency(activeData.currentCost, activeData.currency)}
                     </p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">{t('pages.overview.currentSession.timeLeft')}</p>
-                    <p className="font-medium">
+                    <p className="font-bold text-xl">
                       {activeData.timeLeft ? `${Math.floor(activeData.timeLeft / 60)}h ${activeData.timeLeft % 60}m` : 'N/A'}
                     </p>
                   </div>
@@ -164,7 +167,7 @@ export default function OverviewPage() {
                 {activeData.sessionId && (
                   <div>
                     <p className="text-muted-foreground text-sm">{t('pages.overview.currentSession.sessionId')}</p>
-                    <p className="font-mono text-xs">{activeData.sessionId}</p>
+                    <p className="font-mono font-bold text-xl">{activeData.sessionId}</p>
                   </div>
                 )}
               </div>
@@ -179,7 +182,10 @@ export default function OverviewPage() {
         </DragonCard>
 
         {/* Quick Stats */}
-        <DragonCard variant="gradient">
+        <DragonCard 
+          variant="gradient"
+          className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+        >
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <BarChart3 className="h-5 w-5 text-dragon-secondary" />
@@ -190,21 +196,21 @@ export default function OverviewPage() {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">{t('pages.overview.quickStats.totalCost')}</span>
-                <span className="font-bold text-lg">
+                <span className="font-bold text-xl">
                   {formatCurrency(overviewData.totalCost, overviewData.currency)}
                 </span>
               </div>
               
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">{t('pages.overview.quickStats.totalTokens')}</span>
-                <span className="font-bold text-lg">
+                <span className="font-bold text-xl">
                   {formatNumber(overviewData.totalTokens)}
                 </span>
               </div>
               
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">{t('pages.overview.quickStats.sessions')}</span>
-                <span className="font-bold text-lg">
+                <span className="font-bold text-xl">
                   {overviewData.totalSessions} / 50
                 </span>
               </div>
@@ -212,7 +218,7 @@ export default function OverviewPage() {
               <div className="pt-2 border-t border-white/10">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">{t('pages.overview.quickStats.avgTokensPerSession')}</span>
-                  <span className="font-bold">
+                  <span className="font-bold text-xl">
                     {formatNumber(overviewData.avgTokensPerSession)}
                   </span>
                 </div>
@@ -223,7 +229,10 @@ export default function OverviewPage() {
       </div>
 
       {/* Activity Chart - Last 7 Days */}
-      <DragonCard variant="scales">
+      <DragonCard 
+        variant="scales"
+        className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+      >
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Activity className="h-5 w-5 text-dragon-primary" />

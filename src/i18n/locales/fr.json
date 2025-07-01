@@ -344,9 +344,20 @@
           "enabled": "Activé",
           "disabled": "Désactivé"
         },
+        "compactScale": {
+          "title": "Échelle compacte",
+          "description": "Ajuster la taille globale de l'interface (50% - 100%)",
+          "requiresCompactMode": "(Nécessite l'activation du Mode compact)"
+        },
         "animations": {
           "title": "Animations",
           "description": "Activer les animations et transitions inspirées du dragon",
+          "enabled": "Activé",
+          "disabled": "Désactivé"
+        },
+        "dragonEffects": {
+          "title": "Effets de Flammes de Dragon",
+          "description": "Activer les bordures de flammes de dragon et effets hover sur les cartes",
           "enabled": "Activé",
           "disabled": "Désactivé"
         }

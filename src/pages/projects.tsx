@@ -58,7 +58,10 @@ export default function ProjectsPage() {
 
       {/* Summary Stats - Direct from store! */}
       <div className="grid gap-4 md:grid-cols-3">
-        <DragonCard variant="gradient">
+        <DragonCard 
+          variant="gradient"
+          className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+        >
           <CardContent className="p-6">
             <div className="flex items-center space-x-2">
               <FolderOpen className="h-5 w-5 text-dragon-primary" />
@@ -70,7 +73,10 @@ export default function ProjectsPage() {
           </CardContent>
         </DragonCard>
 
-        <DragonCard variant="scales">
+        <DragonCard 
+          variant="scales"
+          className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+        >
           <CardContent className="p-6">
             <div className="flex items-center space-x-2">
               <DollarSign className="h-5 w-5 text-dragon-accent" />
@@ -84,7 +90,10 @@ export default function ProjectsPage() {
           </CardContent>
         </DragonCard>
 
-        <DragonCard variant="flame">
+        <DragonCard 
+          variant="flame"
+          className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+        >
           <CardContent className="p-6">
             <div className="flex items-center space-x-2">
               <Zap className="h-5 w-5 text-white" />
@@ -105,7 +114,10 @@ export default function ProjectsPage() {
         
         <div className="grid gap-4 md:grid-cols-2">
           {/* Most Active Project */}
-          <DragonCard variant="gradient">
+          <DragonCard 
+            variant="gradient"
+            className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+          >
             <CardContent className="p-4">
               <div className="space-y-2">
                 <h4 className="font-semibold text-sm text-dragon-primary">{t('pages.projects.insights.mostActiveProject')}</h4>
@@ -122,7 +134,10 @@ export default function ProjectsPage() {
           </DragonCard>
 
           {/* Portfolio Summary */}
-          <DragonCard variant="scales">
+          <DragonCard 
+            variant="scales"
+            className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+          >
             <CardContent className="p-4">
               <div className="space-y-2">
                 <h4 className="font-semibold text-sm text-blue-500">{t('pages.projects.insights.portfolio')}</h4>
@@ -167,7 +182,7 @@ export default function ProjectsPage() {
               <DragonCard
                 key={project.project || project.name || index}
                 variant={isTopProject ? 'scales' : 'default'}
-                className="transition-all duration-300 hover:scale-[1.02]"
+                className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
               >
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">

@@ -85,7 +85,10 @@ export default function DailyUsagePage() {
 
       {/* Today vs Yesterday - Compact */}
       <div className="grid gap-4 md:grid-cols-2">
-        <DragonCard variant="gradient">
+        <DragonCard 
+          variant="gradient"
+          className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+        >
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center space-x-2">
@@ -118,7 +121,10 @@ export default function DailyUsagePage() {
           </CardContent>
         </DragonCard>
 
-        <DragonCard variant="scales">
+        <DragonCard 
+          variant="scales"
+          className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+        >
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center space-x-2">
@@ -164,7 +170,10 @@ export default function DailyUsagePage() {
         
         <div className="grid gap-4 md:grid-cols-3">
           {/* Total Cost */}
-          <DragonCard variant="flame">
+          <DragonCard 
+            variant="flame"
+            className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+          >
             <CardContent className="p-4">
               <div className="space-y-2">
                 <h4 className="font-semibold text-sm text-white/80">{t('pages.dailyUsage.summary.totalCost')}</h4>
@@ -181,7 +190,10 @@ export default function DailyUsagePage() {
           </DragonCard>
 
           {/* Daily Average */}
-          <DragonCard variant="scales">
+          <DragonCard 
+            variant="scales"
+            className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+          >
             <CardContent className="p-4">
               <div className="space-y-2">
                 <h4 className="font-semibold text-sm text-dragon-primary">{t('pages.dailyUsage.summary.dailyAverage')}</h4>
@@ -198,7 +210,10 @@ export default function DailyUsagePage() {
           </DragonCard>
 
           {/* Activity Rate */}
-          <DragonCard variant="gradient">
+          <DragonCard 
+            variant="gradient"
+            className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+          >
             <CardContent className="p-4">
               <div className="space-y-2">
                 <h4 className="font-semibold text-sm text-dragon-secondary">{t('pages.dailyUsage.summary.activityRate')}</h4>
@@ -237,7 +252,7 @@ export default function DailyUsagePage() {
               <DragonCard
                 key={day.date}
                 variant={isToday ? 'flame' : isRecent ? 'scales' : 'default'}
-                className={`transition-all duration-300 hover:scale-[1.01] ${
+                className={`transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20 ${
                   !hasUsage ? 'opacity-60' : ''
                 }`}
               >

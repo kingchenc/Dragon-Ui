@@ -344,9 +344,20 @@
           "enabled": "Enabled",
           "disabled": "Disabled"
         },
+        "compactScale": {
+          "title": "Compact Scale",
+          "description": "Adjust the overall size scale of the interface (50% - 100%)",
+          "requiresCompactMode": "(Requires Compact Mode to be enabled)"
+        },
         "animations": {
           "title": "Animations",
           "description": "Enable dragon-themed animations and transitions",
+          "enabled": "Enabled",
+          "disabled": "Disabled"
+        },
+        "dragonEffects": {
+          "title": "Dragon Flame Effects",
+          "description": "Enable dragon flame borders and hover effects on cards",
           "enabled": "Enabled",
           "disabled": "Disabled"
         }

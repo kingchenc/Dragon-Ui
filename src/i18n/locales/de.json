@@ -344,9 +344,20 @@
           "enabled": "Aktiviert",
           "disabled": "Deaktiviert"
         },
+        "compactScale": {
+          "title": "Kompakt-Skalierung",
+          "description": "Gesamtgröße der Benutzeroberfläche anpassen (50% - 100%)",
+          "requiresCompactMode": "(Kompaktmodus muss aktiviert sein)"
+        },
         "animations": {
           "title": "Animationen",
           "description": "Drachen-inspirierte Animationen und Übergänge aktivieren",
+          "enabled": "Aktiviert",
+          "disabled": "Deaktiviert"
+        },
+        "dragonEffects": {
+          "title": "Drachen-Flammeneffekte",
+          "description": "Drachen-Flammenränder und Hover-Effekte auf Karten aktivieren",
           "enabled": "Aktiviert",
           "disabled": "Deaktiviert"
         }

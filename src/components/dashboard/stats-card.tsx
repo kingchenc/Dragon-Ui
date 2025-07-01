@@ -92,7 +92,7 @@ export const StatsCard = React.forwardRef<HTMLDivElement, StatsCardProps>(
         ref={ref}
         variant={variant}
         className={cn(
-          "p-6 transition-all duration-300 hover:scale-105 hover:shadow-lg group",
+          "p-6 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border group relative z-10 hover:z-20",
           className
         )}
         {...props}
@@ -109,7 +109,7 @@ export const StatsCard = React.forwardRef<HTMLDivElement, StatsCardProps>(
             </div>
             
             <div className="space-y-1">
-              <p className="text-3xl font-bold tracking-tight">
+              <p className="text-2xl font-bold tracking-tight">
                 {formatValue(value)}
               </p>
               

@@ -448,17 +448,65 @@
   font-size: calc(0.75rem * (0.95 + 0.05 * var(--compact-scale))) !important;
 }
 
-.compact-scale .text-muted-foreground {
-  font-size: calc(1em * (0.9 + 0.1 * var(--compact-scale))) !important;
-}
-
-/* Special rules for stats numbers - keep them more readable */
+/* Stats numbers can be smaller now */
 .compact-scale .text-3xl.font-bold {
-  font-size: calc(1.875rem * (0.9 + 0.1 * var(--compact-scale))) !important;
+  font-size: calc(1.875rem * (0.7 + 0.3 * var(--compact-scale))) !important;
 }
 
 .compact-scale .text-2xl.font-bold {
-  font-size: calc(1.5rem * (0.9 + 0.1 * var(--compact-scale))) !important;
+  font-size: calc(1.5rem * (0.7 + 0.3 * var(--compact-scale))) !important;
+}
+
+/* Current session text consistency */
+.compact-scale .text-muted-foreground {
+  font-size: calc(1em * (0.75 + 0.25 * var(--compact-scale))) !important;
+}
+
+.compact-scale .font-medium {
+  font-size: calc(1em * (0.75 + 0.25 * var(--compact-scale))) !important;
+}
+
+/* Icon sizes - scale with compact mode */
+.compact-scale .w-12 {
+  width: calc(3rem * var(--compact-scale));
+}
+
+.compact-scale .w-10 {
+  width: calc(2.5rem * var(--compact-scale));
+}
+
+/* All titles should scale down more at 30% */
+.compact-scale h1,
+.compact-scale h2,
+.compact-scale h3,
+.compact-scale h4,
+.compact-scale h5,
+.compact-scale h6 {
+  font-size: calc(1em * (0.7 + 0.3 * var(--compact-scale))) !important;
+}
+
+/* Subtitle and description text scaling */
+.compact-scale .text-muted-foreground:not(.text-xs):not(.text-sm) {
+  font-size: calc(1em * (0.75 + 0.25 * var(--compact-scale))) !important;
+}
+
+/* Tab navigation should be 6% smaller at 50% scale */
+.compact-scale .h-10 {
+  height: calc(2.5rem * (0.64 + 0.3 * var(--compact-scale)));
+}
+
+.compact-scale .h-12 {
+  height: calc(3rem * (0.64 + 0.3 * var(--compact-scale)));
+}
+
+/* Make tabs text and padding smaller */
+.compact-scale [role="tablist"] {
+  font-size: calc(1rem * (0.74 + 0.2 * var(--compact-scale))) !important;
+}
+
+.compact-scale [role="tab"] {
+  font-size: calc(1rem * (0.74 + 0.2 * var(--compact-scale))) !important;
+  padding: calc(0.5rem * (0.64 + 0.3 * var(--compact-scale))) calc(1rem * (0.64 + 0.3 * var(--compact-scale))) !important;
 }
 
 .compact-scale .space-y-6 > * + * {
@@ -603,6 +651,191 @@
 
 .compact-slider:focus::-webkit-slider-thumb {
   box-shadow: 0 0 0 3px hsl(var(--primary) / 0.2);
+}
+
+/* Dragon Flame Border Effect - Only when dragon effects are enabled */
+.dragon-effects .dragon-flame-border {
+  position: relative;
+}
+
+.dragon-effects .dragon-flame-border::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(
+    45deg,
+    rgba(239, 68, 68, 0) 0%,
+    rgba(239, 68, 68, 0.1) 15%,
+    rgba(239, 68, 68, 0.3) 25%,
+    rgba(239, 68, 68, 0.2) 35%,
+    rgba(239, 68, 68, 0) 45%,
+    rgba(239, 68, 68, 0.4) 55%,
+    rgba(239, 68, 68, 0.1) 65%,
+    rgba(239, 68, 68, 0.3) 75%,
+    rgba(239, 68, 68, 0) 85%,
+    rgba(239, 68, 68, 0.2) 95%,
+    rgba(239, 68, 68, 0) 100%
+  );
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: xor;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+  animation: flame-flicker 3s ease-in-out infinite;
+}
+
+.dragon-effects .dragon-flame-border:hover::before {
+  opacity: 1;
+}
+
+/* When dragon effects are DISABLED - add no-dragon-effects class to body */
+.no-dragon-effects .dragon-flame-border:hover {
+  transform: none !important;
+  scale: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Specifically disable hover scale when dragon effects are disabled */
+.no-dragon-effects .hover\:scale-110:hover {
+  transform: none !important;
+}
+
+.no-dragon-effects .hover\:shadow-lg:hover {
+  box-shadow: none !important;
+}
+
+.no-dragon-effects .hover\:shadow-red-500\/20:hover {
+  box-shadow: none !important;
+}
+
+/* Remove any default browser hover states when dragon effects disabled */
+.no-dragon-effects .dragon-flame-border {
+  outline: none !important;
+}
+
+.no-dragon-effects .dragon-flame-border:focus {
+  outline: none !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Disable ALL hover effects in StatsCards when dragon effects disabled */
+.no-dragon-effects .group:hover * {
+  color: inherit !important;
+  transition: none !important;
+}
+
+/* Force StatsCard titles to stay muted when dragon effects disabled */
+.no-dragon-effects .group .text-muted-foreground {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* Force StatsCard icons to keep original colors when dragon effects disabled */
+.no-dragon-effects .group .text-dragon-primary {
+  color: hsl(var(--primary)) !important;
+}
+
+.no-dragon-effects .group .text-dragon-secondary {
+  color: hsl(var(--primary)) !important;
+}
+
+.no-dragon-effects .group .text-dragon-accent {
+  color: rgb(245 158 11) !important;
+}
+
+/* Disable specific iconColor group-hover effects */
+.no-dragon-effects .group:hover .group-hover\:text-amber-400 {
+  color: rgb(245 158 11) !important;
+}
+
+.no-dragon-effects .group:hover .group-hover\:text-emerald-400 {
+  color: rgb(34 197 94) !important;
+}
+
+.no-dragon-effects .group:hover .group-hover\:text-blue-400 {
+  color: rgb(59 130 246) !important;
+}
+
+.no-dragon-effects .group:hover .group-hover\:text-purple-400 {
+  color: rgb(168 85 247) !important;
+}
+
+
+/* Remove any default browser hover states when dragon effects disabled */
+
+@keyframes flame-flicker {
+  0%, 100% { 
+    background: linear-gradient(
+      45deg,
+      rgba(239, 68, 68, 0) 0%,
+      rgba(239, 68, 68, 0.1) 15%,
+      rgba(239, 68, 68, 0.3) 25%,
+      rgba(239, 68, 68, 0.2) 35%,
+      rgba(239, 68, 68, 0) 45%,
+      rgba(239, 68, 68, 0.4) 55%,
+      rgba(239, 68, 68, 0.1) 65%,
+      rgba(239, 68, 68, 0.3) 75%,
+      rgba(239, 68, 68, 0) 85%,
+      rgba(239, 68, 68, 0.2) 95%,
+      rgba(239, 68, 68, 0) 100%
+    );
+  }
+  25% { 
+    background: linear-gradient(
+      47deg,
+      rgba(239, 68, 68, 0.1) 0%,
+      rgba(239, 68, 68, 0) 18%,
+      rgba(239, 68, 68, 0.4) 28%,
+      rgba(239, 68, 68, 0.1) 38%,
+      rgba(239, 68, 68, 0.2) 48%,
+      rgba(239, 68, 68, 0) 58%,
+      rgba(239, 68, 68, 0.3) 68%,
+      rgba(239, 68, 68, 0.1) 78%,
+      rgba(239, 68, 68, 0.2) 88%,
+      rgba(239, 68, 68, 0) 98%,
+      rgba(239, 68, 68, 0.1) 100%
+    );
+  }
+  50% { 
+    background: linear-gradient(
+      43deg,
+      rgba(239, 68, 68, 0) 5%,
+      rgba(239, 68, 68, 0.3) 12%,
+      rgba(239, 68, 68, 0.1) 22%,
+      rgba(239, 68, 68, 0.4) 32%,
+      rgba(239, 68, 68, 0) 42%,
+      rgba(239, 68, 68, 0.2) 52%,
+      rgba(239, 68, 68, 0.3) 62%,
+      rgba(239, 68, 68, 0) 72%,
+      rgba(239, 68, 68, 0.1) 82%,
+      rgba(239, 68, 68, 0.3) 92%,
+      rgba(239, 68, 68, 0) 100%
+    );
+  }
+  75% { 
+    background: linear-gradient(
+      49deg,
+      rgba(239, 68, 68, 0.2) 0%,
+      rgba(239, 68, 68, 0) 10%,
+      rgba(239, 68, 68, 0.1) 20%,
+      rgba(239, 68, 68, 0.3) 30%,
+      rgba(239, 68, 68, 0.1) 40%,
+      rgba(239, 68, 68, 0.4) 50%,
+      rgba(239, 68, 68, 0) 60%,
+      rgba(239, 68, 68, 0.2) 70%,
+      rgba(239, 68, 68, 0.1) 80%,
+      rgba(239, 68, 68, 0) 90%,
+      rgba(239, 68, 68, 0.3) 100%
+    );
+  }
 }
 
 /* Legacy slider styling */

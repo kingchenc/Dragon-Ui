@@ -344,9 +344,20 @@
           "enabled": "Ingeschakeld",
           "disabled": "Uitgeschakeld"
         },
+        "compactScale": {
+          "title": "Compacte schaal",
+          "description": "Pas de algehele grootte van de interface aan (50% - 100%)",
+          "requiresCompactMode": "(Vereist dat Compacte modus is ingeschakeld)"
+        },
         "animations": {
           "title": "Animaties",
           "description": "Schakel draak-geïnspireerde animaties en overgangen in",
+          "enabled": "Ingeschakeld",
+          "disabled": "Uitgeschakeld"
+        },
+        "dragonEffects": {
+          "title": "Draak Vlam Effecten",
+          "description": "Schakel draak vlam randen en hover effecten op kaarten in",
           "enabled": "Ingeschakeld",
           "disabled": "Uitgeschakeld"
         }

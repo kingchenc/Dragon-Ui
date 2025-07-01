@@ -344,9 +344,20 @@
           "enabled": "已启用",
           "disabled": "已禁用"
         },
+        "compactScale": {
+          "title": "紧凑缩放",
+          "description": "调整界面整体大小 (50% - 100%)",
+          "requiresCompactMode": "(需要启用紧凑模式)"
+        },
         "animations": {
           "title": "动画",
           "description": "启用龙主题动画和过渡效果",
+          "enabled": "已启用",
+          "disabled": "已禁用"
+        },
+        "dragonEffects": {
+          "title": "龙焰效果",
+          "description": "启用卡片上的龙焰边框和悬浮效果",
           "enabled": "已启用",
           "disabled": "已禁用"
         }

@@ -344,9 +344,20 @@
           "enabled": "Habilitado",
           "disabled": "Desabilitado"
         },
+        "compactScale": {
+          "title": "Escala compacta",
+          "description": "Ajustar o tamanho geral da interface (50% - 100%)",
+          "requiresCompactMode": "(Requer ativar o Modo compacto)"
+        },
         "animations": {
           "title": "Animações",
           "description": "Habilitar animações e transições inspiradas em dragões",
+          "enabled": "Habilitado",
+          "disabled": "Desabilitado"
+        },
+        "dragonEffects": {
+          "title": "Efeitos de Chamas de Dragão",
+          "description": "Habilitar bordas de chamas de dragão e efeitos hover em cartões",
           "enabled": "Habilitado",
           "disabled": "Desabilitado"
         }

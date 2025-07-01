@@ -183,6 +183,10 @@ export default function SettingsPage() {
     updateSettings({ showAnimations: !settings.showAnimations })
   }
 
+  const toggleDragonEffects = () => {
+    updateSettings({ dragonEffects: !settings.dragonEffects })
+  }
+
   const updateTimeFormat = (format: '12h' | '24h') => {
     updateSettings({ timeFormat: format })
   }
@@ -351,13 +355,13 @@ export default function SettingsPage() {
             {t('pages.settings.description')}
           </p>
         </div>
-        <DragonBadge variant="dragon">
-          v{getAppVersion()}
-        </DragonBadge>
       </div>
 
       {/* Appearance Settings */}
-      <DragonCard variant="gradient">
+      <DragonCard 
+        variant="gradient"
+        className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+      >
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Palette className="h-5 w-5 text-dragon-primary" />
@@ -393,26 +397,34 @@ export default function SettingsPage() {
 
           <div className="flex items-center justify-between">
             <div>
-              <h4 className="font-semibold">Compact Scale</h4>
+              <h4 className={`font-semibold ${!settings.compactMode ? 'text-muted-foreground' : ''}`}>{t('pages.settings.appearance.compactScale.title')}</h4>
               <p className="text-sm text-muted-foreground">
-                Adjust the overall size scale of the interface (30% - 100%)
+                {t('pages.settings.appearance.compactScale.description')}
+                {!settings.compactMode && ` ${t('pages.settings.appearance.compactScale.requiresCompactMode')}`}
               </p>
             </div>
             <div className="flex items-center space-x-3">
-              <div className="relative">
+              <div className={`relative ${!settings.compactMode ? 'opacity-50 pointer-events-none' : ''}`}>
                 <input
                   type="range"
-                  min="30"
+                  min="50"
                   max="100"
                   value={settings.compactScale}
                   onChange={(e) => updateSettings({ compactScale: parseInt(e.target.value) })}
+                  disabled={!settings.compactMode}
                   className="w-24 h-2 rounded-lg appearance-none cursor-pointer compact-slider"
                   style={{
-                    background: `linear-gradient(to right, hsl(var(--dragon-primary)) 0%, hsl(var(--dragon-primary)) ${((settings.compactScale - 30) / 70) * 100}%, hsl(var(--muted)) ${((settings.compactScale - 30) / 70) * 100}%, hsl(var(--muted)) 100%)`
+                    background: settings.compactMode 
+                      ? `linear-gradient(to right, hsl(var(--dragon-primary)) 0%, hsl(var(--dragon-primary)) ${((settings.compactScale - 50) / 50) * 100}%, hsl(var(--muted)) ${((settings.compactScale - 50) / 50) * 100}%, hsl(var(--muted)) 100%)`
+                      : 'hsl(var(--muted))'
                   }}
                 />
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <span className="text-xs font-mono text-white bg-dragon-primary/80 px-1 rounded backdrop-blur-sm">
+                  <span className={`text-xs font-mono px-1 rounded backdrop-blur-sm ${
+                    settings.compactMode 
+                      ? 'text-white bg-dragon-primary/80' 
+                      : 'text-muted-foreground bg-muted/80'
+                  }`}>
                     {settings.compactScale}%
                   </span>
                 </div>
@@ -435,11 +447,30 @@ export default function SettingsPage() {
               {settings.showAnimations ? t('pages.settings.appearance.animations.enabled') : t('pages.settings.appearance.animations.disabled')}
             </Button>
           </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="font-semibold">{t('pages.settings.appearance.dragonEffects.title')}</h4>
+              <p className="text-sm text-muted-foreground">
+                {t('pages.settings.appearance.dragonEffects.description')}
+              </p>
+            </div>
+            <Button
+              variant={settings.dragonEffects ? "dragon" : "outline"}
+              size="sm"
+              onClick={toggleDragonEffects}
+            >
+              {settings.dragonEffects ? t('pages.settings.appearance.dragonEffects.enabled') : t('pages.settings.appearance.dragonEffects.disabled')}
+            </Button>
+          </div>
         </CardContent>
       </DragonCard>
 
       {/* Billing Cycle Settings */}
-      <DragonCard variant="gradient">
+      <DragonCard 
+        variant="gradient"
+        className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+      >
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Calendar className="h-5 w-5 text-dragon-accent" />
@@ -484,7 +515,10 @@ export default function SettingsPage() {
       </DragonCard>
 
       {/* Data & Refresh Settings */}
-      <DragonCard variant="scales">
+      <DragonCard 
+        variant="scales"
+        className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+      >
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <RefreshCw className="h-5 w-5 text-dragon-secondary" />
@@ -561,7 +595,10 @@ export default function SettingsPage() {
 
 
       {/* Advanced Settings */}
-      <DragonCard variant="default">
+      <DragonCard 
+        variant="default"
+        className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+      >
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <SettingsIcon className="h-5 w-5 text-dragon-accent" />
@@ -723,7 +760,10 @@ export default function SettingsPage() {
       </DragonCard>
 
       {/* Claude Projects Settings */}
-      <DragonCard variant="gradient">
+      <DragonCard 
+        variant="gradient"
+        className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+      >
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <FolderOpen className="h-5 w-5 text-dragon-primary" />
@@ -849,7 +889,10 @@ export default function SettingsPage() {
       </DragonCard>
 
       {/* SSH Support */}
-      <DragonCard variant="flame">
+      <DragonCard 
+        variant="flame"
+        className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+      >
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Server className="h-5 w-5 text-white" />
@@ -953,7 +996,10 @@ export default function SettingsPage() {
       </DragonCard>
 
       {/* Database Management */}
-      <DragonCard variant="flame">
+      <DragonCard 
+        variant="flame"
+        className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+      >
         <CardHeader>
           <CardTitle className="flex items-center space-x-2 text-white">
             <Database className="h-5 w-5" />
@@ -983,7 +1029,7 @@ export default function SettingsPage() {
                 disabled={!databaseCleared}
                 className={`${
                   databaseCleared 
-                    ? 'bg-green-500/20 border-green-500/30 text-white hover:bg-green-500/30' 
+                    ? 'bg-red-500/20 border-red-500/30 text-white hover:bg-red-500/30' 
                     : 'bg-white/5 border-white/10 text-white/50 cursor-not-allowed'
                 }`}
               >
@@ -1003,7 +1049,10 @@ export default function SettingsPage() {
       </DragonCard>
 
       {/* Data Export */}
-      <DragonCard variant="scales">
+      <DragonCard 
+        variant="scales"
+        className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+      >
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Download className="h-5 w-5 text-dragon-secondary" />
@@ -1039,7 +1088,10 @@ export default function SettingsPage() {
       </DragonCard>
 
       {/* About */}
-      <DragonCard variant="gradient">
+      <DragonCard 
+        variant="gradient"
+        className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+      >
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Info className="h-5 w-5 text-dragon-primary" />

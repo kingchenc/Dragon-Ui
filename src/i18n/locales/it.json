@@ -344,9 +344,20 @@
           "enabled": "Abilitato",
           "disabled": "Disabilitato"
         },
+        "compactScale": {
+          "title": "Scala compatta",
+          "description": "Regola la dimensione complessiva dell'interfaccia (50% - 100%)",
+          "requiresCompactMode": "(Richiede l'attivazione della Modalità compatta)"
+        },
         "animations": {
           "title": "Animazioni",
           "description": "Abilita animazioni e transizioni ispirate ai draghi",
+          "enabled": "Abilitato",
+          "disabled": "Disabilitato"
+        },
+        "dragonEffects": {
+          "title": "Effetti Fiamme del Drago",
+          "description": "Abilita bordi di fiamme del drago e effetti hover sulle carte",
           "enabled": "Abilitato",
           "disabled": "Disabilitato"
         }

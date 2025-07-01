@@ -74,7 +74,10 @@ export default function MonthlyUsagePage() {
 
       {/* Summary Stats - Direct from store! */}
       <div className="grid gap-4 md:grid-cols-4">
-        <DragonCard variant="gradient">
+        <DragonCard 
+          variant="gradient"
+          className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+        >
           <CardContent className="p-6">
             <div className="flex items-center space-x-2">
               <Calendar className="h-5 w-5 text-dragon-primary" />
@@ -91,7 +94,10 @@ export default function MonthlyUsagePage() {
           </CardContent>
         </DragonCard>
 
-        <DragonCard variant="scales">
+        <DragonCard 
+          variant="scales"
+          className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+        >
           <CardContent className="p-6">
             <div className="flex items-center space-x-2">
               <TrendingUp className="h-5 w-5 text-dragon-secondary" />
@@ -106,7 +112,10 @@ export default function MonthlyUsagePage() {
           </CardContent>
         </DragonCard>
 
-        <DragonCard variant="flame">
+        <DragonCard 
+          variant="flame"
+          className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+        >
           <CardContent className="p-6">
             <div className="flex items-center space-x-2">
               <BarChart3 className="h-5 w-5 text-white" />
@@ -121,7 +130,10 @@ export default function MonthlyUsagePage() {
           </CardContent>
         </DragonCard>
 
-        <DragonCard variant="default">
+        <DragonCard 
+          variant="default"
+          className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+        >
           <CardContent className="p-6">
             <div className="flex items-center space-x-2">
               <Target className="h-5 w-5 text-dragon-accent" />
@@ -150,7 +162,7 @@ export default function MonthlyUsagePage() {
               <DragonCard
                 key={month.date || month.month || month.billing_period_key}
                 variant={isCurrentMonth ? 'scales' : 'default'}
-                className="transition-all duration-300 hover:scale-[1.01]"
+                className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
               >
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
@@ -247,7 +259,10 @@ export default function MonthlyUsagePage() {
         
         <div className="grid gap-4 md:grid-cols-3">
           {/* Highest Spending Month */}
-          <DragonCard variant="flame">
+          <DragonCard 
+            variant="flame"
+            className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+          >
             <CardContent className="p-4">
               <div className="space-y-2">
                 <h4 className="font-semibold text-sm text-white/80">{t('pages.monthlyUsage.trends.highestSpending')}</h4>
@@ -262,7 +277,10 @@ export default function MonthlyUsagePage() {
           </DragonCard>
 
           {/* Most Active Month */}
-          <DragonCard variant="scales">
+          <DragonCard 
+            variant="scales"
+            className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+          >
             <CardContent className="p-4">
               <div className="space-y-2">
                 <h4 className="font-semibold text-sm text-dragon-primary">{t('pages.monthlyUsage.trends.mostActive')}</h4>
@@ -277,7 +295,10 @@ export default function MonthlyUsagePage() {
           </DragonCard>
 
           {/* Growth Trend */}
-          <DragonCard variant="gradient">
+          <DragonCard 
+            variant="gradient"
+            className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+          >
             <CardContent className="p-4">
               <div className="space-y-2">
                 <h4 className="font-semibold text-sm text-dragon-secondary">{t('pages.monthlyUsage.trends.growthTrend')}</h4>
@@ -315,7 +336,10 @@ export default function MonthlyUsagePage() {
         
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {/* Monthly Average */}
-          <DragonCard variant="scales">
+          <DragonCard 
+            variant="scales"
+            className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+          >
             <CardContent className="p-4">
               <div className="space-y-2">
                 <h4 className="font-semibold text-sm text-dragon-primary">{t('pages.monthlyUsage.budget.monthlyAverage')}</h4>
@@ -330,7 +354,10 @@ export default function MonthlyUsagePage() {
           </DragonCard>
 
           {/* Quarterly Projection */}
-          <DragonCard variant="gradient">
+          <DragonCard 
+            variant="gradient"
+            className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+          >
             <CardContent className="p-4">
               <div className="space-y-2">
                 <h4 className="font-semibold text-sm text-dragon-secondary">{t('pages.monthlyUsage.budget.quarterly')}</h4>
@@ -345,7 +372,10 @@ export default function MonthlyUsagePage() {
           </DragonCard>
 
           {/* Yearly Projection */}
-          <DragonCard variant="flame">
+          <DragonCard 
+            variant="flame"
+            className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+          >
             <CardContent className="p-4">
               <div className="space-y-2">
                 <h4 className="font-semibold text-sm text-white/80">{t('pages.monthlyUsage.budget.yearly')}</h4>
@@ -360,7 +390,10 @@ export default function MonthlyUsagePage() {
           </DragonCard>
 
           {/* Current Run Rate */}
-          <DragonCard variant="default">
+          <DragonCard 
+            variant="default"
+            className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+          >
             <CardContent className="p-4">
               <div className="space-y-2">
                 <h4 className="font-semibold text-sm text-muted-foreground">{t('pages.monthlyUsage.budget.runRate')}</h4>

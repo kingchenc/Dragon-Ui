@@ -101,7 +101,10 @@ export default function ActiveSessionPage() {
 
       {/* CLI-Style Session Progress */}
       {sessionActive && (
-        <DragonCard variant="flame" className="mb-6">
+        <DragonCard 
+          variant="flame" 
+          className="mb-6 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+        >
           <CardContent className="p-6">
             <div className="space-y-4">
               {/* Session Progress Bar */}
@@ -160,7 +163,10 @@ export default function ActiveSessionPage() {
       {sessionActive ? (
         <div className="grid gap-6 md:grid-cols-2">
           {/* Session Status & Info */}
-          <DragonCard variant="scales">
+          <DragonCard 
+            variant="scales"
+            className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+          >
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Activity className="h-5 w-5 text-dragon-primary" />
@@ -226,7 +232,10 @@ export default function ActiveSessionPage() {
           </DragonCard>
 
           {/* Performance & Projections */}
-          <DragonCard variant="gradient">
+          <DragonCard 
+            variant="gradient"
+            className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+          >
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <TrendingUp className="h-5 w-5 text-dragon-secondary" />
@@ -288,7 +297,10 @@ export default function ActiveSessionPage() {
         </div>
       ) : (
         /* No Active Session */
-        <DragonCard variant="default">
+        <DragonCard 
+          variant="default"
+          className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+        >
           <CardContent className="text-center py-12">
             <Pause className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
             <p className="font-medium text-muted-foreground">{t('pages.activeSession.noSession.title')}</p>
@@ -298,7 +310,10 @@ export default function ActiveSessionPage() {
       )}
 
       {/* Real-time Updates Notice */}
-      <DragonCard variant="gradient">
+      <DragonCard 
+        variant="gradient"
+        className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20 dragon-flame-border relative z-10 hover:z-20"
+      >
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 text-sm">
