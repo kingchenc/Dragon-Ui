@@ -414,12 +414,19 @@ class DatabaseService {
     
     // Handle months with fewer days (e.g., Feb 30th -> Feb 28th)
     if (periodStart.getDate() !== billingCycleDay && billingCycleDay > 28) {
-      periodStart = new Date(year, month - (day < billingCycleDay ? 0 : -1), 0);
+      // Get the last day of the target month properly
+      const targetMonth = day < billingCycleDay ? month - 1 : month;
+      const targetYear = targetMonth < 0 ? year - 1 : year;
+      const adjustedMonth = targetMonth < 0 ? 11 : targetMonth;
+      
+      // Get last day of the month by going to first day of next month and subtracting 1
+      periodStart = new Date(targetYear, adjustedMonth + 1, 0);
     }
     
     // Calculate period end
     let periodEnd = new Date(periodStart.getFullYear(), periodStart.getMonth() + 1, billingCycleDay);
     if (periodEnd.getDate() !== billingCycleDay && billingCycleDay > 28) {
+      // Get last day of next month properly
       periodEnd = new Date(periodEnd.getFullYear(), periodEnd.getMonth() + 1, 0);
     }
     periodEnd = new Date(periodEnd.getTime() - 1); // One day before next cycle

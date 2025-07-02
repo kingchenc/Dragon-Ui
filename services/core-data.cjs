@@ -294,12 +294,9 @@ class CoreDataService {
   async calculateIncrementalUpdate(newEntries, allEntries) {
     console.log(`[CALC] CoreDataService: Smart incremental calculation for ${newEntries.length} new entries`);
     
-    // For small incremental updates, calculate directly without Worker thread
-    if (newEntries.length < 1000) {
-      return this.calculateIncrementalDirect(newEntries);
-    }
-    
-    // For large updates, use Worker thread but with incremental mode
+    // Always use Worker thread for proper monthly calculations
+    // Even small updates need proper monthly/billing period recalculation
+    console.log(`[CALC] CoreDataService: Using Worker thread for proper monthly calculations`);
     return this.calculateInWorker(allEntries, true);
   }
   
@@ -666,7 +663,7 @@ class CoreDataService {
     console.log('[LOAD] CoreDataService: Force refreshing all data - FULL RECALCULATION');
     
     // Reset incremental tracking to force full recalculation
-    this.isInitialLoad = true;
+    // DO NOT set isInitialLoad = true (causes January 2001 bugs!)
     this.lastProcessedTimestamp = 0;
     this.processedEntryIds.clear();
     

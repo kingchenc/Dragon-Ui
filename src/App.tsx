@@ -44,7 +44,10 @@ function App() {
     settings,
     lastRefresh,
     isInitialized,
-    isInitializing
+    isInitializing,
+    currentAppVersion,
+    latestVersion,
+    isVersionOutdated
   } = useAppStore()
   
   const { t } = useTranslation()
@@ -165,9 +168,22 @@ function App() {
                     <h1 className="text-2xl font-bold bg-gradient-to-r from-dragon-primary to-dragon-secondary bg-clip-text text-transparent">
                       Dragon UI
                     </h1>
-                    <DragonBadge variant="dragon" className="text-xs">
-                      v{getAppVersion()}
+                    <DragonBadge 
+                      variant={isVersionOutdated ? "destructive" : "dragon"} 
+                      className={`text-xs ${isVersionOutdated ? 'animate-pulse' : ''}`}
+                    >
+                      v{currentAppVersion || getAppVersion()}
                     </DragonBadge>
+                    {isVersionOutdated && latestVersion && (
+                      <a
+                        href="https://www.npmjs.com/package/dragon-ui-claude"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-red-500 hover:text-red-400 font-medium cursor-pointer underline"
+                      >
+                        v{latestVersion} - Update Now
+                      </a>
+                    )}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {t('app.subtitle')}

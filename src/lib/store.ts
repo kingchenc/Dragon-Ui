@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { subscribeWithSelector, persist } from 'zustand/middleware'
 import { currencyService, CurrencyRate, SUPPORTED_CURRENCIES } from './currency-service'
 import { LanguageCode, DEFAULT_LANGUAGE, changeLanguage as i18nChangeLanguage } from '@/i18n'
+import { getAppVersion, fetchLatestVersion, compareVersions } from '@/lib/utils'
 import React from 'react'
 
 // Extend window interface for TypeScript in this file
@@ -167,6 +168,12 @@ interface AppState {
   activeTab: string
   setActiveTab: (tab: string) => void
   
+  // Version management
+  currentAppVersion: string
+  latestVersion: string | null
+  isVersionOutdated: boolean
+  lastVersionCheck: number
+  
   // Loading states
   isLoading: boolean
   isLoadingCurrency: boolean
@@ -248,6 +255,7 @@ interface AppState {
   changeCurrency: (newCurrency: string) => Promise<void>
   changeLanguage: (newLanguage: LanguageCode) => Promise<void>
   exportData: (dataType: string, format?: string, options?: any) => Promise<string>
+  checkForUpdates: () => Promise<void>
   
   // SSH helpers
   updateSshConfig: (config: Partial<AppState['settings']['sshConfig']>) => void
@@ -284,6 +292,12 @@ export const useAppStore = create<AppState>()(
     // Active tab management
     activeTab: 'overview',
     setActiveTab: (tab: string) => set({ activeTab: tab }),
+    
+    // Version management
+    currentAppVersion: '',
+    latestVersion: null,
+    isVersionOutdated: false,
+    lastVersionCheck: 0,
     
     // Initial state
     isLoading: false,
@@ -955,6 +969,33 @@ export const useAppStore = create<AppState>()(
         console.error('[ERR] Store: SSH connection test failed:', errorMessage)
         return { success: false, message: errorMessage }
       }
+    },
+    
+    // Check for version updates
+    checkForUpdates: async () => {
+      try {
+        const currentVersion = getAppVersion()
+        const latestVersion = await fetchLatestVersion()
+        
+        if (latestVersion) {
+          const isOutdated = compareVersions(currentVersion, latestVersion)
+          
+          set({
+            currentAppVersion: currentVersion,
+            latestVersion: latestVersion,
+            isVersionOutdated: isOutdated,
+            lastVersionCheck: Date.now()
+          })
+          
+          if (isOutdated) {
+            console.log(`[VERSION] Update available: ${currentVersion} -> ${latestVersion}`)
+          } else {
+            console.log(`[VERSION] App is up to date: ${currentVersion}`)
+          }
+        }
+      } catch (error) {
+        console.error('[VERSION] Failed to check for updates:', error)
+      }
     }
   })),
     {
@@ -1172,6 +1213,24 @@ if (typeof window !== 'undefined' && window.electronAPI) {
   setTimeout(() => {
     useAppStore.getState().initializeStore().catch(console.error)
   }, 100)
+  
+  // Setup hourly version check
+  const checkVersionPeriodically = () => {
+    const state = useAppStore.getState()
+    const now = Date.now()
+    const hourInMs = 60 * 60 * 1000 // 1 hour
+    
+    if (now - state.lastVersionCheck > hourInMs) {
+      state.checkForUpdates()
+    }
+  }
+  
+  // Check immediately and then every hour
+  setTimeout(() => {
+    const hourInMs = 60 * 60 * 1000 // 1 hour
+    useAppStore.getState().checkForUpdates()
+    setInterval(checkVersionPeriodically, hourInMs)
+  }, 5000) // Wait 5 seconds after app start
 }
 
 export default useAppStore

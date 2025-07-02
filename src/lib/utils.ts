@@ -11,6 +11,35 @@ export function getAppVersion(): string {
   return typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.0.0';
 }
 
+// Fetch latest version from npm registry
+export async function fetchLatestVersion(): Promise<string | null> {
+  try {
+    const response = await fetch('https://registry.npmjs.org/dragon-ui-claude/latest');
+    if (!response.ok) throw new Error('Failed to fetch version');
+    const data = await response.json();
+    return data.version || null;
+  } catch (error) {
+    console.error('Failed to fetch latest version:', error);
+    return null;
+  }
+}
+
+// Compare two semantic versions
+export function compareVersions(current: string, latest: string): boolean {
+  const currentParts = current.replace('v', '').split('.').map(Number);
+  const latestParts = latest.replace('v', '').split('.').map(Number);
+  
+  for (let i = 0; i < Math.max(currentParts.length, latestParts.length); i++) {
+    const currentPart = currentParts[i] || 0;
+    const latestPart = latestParts[i] || 0;
+    
+    if (latestPart > currentPart) return true;  // Update available
+    if (currentPart > latestPart) return false; // Current is newer
+  }
+  
+  return false; // Versions are equal
+}
+
 export function formatCurrency(amount: number, currency: string = 'USD'): string {
   // Safety check for null/undefined/NaN
   if (!amount || typeof amount !== 'number' || isNaN(amount) || !isFinite(amount)) {

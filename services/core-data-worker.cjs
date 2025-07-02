@@ -697,6 +697,27 @@ class CoreDataWorker {
         monthName: mostActiveMonthName,
         totalSessions: maxSessions
       };
+      
+      // Calculate month-over-month growth rate
+      if (result.monthlyData.length >= 2) {
+        const currentMonth = result.monthlyData[0]; // Most recent (sorted newest first)
+        const previousMonth = result.monthlyData[1]; // Previous month
+        
+        if (currentMonth && previousMonth && previousMonth.totalCost > 0) {
+          const growthRate = ((currentMonth.totalCost - previousMonth.totalCost) / previousMonth.totalCost) * 100;
+          result.monthlyGrowth = growthRate;
+          result.growthTrend = growthRate;
+          
+          console.log(`[GROWTH] Month-over-Month: ${currentMonth.date} ($${currentMonth.totalCost}) vs ${previousMonth.date} ($${previousMonth.totalCost}) = ${growthRate.toFixed(1)}%`);
+        } else {
+          result.monthlyGrowth = 0;
+          result.growthTrend = 0;
+        }
+      } else {
+        // Not enough data for growth calculation
+        result.monthlyGrowth = 0;
+        result.growthTrend = 0;
+      }
     } else {
       // If no monthly data but we have entries, still show at least 1 month
       result.monthsTracked = dbInfo.entryCount > 0 ? 1 : 0;
