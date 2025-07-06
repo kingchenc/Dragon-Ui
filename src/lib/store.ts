@@ -1103,10 +1103,11 @@ export const useActiveData = () => {
   // Smart auto-refresh - only when window is active and not loading
   React.useEffect(() => {
     let interval: NodeJS.Timeout | null = null
+    let isPaused = false
     
     const startSmartRefresh = () => {
-      // Only refresh if window is visible and not loading
-      if (!document.hidden && !isLoading) {
+      // Only refresh if window is visible, not loading, and not paused
+      if (!document.hidden && !isLoading && !isPaused) {
         console.log('[REFRESH] Smart refresh: Incremental update check')
         refreshCoreData().catch(console.error)
       }
@@ -1118,22 +1119,54 @@ export const useActiveData = () => {
     // Pause refresh when window is hidden to save resources
     const handleVisibilityChange = () => {
       if (document.hidden) {
+        isPaused = true
         if (interval) {
           clearInterval(interval)
           interval = null
           console.log('[PAUSE] Smart refresh: Paused (window hidden)')
         }
       } else {
+        isPaused = false
         if (!interval) {
           interval = setInterval(startSmartRefresh, 30000)
           console.log('[RESUME] Smart refresh: Resumed (window visible)')
-          // Immediate refresh when window becomes visible
-          startSmartRefresh()
+          // Delayed refresh when window becomes visible to avoid lag
+          setTimeout(() => {
+            startSmartRefresh()
+          }, 500)
         }
       }
     }
     
+    // Listen for app minimize/restore events
+    const handleAppMinimized = () => {
+      isPaused = true
+      if (interval) {
+        clearInterval(interval)
+        interval = null
+        console.log('[PAUSE] Smart refresh: Paused (app minimized)')
+      }
+    }
+    
+    const handleAppRestored = () => {
+      isPaused = false
+      if (!interval) {
+        interval = setInterval(startSmartRefresh, 30000)
+        console.log('[RESUME] Smart refresh: Resumed (app restored)')
+        // Delayed refresh when app is restored to avoid blocking UI
+        setTimeout(() => {
+          startSmartRefresh()
+        }, 1000)
+      }
+    }
+    
     document.addEventListener('visibilitychange', handleVisibilityChange)
+    
+    // Listen for electron events if available
+    if (window.electronAPI) {
+      window.electronAPI.onAppMinimized?.(handleAppMinimized)
+      window.electronAPI.onAppRestored?.(handleAppRestored)
+    }
     
     return () => {
       if (interval) clearInterval(interval)

@@ -47,6 +47,26 @@ function createWindow() {
     mainWindow = null;
   });
 
+  // Handle window minimize/restore performance
+  mainWindow.on('minimize', () => {
+    // Pause any heavy operations when minimized
+    mainWindow.webContents.send('app-minimized');
+  });
+
+  mainWindow.on('restore', () => {
+    // Resume operations and refresh UI when restored
+    mainWindow.webContents.send('app-restored');
+    // Small delay to ensure smooth restoration
+    setTimeout(() => {
+      mainWindow.webContents.send('refresh-data');
+    }, 100);
+  });
+
+  mainWindow.on('focus', () => {
+    // Ensure UI is responsive when focused
+    mainWindow.webContents.send('app-focused');
+  });
+
   // Create application menu
   createMenu();
 }

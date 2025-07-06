@@ -14,6 +14,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('toggle-theme', callback);
   },
   
+  // Listen for app state changes
+  onAppMinimized: (callback) => {
+    ipcRenderer.on('app-minimized', callback);
+  },
+  onAppRestored: (callback) => {
+    ipcRenderer.on('app-restored', callback);
+  },
+  onAppFocused: (callback) => {
+    ipcRenderer.on('app-focused', callback);
+  },
+  
   // Remove listeners
   removeAllListeners: (channel) => {
     ipcRenderer.removeAllListeners(channel);

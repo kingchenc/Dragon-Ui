@@ -53,6 +53,47 @@ function App() {
   const { t } = useTranslation()
   const { formatTime } = useTimeFormatting()
   const appRef = useRef<HTMLDivElement>(null)
+  const isMinimized = useRef(false)
+
+  // Handle app minimize/restore states
+  useEffect(() => {
+    const handleMinimized = () => {
+      isMinimized.current = true
+      // Pause heavy operations, timers, etc.
+      console.log('[APP] App minimized - pausing operations')
+    }
+
+    const handleRestored = () => {
+      if (isMinimized.current) {
+        isMinimized.current = false
+        // Resume operations and refresh data
+        console.log('[APP] App restored - resuming operations')
+        // Defer refresh to avoid blocking UI
+        setTimeout(() => {
+          refreshCoreData()
+        }, 200)
+      }
+    }
+
+    const handleFocused = () => {
+      if (isMinimized.current) {
+        isMinimized.current = false
+        // Ensure UI is responsive
+        console.log('[APP] App focused - ensuring responsiveness')
+      }
+    }
+
+    // Listen for electron events
+    if (window.electronAPI) {
+      window.electronAPI.onAppMinimized?.(handleMinimized)
+      window.electronAPI.onAppRestored?.(handleRestored)
+      window.electronAPI.onAppFocused?.(handleFocused)
+    }
+
+    return () => {
+      // Cleanup listeners if needed
+    }
+  }, [refreshCoreData])
 
   // Screenshot functionality with hotkey L (DISABLED)
   const handleScreenshot = async () => {
