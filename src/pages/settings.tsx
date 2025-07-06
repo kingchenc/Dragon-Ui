@@ -194,6 +194,20 @@ export default function SettingsPage() {
     updateSettings({ dragonEffects: !settings.dragonEffects })
   }
 
+  const toggleDevTools = async () => {
+    const newValue = !settings.devToolsEnabled
+    updateSettings({ devToolsEnabled: newValue })
+    
+    // Apply immediately
+    if (window.electronAPI) {
+      if (newValue) {
+        await window.electronAPI.openDevTools()
+      } else {
+        await window.electronAPI.closeDevTools()
+      }
+    }
+  }
+
   const updateTimeFormat = (format: '12h' | '24h') => {
     updateSettings({ timeFormat: format })
   }
@@ -427,6 +441,22 @@ export default function SettingsPage() {
               onClick={toggleDragonEffects}
             >
               {settings.dragonEffects ? t('pages.settings.appearance.dragonEffects.enabled') : t('pages.settings.appearance.dragonEffects.disabled')}
+            </Button>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="font-semibold">Developer Tools</h4>
+              <p className="text-sm text-muted-foreground">
+                Enable automatic opening of developer tools (F12 always works)
+              </p>
+            </div>
+            <Button
+              variant={settings.devToolsEnabled ? "dragon" : "outline"}
+              size="sm"
+              onClick={toggleDevTools}
+            >
+              {settings.devToolsEnabled ? 'Enabled' : 'Disabled'}
             </Button>
           </div>
         </CardContent>

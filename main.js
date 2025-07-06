@@ -36,10 +36,17 @@ function createWindow() {
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
     
-    // Focus on window
+    // Dev tools only in development mode by default
+    // Users can still open manually with F12/Ctrl+Shift+I
     if (isDev) {
       mainWindow.webContents.openDevTools();
     }
+  });
+
+  // Listen for dev tools setting changes
+  mainWindow.webContents.on('dom-ready', () => {
+    // Dev tools can be controlled via settings
+    // Default keyboard shortcuts (F12, Ctrl+Shift+I) always work
   });
 
   // Handle window closed
@@ -160,6 +167,31 @@ app.on('web-contents-created', (event, contents) => {
 // IPC handlers
 ipcMain.handle('get-app-version', () => {
   return app.getVersion();
+});
+
+// Dev tools control
+ipcMain.handle('toggle-dev-tools', () => {
+  if (mainWindow) {
+    mainWindow.webContents.toggleDevTools();
+    return { success: true };
+  }
+  return { success: false, error: 'No main window' };
+});
+
+ipcMain.handle('open-dev-tools', () => {
+  if (mainWindow) {
+    mainWindow.webContents.openDevTools();
+    return { success: true };
+  }
+  return { success: false, error: 'No main window' };
+});
+
+ipcMain.handle('close-dev-tools', () => {
+  if (mainWindow) {
+    mainWindow.webContents.closeDevTools();
+    return { success: true };
+  }
+  return { success: false, error: 'No main window' };
 });
 
 ipcMain.handle('export-data', async (event, data, filename) => {

@@ -219,6 +219,7 @@ interface AppState {
     compactScale: number // 50% - 100% scale
     showAnimations: boolean
     dragonEffects: boolean // Dragon flame hover effects
+    devToolsEnabled: boolean // Enable/disable dev tools
     billingCycleDay: number
     claudePaths: {
       standardPaths: string[]
@@ -359,6 +360,7 @@ export const useAppStore = create<AppState>()(
       compactScale: 100, // Default 100% (normal size)
       showAnimations: true,
       dragonEffects: true, // Default enabled
+      devToolsEnabled: false, // Default disabled for production
       billingCycleDay: 1, // Default to 1st of each month
       claudePaths: {
         standardPaths: [],

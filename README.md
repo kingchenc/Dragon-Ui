@@ -165,7 +165,7 @@ npx dragon-ui-claude
 - **Multi-Language:** 9 languages with live switching (EN, DE, FR, ES, IT, PT, NL, JA, ZH)
 - **Multi-Currency:** 12 currencies with real-time conversion (USD, EUR, GBP, JPY, etc.)
 - **Global Timezones:** 8 supported zones with live clock (Auto, UTC, EST, PST, GMT, CET, JST, AEST)
-- **Appearance:** Dark/light themes, compact mode (50%-100% scale), animations, dragon effects
+- **Appearance:** Dark/light themes, compact mode (50%-100% scale), animations, dragon effects, dev tools toggle
 - **Billing & Refresh:** Custom billing cycles, auto-refresh intervals (30s-1h)
 - **Project Management:** Claude project detection, custom paths, SSH support
 - **Data Tools:** Modern database dialogs, CSV/JSON export, backup capabilities
