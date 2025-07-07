@@ -126,7 +126,7 @@ class DatabaseService {
   // INSERT operations
   insertEntry(entry) {
     try {
-      // Final timestamp validation before database insert
+      // Session-aware timestamp validation before database insert
       let validatedTimestamp = entry.timestamp;
       if (!entry.timestamp || typeof entry.timestamp !== 'string') {
         console.log(`[DB] 🚨 Invalid timestamp at insert, using current time: ${entry.timestamp}`);
@@ -136,8 +136,15 @@ class DatabaseService {
         if (isNaN(date.getTime()) || date.getFullYear() < 2020) {
           console.log(`[DB] 🚨 Corrupt timestamp at insert, using current time: ${entry.timestamp} -> ${validatedTimestamp}`);
           validatedTimestamp = new Date().toISOString();
-        } else if (entry.timestamp !== validatedTimestamp) {
-          console.log(`[DB] ✅ Valid timestamp: ${entry.timestamp}`);
+        } else {
+          // Session-based validation: Check if timestamp makes sense for this session
+          if (entry.session_id) {
+            const sessionValidation = this.validateTimestampForSession(entry.session_id, entry.timestamp);
+            if (!sessionValidation.valid) {
+              console.log(`[DB] 🚨 Session ${entry.session_id}: Timestamp ${entry.timestamp} conflicts with session timeline. ${sessionValidation.reason}`);
+              validatedTimestamp = sessionValidation.suggestedTimestamp || new Date().toISOString();
+            }
+          }
         }
       }
       
@@ -440,6 +447,7 @@ class DatabaseService {
   }
 
   getDailyFinancialStats(days = 30) {
+    // Simple calendar day grouping: All financial activity per day
     const stmt = this.db.prepare(`
       SELECT 
         date(timestamp) as date,
@@ -457,7 +465,7 @@ class DatabaseService {
       ORDER BY date ASC
     `);
     const result = stmt.all();
-    console.log(`[DB] Daily financial stats for last ${days} days: ${result.length} entries`);
+    console.log(`[DB] 💰 Daily financial stats (calendar day based) for last ${days} days: ${result.length} entries`);
     
     // Calculate running total for enhanced chart
     let runningTotal = 0;
@@ -474,41 +482,60 @@ class DatabaseService {
   }
 
   getDailyStats(days = 7) {
+    // Generate complete date range first
+    const dateRange = [];
+    for (let i = 0; i < days; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      dateRange.push(date.toISOString().split('T')[0]);
+    }
+    
+    // Get actual usage data
     const stmt = this.db.prepare(`
       SELECT 
         date(timestamp) as date,
         SUM(cost) as total_cost,
         SUM(input_tokens + output_tokens + cache_creation_input_tokens + cache_read_input_tokens) as total_tokens,
-        COUNT(DISTINCT model) as model_count
+        COUNT(DISTINCT session_id) as session_count,
+        COUNT(DISTINCT model) as model_count,
+        GROUP_CONCAT(DISTINCT model) as models,
+        COUNT(*) as entry_count,
+        MIN(timestamp) as first_activity,
+        MAX(timestamp) as last_activity
       FROM usage_entries 
       WHERE timestamp >= datetime('now', '-${days} days')
+        AND timestamp IS NOT NULL 
+        AND date(timestamp) >= '2020-01-01'
       GROUP BY date(timestamp)
       ORDER BY date DESC
     `);
-    const dailyData = stmt.all();
     
-    // For each day, count sessions that STARTED on that day (not just had activity)
-    const enhancedDailyData = dailyData.map(day => {
-      const sessionCountStmt = this.db.prepare(`
-        SELECT COUNT(DISTINCT session_id) as session_count
-        FROM usage_entries 
-        WHERE session_id IN (
-          SELECT session_id 
-          FROM usage_entries 
-          GROUP BY session_id 
-          HAVING date(MIN(timestamp)) = ?
-        )
-        AND date(timestamp) = ?
-      `);
-      const sessionResult = sessionCountStmt.get(day.date, day.date);
-      
-      return {
-        ...day,
-        session_count: sessionResult.session_count || 0
+    const usageData = stmt.all().reduce((acc, row) => {
+      acc[row.date] = {
+        ...row,
+        models: row.models ? row.models.split(',').filter(m => m && m.trim()) : []
+      };
+      return acc;
+    }, {});
+    
+    // Fill in complete date range with zeros for missing days
+    const dailyData = dateRange.map(date => {
+      return usageData[date] || {
+        date,
+        total_cost: 0,
+        total_tokens: 0,
+        session_count: 0,
+        model_count: 0,
+        models: [],
+        entry_count: 0,
+        first_activity: null,
+        last_activity: null
       };
     });
     
-    return enhancedDailyData;
+    console.log(`[DB] 📅 Daily stats (calendar day based): ${dailyData.length} days, complete ${days}-day range`);
+    
+    return dailyData;
   }
 
   /**
@@ -833,6 +860,7 @@ class DatabaseService {
 
   cleanupCorruptedTimestamps() {
     try {
+      // Step 1: Clean up obviously corrupted timestamps
       const stmt = this.db.prepare(`
         DELETE FROM usage_entries 
         WHERE timestamp IS NULL 
@@ -842,11 +870,164 @@ class DatabaseService {
            OR strftime('%Y', timestamp) = '1970'
            OR strftime('%Y', timestamp) = '2001'
       `);
-      const result = stmt.run();
-      console.log(`[DB] Cleaned up ${result.changes} corrupted timestamp entries`);
-      return result.changes;
+      const basicCleanup = stmt.run();
+      console.log(`[DB] Basic cleanup: ${basicCleanup.changes} corrupted timestamp entries`);
+      
+      // Step 2: Session ID-based validation and cleanup
+      const sessionValidation = this.validateSessionTimestamps();
+      
+      return basicCleanup.changes + sessionValidation;
     } catch (error) {
       console.error('[ERR] Failed to cleanup corrupted timestamps:', error);
+      return 0;
+    }
+  }
+
+  validateTimestampForSession(sessionId, timestamp) {
+    try {
+      // Get existing entries for this session
+      const sessionStmt = this.db.prepare(`
+        SELECT timestamp, strftime('%Y', timestamp) as year
+        FROM usage_entries 
+        WHERE session_id = ?
+        ORDER BY timestamp
+      `);
+      const sessionEntries = sessionStmt.all(sessionId);
+      
+      if (sessionEntries.length === 0) {
+        // New session - timestamp is valid
+        return { valid: true };
+      }
+      
+      const entryDate = new Date(timestamp);
+      const entryYear = entryDate.getFullYear();
+      
+      // Check if year makes sense
+      if (entryYear < 2020 || entryYear > new Date().getFullYear() + 1) {
+        return {
+          valid: false,
+          reason: `Invalid year ${entryYear}`,
+          suggestedTimestamp: new Date().toISOString()
+        };
+      }
+      
+      // Get session's valid timestamp range
+      const validEntries = sessionEntries.filter(entry => {
+        const year = parseInt(entry.year);
+        return year >= 2020 && year <= new Date().getFullYear() + 1;
+      });
+      
+      if (validEntries.length > 0) {
+        const sessionStart = new Date(validEntries[0].timestamp);
+        const sessionEnd = new Date(validEntries[validEntries.length - 1].timestamp);
+        
+        // Check if new timestamp is within reasonable session bounds (max 24 hours gap)
+        const maxGapMs = 24 * 60 * 60 * 1000; // 24 hours
+        const timeSinceStart = entryDate.getTime() - sessionStart.getTime();
+        const timeSinceEnd = entryDate.getTime() - sessionEnd.getTime();
+        
+        if (timeSinceStart < -maxGapMs) {
+          return {
+            valid: false,
+            reason: `Timestamp too far before session start (${Math.abs(timeSinceStart / (60 * 60 * 1000)).toFixed(1)}h gap)`,
+            suggestedTimestamp: new Date().toISOString()
+          };
+        }
+        
+        if (timeSinceEnd > maxGapMs) {
+          return {
+            valid: false,
+            reason: `Timestamp too far after session end (${(timeSinceEnd / (60 * 60 * 1000)).toFixed(1)}h gap)`,
+            suggestedTimestamp: new Date().toISOString()
+          };
+        }
+      }
+      
+      return { valid: true };
+      
+    } catch (error) {
+      console.error('[ERR] Session timestamp validation error:', error);
+      return { valid: true }; // Default to valid on error
+    }
+  }
+
+  validateSessionTimestamps() {
+    try {
+      console.log('[DB] 🔍 Starting session-based timestamp validation...');
+      
+      // Get all sessions with their timestamp ranges
+      const sessionStmt = this.db.prepare(`
+        SELECT 
+          session_id,
+          COUNT(*) as entry_count,
+          MIN(timestamp) as first_timestamp,
+          MAX(timestamp) as last_timestamp,
+          julianday(MAX(timestamp)) - julianday(MIN(timestamp)) as session_duration_days
+        FROM usage_entries 
+        WHERE session_id IS NOT NULL 
+        GROUP BY session_id
+        HAVING session_duration_days > 30  -- Sessions longer than 30 days are suspicious
+      `);
+      
+      const suspiciousSessions = sessionStmt.all();
+      let cleanedCount = 0;
+      
+      for (const session of suspiciousSessions) {
+        console.log(`[DB] 🚨 Suspicious session ${session.session_id}: ${session.session_duration_days} days duration`);
+        
+        // Get all entries for this session
+        const entriesStmt = this.db.prepare(`
+          SELECT id, timestamp, strftime('%Y', timestamp) as year
+          FROM usage_entries 
+          WHERE session_id = ?
+          ORDER BY timestamp
+        `);
+        const entries = entriesStmt.all(session.session_id);
+        
+        // Find corrupted entries (wrong year) within valid sessions
+        const corruptedEntries = entries.filter(entry => {
+          const year = parseInt(entry.year);
+          return year < 2020 || year > new Date().getFullYear() + 1;
+        });
+        
+        if (corruptedEntries.length > 0) {
+          console.log(`[DB] 💡 Session ${session.session_id}: Found ${corruptedEntries.length} entries with corrupted timestamps`);
+          
+          // Calculate session's most likely timestamp range from valid entries
+          const validEntries = entries.filter(entry => {
+            const year = parseInt(entry.year);
+            return year >= 2020 && year <= new Date().getFullYear() + 1;
+          });
+          
+          if (validEntries.length > 0) {
+            // Fix corrupted entries by interpolating based on valid session data
+            const sessionStart = new Date(validEntries[0].timestamp);
+            const sessionEnd = new Date(validEntries[validEntries.length - 1].timestamp);
+            
+            console.log(`[DB] 🔧 Fixing ${corruptedEntries.length} corrupted entries in session ${session.session_id}`);
+            
+            const deleteStmt = this.db.prepare('DELETE FROM usage_entries WHERE id = ?');
+            for (const corruptedEntry of corruptedEntries) {
+              deleteStmt.run(corruptedEntry.id);
+              cleanedCount++;
+            }
+            
+            console.log(`[DB] ✅ Session ${session.session_id}: Removed ${corruptedEntries.length} corrupted entries`);
+          } else {
+            // No valid entries in session - remove entire session
+            console.log(`[DB] 🗑️ Session ${session.session_id}: No valid entries, removing entire session`);
+            const deleteSessionStmt = this.db.prepare('DELETE FROM usage_entries WHERE session_id = ?');
+            const result = deleteSessionStmt.run(session.session_id);
+            cleanedCount += result.changes;
+          }
+        }
+      }
+      
+      console.log(`[DB] ✅ Session validation completed: ${cleanedCount} corrupted entries fixed`);
+      return cleanedCount;
+      
+    } catch (error) {
+      console.error('[ERR] Session timestamp validation failed:', error);
       return 0;
     }
   }

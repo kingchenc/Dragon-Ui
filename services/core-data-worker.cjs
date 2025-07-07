@@ -96,7 +96,7 @@ class CoreDataWorker {
     const sessionStats = this.db.getSessionStats();
     const projectStats = this.db.getProjectStats();
     const monthlyStats = this.db.getMonthlyStats(billingCycleDay); // Use billing cycle
-    const dailyStats = this.db.getDailyStatsBySessionStart(7); // Use session-start-date grouping
+    const dailyStats = this.db.getDailyStats(7); // Use pure calendar day grouping
     const dailyFinancialStats = this.db.getDailyFinancialStats(30); // Last 30 days for chart
     
     // Lightning-fast DB calculations
