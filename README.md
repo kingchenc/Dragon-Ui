@@ -16,6 +16,17 @@ Dragon UI is a high-performance desktop application that provides comprehensive 
 npm install -g dragon-ui-claude
 ```
 
+**Run Dragon UI:**
+```bash
+# Electron GUI (default)
+dragon-ui-claude
+
+# CLI version  
+dragon-ui-claude-cli
+# or
+dragon-ui-claude --cli
+```
+
 ![Electron](https://img.shields.io/badge/Electron-28.0.0-47848F?style=for-the-badge&logo=electron)
 ![React](https://img.shields.io/badge/React-18.2.0-61DAFB?style=for-the-badge&logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.2.2-3178C6?style=for-the-badge&logo=typescript)
@@ -79,14 +90,49 @@ npm install -g dragon-ui-claude
 # Install globally via npm
 npm install -g dragon-ui-claude
 
-# Run Dragon UI
+# Run Dragon UI (Electron GUI - default)
 dragon-ui-claude
 
+# Run CLI version
+dragon-ui-claude-cli
+# or
+dragon-ui-claude --cli
+
 # Or run without installing
-npx dragon-ui-claude
+npx dragon-ui-claude       # GUI version
+npx dragon-ui-claude-cli   # CLI version
+npx dragon-ui-claude --cli # CLI version (alternative)
 ```
 
-> **Why Dragon UI?** The fastest, most comprehensive **Claude Code Max** usage dashboard with real-time analytics, multi-language support, and intelligent automation. No configuration needed - just install and run!
+> **Why Dragon UI?** The fastest, most comprehensive **Claude Code Max** usage dashboard with real-time analytics, **dual interface options (GUI + CLI)**, multi-language support, and intelligent automation. No configuration needed - just install and run!
+
+## 🚀 Interface Options
+
+### 🖥️ **Dual Interface Options**
+- **Electron GUI** - Beautiful desktop application with dragon-inspired design and animations
+- **CLI Interface** - Powerful command-line interface for terminal enthusiasts and server environments
+- **Same Data** - Both interfaces share the same SQLite database and features
+- **Live Updates** - Real-time data synchronization across both interfaces
+- **Settings Sync** - Preferences and configurations work across GUI and CLI
+
+### 💻 **CLI Features**
+- **Interactive Navigation** - Number-based commands (0-6) for easy page switching
+- **Colored Output** - Beautiful terminal colors with monochrome fallback option
+- **ASCII Tables** - Professional data presentation with minimal and detailed table styles
+- **Live Dashboard** - Real-time updates with configurable refresh intervals (1-60 seconds)
+- **Settings Management** - Toggle colors, table styles, and refresh rates on the fly
+- **Complete Analytics** - All GUI features available in CLI: Overview, Projects, Sessions, Monthly, Daily, Active
+- **Smart Formatting** - Currency, numbers, dates, and durations formatted for terminal display
+- **Help System** - Built-in help and navigation assistance
+
+### 🖥️ **GUI Features**
+- **Dragon-Inspired Design** - Beautiful dark/light themes with dragon scale patterns and flame effects
+- **Real-time Analytics** - Live dashboard with comprehensive usage statistics
+- **Multi-Language Support** - 9 languages with instant switching (EN, DE, FR, ES, IT, PT, NL, JA, ZH)
+- **Multi-Currency** - 12 currencies with real-time conversion and live exchange rates
+- **Advanced Charts** - Activity charts, financial trends, usage patterns with Chart.js
+- **Smart Animations** - Smooth transitions with accessibility support and reduce-motion detection
+- **Responsive Layout** - Adapts beautifully to different screen sizes and orientations
 
 ## ✨ Features
 
@@ -184,13 +230,23 @@ npx dragon-ui-claude
 git clone https://github.com/KingchenC/dragon-ui
 cd dragon-ui && npm install
 
-# Development
+# Development - GUI
 npm run dev          # Vite dev server
 npm run electron     # Launch Electron
+
+# Development - CLI
+node cli/index.cjs   # Test CLI directly
+npm run start        # Build and run GUI
+dragon-ui-claude-cli # Test CLI after install
 
 # Building & Distribution
 npm run build        # Production build
 npm run dist         # Create installer/DMG/AppImage
+
+# CLI Testing Commands
+node cli/index.cjs --help     # Show CLI help
+node cli/index.cjs --no-color # Test without colors
+node cli/index.cjs --minimal  # Test minimal tables
 ```
 
 ### System Requirements

@@ -6,7 +6,8 @@
   "description": "🐲 Ultra-fast, cross-platform Claude Code Max usage dashboard with dragon-inspired design, advanced background services, and multi-currency support",
   "main": "main.cjs",
   "bin": {
-    "dragon-ui-claude": "./bin/dragon-ui.js"
+    "dragon-ui-claude": "./bin/dragon-ui.js",
+    "dragon-ui-claude-cli": "./cli/index.cjs"
   },
   "homepage": "./",
   "scripts": {
@@ -28,19 +29,25 @@
     "@radix-ui/react-slot": "^1.0.2",
     "@radix-ui/react-tabs": "^1.0.4",
     "better-sqlite3": "^12.1.1",
+    "chalk": "^5.3.0",
     "chart.js": "^4.4.0",
     "class-variance-authority": "^0.7.0",
+    "cli-table3": "^0.6.3",
     "clsx": "^2.0.0",
+    "commander": "^11.1.0",
     "date-fns": "^2.30.0",
     "electron": "^28.0.0",
     "electron-is-dev": "^2.0.0",
+    "figlet": "^1.7.0",
     "framer-motion": "^10.16.5",
     "glob": "^10.3.10",
+    "inquirer": "^9.2.12",
     "lucide-react": "^0.294.0",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.2.0",
     "smart-buffer": "^4.2.0",
+    "sql.js": "^1.13.0",
     "tailwind-merge": "^2.0.0",
     "zustand": "^4.4.7"
   },
@@ -95,7 +102,8 @@
       "services/**/*",
       "public/**/*",
       "!node_modules/**/*",
-      "node_modules/better-sqlite3/**/*"
+      "node_modules/better-sqlite3/**/*",
+      "node_modules/sql.js/**/*"
     ],
     "extraResources": [
       "services/**/*"
