@@ -90,8 +90,8 @@
     },
     "files": [
       "dist/**/*",
-      "main.js",
-      "preload.js",
+      "main.cjs",
+      "preload.cjs",
       "services/**/*",
       "public/**/*",
       "!node_modules/**/*",
