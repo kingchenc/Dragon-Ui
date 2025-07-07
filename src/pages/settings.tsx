@@ -208,6 +208,10 @@ export default function SettingsPage() {
     }
   }
 
+  const toggleAutoUpdateNotifications = () => {
+    updateSettings({ autoUpdateNotifications: !settings.autoUpdateNotifications })
+  }
+
   const updateTimeFormat = (format: '12h' | '24h') => {
     updateSettings({ timeFormat: format })
   }
@@ -457,6 +461,22 @@ export default function SettingsPage() {
               onClick={toggleDevTools}
             >
               {settings.devToolsEnabled ? 'Enabled' : 'Disabled'}
+            </Button>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="font-semibold">Auto-Update Notifications</h4>
+              <p className="text-sm text-muted-foreground">
+                Show popup when new Dragon UI version is available
+              </p>
+            </div>
+            <Button
+              variant={settings.autoUpdateNotifications ? "dragon" : "outline"}
+              size="sm"
+              onClick={toggleAutoUpdateNotifications}
+            >
+              {settings.autoUpdateNotifications ? 'Enabled' : 'Disabled'}
             </Button>
           </div>
         </CardContent>

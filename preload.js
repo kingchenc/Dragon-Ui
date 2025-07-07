@@ -11,6 +11,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openDevTools: () => ipcRenderer.invoke('open-dev-tools'),
   closeDevTools: () => ipcRenderer.invoke('close-dev-tools'),
   
+  // Auto-update
+  performUpdate: () => ipcRenderer.invoke('perform-update'),
+  
   // Listen for menu actions
   onRefreshData: (callback) => {
     ipcRenderer.on('refresh-data', callback);

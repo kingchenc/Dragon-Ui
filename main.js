@@ -194,6 +194,44 @@ ipcMain.handle('close-dev-tools', () => {
   return { success: false, error: 'No main window' };
 });
 
+// Auto-update handler
+ipcMain.handle('perform-update', async () => {
+  try {
+    console.log('[UPDATE] Performing self-update...');
+    
+    const { spawn } = require('child_process');
+    
+    // Cross-platform command execution
+    let updateProcess;
+    
+    if (process.platform === 'win32') {
+      // Windows
+      updateProcess = spawn('cmd', ['/c', 'npm install -g dragon-ui-claude@latest && dragon-ui'], {
+        detached: true,
+        stdio: 'ignore'
+      });
+    } else {
+      // macOS, Linux, Unix
+      updateProcess = spawn('sh', ['-c', 'npm install -g dragon-ui-claude@latest && dragon-ui'], {
+        detached: true,
+        stdio: 'ignore'
+      });
+    }
+    
+    updateProcess.unref();
+    
+    // Close current app after short delay
+    setTimeout(() => {
+      app.quit();
+    }, 2000);
+    
+    return { success: true };
+  } catch (error) {
+    console.error('[UPDATE] Update failed:', error);
+    return { success: false, error: error.message };
+  }
+});
+
 ipcMain.handle('export-data', async (event, data, filename) => {
   const { dialog } = require('electron');
   const fs = require('fs');

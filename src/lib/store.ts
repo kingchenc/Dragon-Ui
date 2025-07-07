@@ -220,6 +220,7 @@ interface AppState {
     showAnimations: boolean
     dragonEffects: boolean // Dragon flame hover effects
     devToolsEnabled: boolean // Enable/disable dev tools
+    autoUpdateNotifications: boolean // Enable/disable update popups
     billingCycleDay: number
     claudePaths: {
       standardPaths: string[]
@@ -257,6 +258,7 @@ interface AppState {
   changeLanguage: (newLanguage: LanguageCode) => Promise<void>
   exportData: (dataType: string, format?: string, options?: any) => Promise<string>
   checkForUpdates: () => Promise<void>
+  performUpdate: () => Promise<void>
   
   // SSH helpers
   updateSshConfig: (config: Partial<AppState['settings']['sshConfig']>) => void
@@ -361,6 +363,7 @@ export const useAppStore = create<AppState>()(
       showAnimations: true,
       dragonEffects: true, // Default enabled
       devToolsEnabled: false, // Default disabled for production
+      autoUpdateNotifications: true, // Default enabled for updates
       billingCycleDay: 1, // Default to 1st of each month
       claudePaths: {
         standardPaths: [],
@@ -991,12 +994,48 @@ export const useAppStore = create<AppState>()(
           
           if (isOutdated) {
             console.log(`[VERSION] Update available: ${currentVersion} -> ${latestVersion}`)
+            
+            // Show update popup if notifications enabled
+            const settings = get().settings
+            if (settings.autoUpdateNotifications) {
+              // Trigger update popup (will be handled by App.tsx)
+              window.dispatchEvent(new CustomEvent('show-update-popup', {
+                detail: { currentVersion, latestVersion }
+              }))
+            }
           } else {
             console.log(`[VERSION] App is up to date: ${currentVersion}`)
           }
         }
       } catch (error) {
         console.error('[VERSION] Failed to check for updates:', error)
+      }
+    },
+
+    // Perform update
+    performUpdate: async () => {
+      try {
+        console.log('[UPDATE] Starting auto-update process...')
+        console.log('[UPDATE] electronAPI available:', !!window.electronAPI)
+        console.log('[UPDATE] electronAPI keys:', window.electronAPI ? Object.keys(window.electronAPI) : 'null')
+        console.log('[UPDATE] performUpdate available:', !!window.electronAPI?.performUpdate)
+        
+        if (window.electronAPI?.performUpdate) {
+          console.log('[UPDATE] Calling electronAPI.performUpdate...')
+          const result = await window.electronAPI.performUpdate()
+          console.log('[UPDATE] Result:', result)
+          
+          if (result.success) {
+            console.log('[UPDATE] Update completed successfully - app should restart')
+          } else {
+            throw new Error(result.error || 'Update failed')
+          }
+        } else {
+          throw new Error('Auto-update not available. Please update manually: npm install -g dragon-ui-claude@latest')
+        }
+      } catch (error) {
+        console.error('[UPDATE] Update failed:', error)
+        set({ error: 'Update failed: ' + (error instanceof Error ? error.message : 'Unknown error') })
       }
     }
   })),

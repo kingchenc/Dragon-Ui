@@ -66,6 +66,19 @@ declare global {
       takeFullPageScreenshot: () => Promise<{ success: boolean; filePath?: string; message?: string; error?: string }>;
       onHotkeyScreenshot: (callback: () => void) => void;
       
+      // Dev tools control
+      toggleDevTools: () => Promise<{ success: boolean; error?: string }>;
+      openDevTools: () => Promise<{ success: boolean; error?: string }>;
+      closeDevTools: () => Promise<{ success: boolean; error?: string }>;
+      
+      // Auto-update
+      performUpdate: () => Promise<{ success: boolean; error?: string }>;
+      
+      // App state events
+      onAppMinimized: (callback: () => void) => void;
+      onAppRestored: (callback: () => void) => void;
+      onAppFocused: (callback: () => void) => void;
+      
       // SSH Support
       'ssh-set-config': (config: SSHConfig) => Promise<{ success: boolean; message?: string; error?: string }>;
       'ssh-get-config': () => Promise<{ success: boolean; data?: SSHConfig; error?: string }>;

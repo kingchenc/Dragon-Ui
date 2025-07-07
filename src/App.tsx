@@ -5,6 +5,7 @@ import { LoadingOverlay, DragonLoading } from '@/components/ui/loading'
 import { Button } from '@/components/ui/button'
 import { DragonCard } from '@/components/ui/card'
 import { DragonBadge } from '@/components/ui/badge'
+import { UpdatePopup } from '@/components/ui/update-popup'
 import { useAppStore } from '@/lib/store'
 import { useTimeFormatting } from '@/lib/hooks'
 import { useTranslation, initializeLanguage, changeLanguage } from '@/i18n'
@@ -18,7 +19,8 @@ import {
   Activity, 
   Settings,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  Download
 } from 'lucide-react'
 
 // Import page components (we'll create these next)
@@ -47,13 +49,15 @@ function App() {
     isInitializing,
     currentAppVersion,
     latestVersion,
-    isVersionOutdated
+    isVersionOutdated,
+    performUpdate
   } = useAppStore()
   
   const { t } = useTranslation()
   const { formatTime } = useTimeFormatting()
   const appRef = useRef<HTMLDivElement>(null)
   const isMinimized = useRef(false)
+  const [showUpdatePopup, setShowUpdatePopup] = React.useState(false)
 
   // Handle app minimize/restore states
   useEffect(() => {
@@ -94,6 +98,18 @@ function App() {
       // Cleanup listeners if needed
     }
   }, [refreshCoreData])
+
+  // Listen for update popup events
+  useEffect(() => {
+    const handleShowUpdatePopup = (event: CustomEvent) => {
+      setShowUpdatePopup(true)
+    }
+
+    window.addEventListener('show-update-popup', handleShowUpdatePopup as EventListener)
+    return () => {
+      window.removeEventListener('show-update-popup', handleShowUpdatePopup as EventListener)
+    }
+  }, [])
 
   // Screenshot functionality with hotkey L (DISABLED)
   const handleScreenshot = async () => {
@@ -215,16 +231,6 @@ function App() {
                     >
                       v{currentAppVersion || getAppVersion()}
                     </DragonBadge>
-                    {isVersionOutdated && latestVersion && (
-                      <a
-                        href="https://www.npmjs.com/package/dragon-ui-claude"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-red-500 hover:text-red-400 font-medium cursor-pointer underline"
-                      >
-                        v{latestVersion} - Update Now
-                      </a>
-                    )}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {t('app.subtitle')}
@@ -234,6 +240,18 @@ function App() {
             </div>
 
             <div className="flex items-center space-x-4">
+              {/* Update Button with breathing animation */}
+              {isVersionOutdated && latestVersion && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setShowUpdatePopup(true)}
+                  className="flex items-center space-x-2 animate-pulse hover:animate-none dragon-breathing"
+                >
+                  <Download className="h-4 w-4" />
+                  <span>Update to v{latestVersion}</span>
+                </Button>
+              )}
               {lastRefresh && (
                 <span className="text-xs text-muted-foreground">
                   {t('app.updated')} {formatLastUpdate()}
@@ -348,6 +366,15 @@ function App() {
           </div>
         </div>
       </footer>
+
+      {/* Update Popup */}
+      <UpdatePopup
+        isOpen={showUpdatePopup}
+        onClose={() => setShowUpdatePopup(false)}
+        currentVersion={currentAppVersion || getAppVersion()}
+        latestVersion={latestVersion || 'unknown'}
+        onUpdate={performUpdate}
+      />
     </div>
   )
 }

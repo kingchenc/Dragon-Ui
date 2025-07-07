@@ -218,6 +218,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   exportData: (data, filename) => ipcRenderer.invoke('export-data', data, filename),
   
+  // Dev tools control
+  toggleDevTools: () => ipcRenderer.invoke('toggle-dev-tools'),
+  openDevTools: () => ipcRenderer.invoke('open-dev-tools'),
+  closeDevTools: () => ipcRenderer.invoke('close-dev-tools'),
+  
+  // Auto-update
+  performUpdate: () => ipcRenderer.invoke('perform-update'),
+  
   // Generic invoke method for store.ts
   invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
   

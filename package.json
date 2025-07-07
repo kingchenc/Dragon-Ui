@@ -1,7 +1,7 @@
 {
   "name": "dragon-ui-claude",
   "private": false,
-  "version": "1.1.1",
+  "version": "1.1.0",
   "type": "module",
   "description": "🐲 Ultra-fast, cross-platform Claude Code Max usage dashboard with dragon-inspired design, advanced background services, and multi-currency support",
   "main": "main.cjs",
