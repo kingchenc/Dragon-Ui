@@ -3,6 +3,7 @@ const path = require('path');
 const glob = require('glob');
 const DatabaseService = require('./database.cjs');
 const { sshService } = require('./ssh-service.cjs');
+const { modelPriceService } = require('./model-price-service.cjs');
 
 /**
  * Data Loader Service
@@ -277,7 +278,7 @@ class DataLoaderService {
   }
 
   /**
-   * Claude pricing model - Updated for Claude 4 models
+   * Claude pricing model - Now uses dynamic pricing from LiteLLM
    */
   calculateCost(usage, model = 'unknown') {
     const inputTokens = usage.input_tokens || 0;
@@ -290,31 +291,12 @@ class DataLoaderService {
       console.log(`[COST] Calculating cost for model: "${model}"`);
     }
     
-    // Claude 4 and Claude 3 pricing (official Anthropic rates)
-    let inputRate = 3.0;   // Default: Sonnet 3.5/4
-    let outputRate = 15.0; 
-    let cacheCreateRate = 3.75; // 1.25x base rate for Sonnet
-    let cacheReadRate = 0.30;   // Standard cache read rate
-    
-    if (model.includes('opus')) {
-      // Claude 3/4 Opus pricing
-      inputRate = 15.0;  
-      outputRate = 75.0;
-      cacheCreateRate = 18.75; // 1.25x base rate
-      cacheReadRate = 1.50;    // Higher cache read for Opus
-    } else if (model.includes('haiku')) {
-      // Claude 3.5 Haiku pricing (corrected to match Anthropic pricing)
-      inputRate = 0.80;  
-      outputRate = 4.00;
-      cacheCreateRate = 1.00;  // Cache write rate for Haiku
-      cacheReadRate = 0.08;    // Cache read rate for Haiku
-    } else if (model.includes('sonnet-4') || model.includes('sonnet-3.5')) {
-      // Sonnet 3.5/4 (already set as default)
-      inputRate = 3.0;
-      outputRate = 15.0;
-      cacheCreateRate = 3.75;
-      cacheReadRate = 0.30;
-    }
+    // Get current pricing from model price service (with fallback to defaults)
+    const pricing = modelPriceService.getModelPrices(model);
+    const inputRate = pricing.input;
+    const outputRate = pricing.output;
+    const cacheCreateRate = pricing.cacheWrite;
+    const cacheReadRate = pricing.cacheRead;
     
     const inputCost = (inputTokens / 1000000) * inputRate;
     const outputCost = (outputTokens / 1000000) * outputRate;

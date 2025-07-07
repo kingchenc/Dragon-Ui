@@ -226,6 +226,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Auto-update
   performUpdate: () => ipcRenderer.invoke('perform-update'),
   
+  // Model price service
+  getModelPrices: () => ipcRenderer.invoke('model-prices-get-all'),
+  getModelPricingStats: () => ipcRenderer.invoke('model-prices-get-stats'),
+  forceUpdatePrices: () => ipcRenderer.invoke('model-prices-force-update'),
+  getModelPricing: (model) => ipcRenderer.invoke('model-prices-get-for-model', model),
+  
   // Generic invoke method for store.ts
   invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
   

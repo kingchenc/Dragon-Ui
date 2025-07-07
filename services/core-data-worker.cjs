@@ -6,6 +6,7 @@
 const { parentPort, workerData } = require('worker_threads');
 const path = require('path');
 const DatabaseService = require('./database.cjs');
+const { modelPriceService } = require('./model-price-service.cjs');
 
 // Import calculation logic (we'll move the heavy parts here)
 class CoreDataWorker {
@@ -859,13 +860,12 @@ class CoreDataWorker {
     `).all();
     
     sampleEntries.forEach((entry, i) => {
-      // Manual calculation using same rates as data-loader.cjs
-      let inputRate = 3.0, outputRate = 15.0, cacheCreateRate = 3.75, cacheReadRate = 0.30;
-      if (entry.model.includes('opus')) {
-        inputRate = 15.0; outputRate = 75.0; cacheCreateRate = 18.75; cacheReadRate = 1.50;
-      } else if (entry.model.includes('haiku')) {
-        inputRate = 0.25; outputRate = 1.25; cacheCreateRate = 0.30; cacheReadRate = 0.03;
-      }
+      // Manual calculation using dynamic pricing from model price service
+      const pricing = modelPriceService.getModelPrices(entry.model);
+      const inputRate = pricing.input;
+      const outputRate = pricing.output;
+      const cacheCreateRate = pricing.cacheWrite;
+      const cacheReadRate = pricing.cacheRead;
       
       const manualCost = 
         (entry.input_tokens / 1000000) * inputRate +

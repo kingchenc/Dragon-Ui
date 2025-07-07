@@ -9,6 +9,7 @@ const DataLoaderService = require('./services/data-loader.cjs');
 const CoreDataService = require('./services/core-data.cjs');
 const PathManagerService = require('./services/path-manager.cjs');
 const { sshService } = require('./services/ssh-service.cjs');
+const { modelPriceService } = require('./services/model-price-service.cjs');
 
 let mainWindow;
 
@@ -995,4 +996,46 @@ ipcMain.handle('ssh-get-active-connections', async () => {
   }
 });
 
-console.log('[OK] Modular Dragon UI main process initialized');
+// Model Price Service IPC Handlers
+ipcMain.handle('model-prices-get-all', async () => {
+  try {
+    const prices = modelPriceService.getAllPrices();
+    return { success: true, prices };
+  } catch (error) {
+    console.error('[PRICE] Get all prices error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('model-prices-get-stats', async () => {
+  try {
+    const stats = modelPriceService.getPricingStats();
+    return { success: true, stats };
+  } catch (error) {
+    console.error('[PRICE] Get pricing stats error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('model-prices-force-update', async () => {
+  try {
+    console.log('[PRICE] Force update requested via IPC');
+    const updated = await modelPriceService.forceUpdate();
+    return { success: true, updated };
+  } catch (error) {
+    console.error('[PRICE] Force update error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('model-prices-get-for-model', async (event, model) => {
+  try {
+    const pricing = modelPriceService.getModelPrices(model);
+    return { success: true, pricing };
+  } catch (error) {
+    console.error('[PRICE] Get model pricing error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+console.log('[OK] Modular Dragon UI main process initialized with model price service');

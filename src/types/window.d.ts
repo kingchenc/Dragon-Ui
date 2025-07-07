@@ -74,6 +74,12 @@ declare global {
       // Auto-update
       performUpdate: () => Promise<{ success: boolean; error?: string }>;
       
+      // Model price service
+      getModelPrices: () => Promise<{ success: boolean; prices?: any; error?: string }>;
+      getModelPricingStats: () => Promise<{ success: boolean; stats?: any; error?: string }>;
+      forceUpdatePrices: () => Promise<{ success: boolean; updated?: boolean; error?: string }>;
+      getModelPricing: (model: string) => Promise<{ success: boolean; pricing?: any; error?: string }>;
+      
       // App state events
       onAppMinimized: (callback: () => void) => void;
       onAppRestored: (callback: () => void) => void;
