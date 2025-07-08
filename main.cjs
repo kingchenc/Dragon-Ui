@@ -9,6 +9,7 @@ const DataLoaderService = require('./services/data-loader.cjs');
 const CoreDataService = require('./services/core-data.cjs');
 const PathManagerService = require('./services/path-manager.cjs');
 const { sshService } = require('./services/ssh-service.cjs');
+const { modelPriceService } = require('./services/model-price-service.cjs');
 
 let mainWindow;
 
@@ -512,6 +513,159 @@ ipcMain.handle('get-app-version', () => {
   return app.getVersion();
 });
 
+// Dev tools control
+ipcMain.handle('toggle-dev-tools', () => {
+  if (mainWindow) {
+    mainWindow.webContents.toggleDevTools();
+    return { success: true };
+  }
+  return { success: false, error: 'No main window' };
+});
+
+ipcMain.handle('open-dev-tools', () => {
+  if (mainWindow) {
+    mainWindow.webContents.openDevTools();
+    return { success: true };
+  }
+  return { success: false, error: 'No main window' };
+});
+
+ipcMain.handle('close-dev-tools', () => {
+  if (mainWindow) {
+    mainWindow.webContents.closeDevTools();
+    return { success: true };
+  }
+  return { success: false, error: 'No main window' };
+});
+
+// Auto-update handler
+ipcMain.handle('perform-update', async () => {
+  try {
+    console.log('[UPDATE] Performing self-update...');
+    
+    const { spawn } = require('child_process');
+    const fs = require('fs');
+    const os = require('os');
+    
+    // Create update script file
+    let scriptPath, scriptContent;
+    
+    if (process.platform === 'win32') {
+      // Windows batch script
+      scriptPath = path.join(os.tmpdir(), 'dragon-ui-update.bat');
+      scriptContent = `@echo off
+echo [UPDATE] Starting Dragon UI update process...
+echo [UPDATE] Installing latest version...
+call npm install -g dragon-ui-claude@latest
+echo [UPDATE] npm install completed with exit code %errorlevel%
+
+if %errorlevel% equ 0 (
+  echo [UPDATE] Update successful! Starting Dragon UI...
+  echo [UPDATE] Waiting 3 seconds for npm cache to settle...
+  timeout /t 3 /nobreak >nul
+  
+  echo [UPDATE] Refreshing PATH and checking for dragon-ui...
+  call refreshenv 2>nul
+  
+  echo [UPDATE] Trying direct npm global path...
+  set "NPM_GLOBAL_PATH=%APPDATA%\\npm"
+  if exist "%NPM_GLOBAL_PATH%\\dragon-ui.cmd" (
+    echo [UPDATE] Found dragon-ui in npm global path, starting...
+    start "" "%NPM_GLOBAL_PATH%\\dragon-ui.cmd"
+    echo [UPDATE] Dragon UI restart initiated via npm global path
+  ) else (
+    echo [UPDATE] Trying npx method...
+    start "" npx dragon-ui-claude
+    echo [UPDATE] Dragon UI restart initiated via npx
+  )
+  
+  echo [UPDATE] Closing update window in 60 seconds...
+  timeout /t 60 /nobreak >nul
+) else (
+  echo [UPDATE] Update failed with error code %errorlevel%
+  echo [UPDATE] Auto-closing in 60 seconds...
+  timeout /t 60 /nobreak >nul
+)`;
+    } else {
+      // Unix shell script
+      scriptPath = path.join(os.tmpdir(), 'dragon-ui-update.sh');
+      scriptContent = `#!/bin/bash
+echo "[UPDATE] Starting Dragon UI update process..."
+echo "[UPDATE] Current PATH: $PATH"
+echo "[UPDATE] Checking if dragon-ui is accessible..."
+which dragon-ui
+if [ $? -ne 0 ]; then
+  echo "[UPDATE] dragon-ui not found in PATH, will use npx after update"
+fi
+
+echo "[UPDATE] Installing latest version..."
+npm install -g dragon-ui-claude@latest
+if [ $? -eq 0 ]; then
+  echo "[UPDATE] Update successful! Starting Dragon UI..."
+  echo "[UPDATE] Waiting 3 seconds for npm cache to settle..."
+  sleep 3
+  
+  echo "[UPDATE] Checking updated PATH..."
+  which dragon-ui
+  if [ $? -eq 0 ]; then
+    echo "[UPDATE] Found dragon-ui in PATH, starting..."
+    nohup dragon-ui > /dev/null 2>&1 &
+    if [ $? -ne 0 ]; then
+      echo "[UPDATE] dragon-ui start failed, trying npx fallback..."
+      nohup npx dragon-ui-claude > /dev/null 2>&1 &
+    fi
+  else
+    echo "[UPDATE] dragon-ui still not in PATH after update"
+    echo "[UPDATE] Trying npx method..."
+    nohup npx dragon-ui-claude > /dev/null 2>&1 &
+  fi
+  
+  echo "[UPDATE] Dragon UI restart initiated, closing update window in 60 seconds..."
+  sleep 60
+else
+  echo "[UPDATE] Update failed with exit code $?"
+  echo "[UPDATE] Auto-closing in 60 seconds..."
+  sleep 60
+fi
+rm "$0"`;
+    }
+    
+    // Write script file
+    fs.writeFileSync(scriptPath, scriptContent);
+    
+    // Make executable on Unix
+    if (process.platform !== 'win32') {
+      fs.chmodSync(scriptPath, '755');
+    }
+    
+    // Execute script
+    let updateProcess;
+    if (process.platform === 'win32') {
+      updateProcess = spawn('cmd', ['/c', 'start', '', scriptPath], {
+        detached: true,
+        stdio: 'ignore'
+      });
+    } else {
+      updateProcess = spawn('bash', [scriptPath], {
+        detached: true,
+        stdio: 'ignore'
+      });
+    }
+    
+    updateProcess.unref();
+    
+    // Close current app after short delay
+    setTimeout(() => {
+      app.quit();
+    }, 1000);
+    
+    return { success: true };
+  } catch (error) {
+    console.error('[UPDATE] Update failed:', error);
+    return { success: false, error: error.message };
+  }
+});
+
 ipcMain.handle('save-window-state', () => {
   saveWindowState();
   return { success: true };
@@ -842,4 +996,46 @@ ipcMain.handle('ssh-get-active-connections', async () => {
   }
 });
 
-console.log('[OK] Modular Dragon UI main process initialized');
+// Model Price Service IPC Handlers
+ipcMain.handle('model-prices-get-all', async () => {
+  try {
+    const prices = modelPriceService.getAllPrices();
+    return { success: true, prices };
+  } catch (error) {
+    console.error('[PRICE] Get all prices error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('model-prices-get-stats', async () => {
+  try {
+    const stats = modelPriceService.getPricingStats();
+    return { success: true, stats };
+  } catch (error) {
+    console.error('[PRICE] Get pricing stats error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('model-prices-force-update', async () => {
+  try {
+    console.log('[PRICE] Force update requested via IPC');
+    const updated = await modelPriceService.forceUpdate();
+    return { success: true, updated };
+  } catch (error) {
+    console.error('[PRICE] Force update error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('model-prices-get-for-model', async (event, model) => {
+  try {
+    const pricing = modelPriceService.getModelPrices(model);
+    return { success: true, pricing };
+  } catch (error) {
+    console.error('[PRICE] Get model pricing error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+console.log('[OK] Modular Dragon UI main process initialized with model price service');

@@ -219,6 +219,8 @@ interface AppState {
     compactScale: number // 50% - 100% scale
     showAnimations: boolean
     dragonEffects: boolean // Dragon flame hover effects
+    devToolsEnabled: boolean // Enable/disable dev tools
+    autoUpdateNotifications: boolean // Enable/disable update popups
     billingCycleDay: number
     claudePaths: {
       standardPaths: string[]
@@ -256,6 +258,7 @@ interface AppState {
   changeLanguage: (newLanguage: LanguageCode) => Promise<void>
   exportData: (dataType: string, format?: string, options?: any) => Promise<string>
   checkForUpdates: () => Promise<void>
+  performUpdate: () => Promise<void>
   
   // SSH helpers
   updateSshConfig: (config: Partial<AppState['settings']['sshConfig']>) => void
@@ -359,6 +362,8 @@ export const useAppStore = create<AppState>()(
       compactScale: 100, // Default 100% (normal size)
       showAnimations: true,
       dragonEffects: true, // Default enabled
+      devToolsEnabled: false, // Default disabled for production
+      autoUpdateNotifications: true, // Default enabled for updates
       billingCycleDay: 1, // Default to 1st of each month
       claudePaths: {
         standardPaths: [],
@@ -989,12 +994,48 @@ export const useAppStore = create<AppState>()(
           
           if (isOutdated) {
             console.log(`[VERSION] Update available: ${currentVersion} -> ${latestVersion}`)
+            
+            // Show update popup if notifications enabled
+            const settings = get().settings
+            if (settings.autoUpdateNotifications) {
+              // Trigger update popup (will be handled by App.tsx)
+              window.dispatchEvent(new CustomEvent('show-update-popup', {
+                detail: { currentVersion, latestVersion }
+              }))
+            }
           } else {
             console.log(`[VERSION] App is up to date: ${currentVersion}`)
           }
         }
       } catch (error) {
         console.error('[VERSION] Failed to check for updates:', error)
+      }
+    },
+
+    // Perform update
+    performUpdate: async () => {
+      try {
+        console.log('[UPDATE] Starting auto-update process...')
+        console.log('[UPDATE] electronAPI available:', !!window.electronAPI)
+        console.log('[UPDATE] electronAPI keys:', window.electronAPI ? Object.keys(window.electronAPI) : 'null')
+        console.log('[UPDATE] performUpdate available:', !!window.electronAPI?.performUpdate)
+        
+        if (window.electronAPI?.performUpdate) {
+          console.log('[UPDATE] Calling electronAPI.performUpdate...')
+          const result = await window.electronAPI.performUpdate()
+          console.log('[UPDATE] Result:', result)
+          
+          if (result.success) {
+            console.log('[UPDATE] Update completed successfully - app should restart')
+          } else {
+            throw new Error(result.error || 'Update failed')
+          }
+        } else {
+          throw new Error('Auto-update not available. Please update manually: npm install -g dragon-ui-claude@latest')
+        }
+      } catch (error) {
+        console.error('[UPDATE] Update failed:', error)
+        set({ error: 'Update failed: ' + (error instanceof Error ? error.message : 'Unknown error') })
       }
     }
   })),
@@ -1103,10 +1144,11 @@ export const useActiveData = () => {
   // Smart auto-refresh - only when window is active and not loading
   React.useEffect(() => {
     let interval: NodeJS.Timeout | null = null
+    let isPaused = false
     
     const startSmartRefresh = () => {
-      // Only refresh if window is visible and not loading
-      if (!document.hidden && !isLoading) {
+      // Only refresh if window is visible, not loading, and not paused
+      if (!document.hidden && !isLoading && !isPaused) {
         console.log('[REFRESH] Smart refresh: Incremental update check')
         refreshCoreData().catch(console.error)
       }
@@ -1118,22 +1160,54 @@ export const useActiveData = () => {
     // Pause refresh when window is hidden to save resources
     const handleVisibilityChange = () => {
       if (document.hidden) {
+        isPaused = true
         if (interval) {
           clearInterval(interval)
           interval = null
           console.log('[PAUSE] Smart refresh: Paused (window hidden)')
         }
       } else {
+        isPaused = false
         if (!interval) {
           interval = setInterval(startSmartRefresh, 30000)
           console.log('[RESUME] Smart refresh: Resumed (window visible)')
-          // Immediate refresh when window becomes visible
-          startSmartRefresh()
+          // Delayed refresh when window becomes visible to avoid lag
+          setTimeout(() => {
+            startSmartRefresh()
+          }, 500)
         }
       }
     }
     
+    // Listen for app minimize/restore events
+    const handleAppMinimized = () => {
+      isPaused = true
+      if (interval) {
+        clearInterval(interval)
+        interval = null
+        console.log('[PAUSE] Smart refresh: Paused (app minimized)')
+      }
+    }
+    
+    const handleAppRestored = () => {
+      isPaused = false
+      if (!interval) {
+        interval = setInterval(startSmartRefresh, 30000)
+        console.log('[RESUME] Smart refresh: Resumed (app restored)')
+        // Delayed refresh when app is restored to avoid blocking UI
+        setTimeout(() => {
+          startSmartRefresh()
+        }, 1000)
+      }
+    }
+    
     document.addEventListener('visibilitychange', handleVisibilityChange)
+    
+    // Listen for electron events if available
+    if (window.electronAPI) {
+      window.electronAPI.onAppMinimized?.(handleAppMinimized)
+      window.electronAPI.onAppRestored?.(handleAppRestored)
+    }
     
     return () => {
       if (interval) clearInterval(interval)

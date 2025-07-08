@@ -67,6 +67,14 @@ export default function ActiveSessionPage() {
   const costPerToken = (activeData.currentTokens || 0) > 0 ? (currentCost || 0) / (activeData.currentTokens || 0) : 0
   const projectedCost = costPerToken > 0 ? projectedTokens * costPerToken : 0
   
+  // Calculate usage progress (token burn rate intensity)
+  const highActivityThreshold = 150000 // tokens/min for high activity
+  const usageProgress = Math.min(100, (tokenBurnRate / highActivityThreshold) * 100)
+  
+  // Calculate projection progress (current vs projected end-of-session)
+  const projectionProgress = Math.min(100, projectedTokens > 0 ? ((activeData.currentTokens || 0) / projectedTokens) * 100 : 0)
+  
+  console.log(`[DEBUG] Progress Values: Session=${sessionProgress.toFixed(1)}%, Usage=${usageProgress.toFixed(1)}%, Projection=${projectionProgress.toFixed(1)}%`)
   console.log(`[DEBUG] Projection Debug: Current=${formatNumber(activeData.currentTokens || 0)} tokens, Cost=${formatCurrency(currentCost || 0, currency)}, Rate=${costPerToken.toFixed(6)}/token, Projected=${formatNumber(projectedTokens)} tokens, Cost=${formatCurrency(projectedCost, currency)}`)
 
   return (
@@ -132,7 +140,7 @@ export default function ActiveSessionPage() {
                   </h3>
                   <span className="text-white/80">({formatNumber(activeData.currentTokens || 0)} tokens)</span>
                 </div>
-                <DragonProgress value={sessionProgress} className="h-3 mb-2" />
+                <DragonProgress value={usageProgress} className="h-3 mb-2" />
                 <div className="flex justify-between text-sm text-white/80">
                   <span>{t('pages.activeSession.progress.tokens')}: {formatNumber(activeData.currentTokens || 0)} ({t('pages.activeSession.progress.burnRate')}: {tokenBurnRate} {t('pages.activeSession.progress.tokenPerMin')} {tokenBurnRate > 100 ? `[${t('pages.activeSession.progress.high')}]` : `[${t('pages.activeSession.progress.normal')}]`})</span>
                   <span>{t('pages.activeSession.progress.cost')}: {formatCurrency(currentCost || 0, currency)}</span>
@@ -148,7 +156,7 @@ export default function ActiveSessionPage() {
                   </h3>
                   <span className="text-white/80">({formatNumber(projectedTokens)} tokens)</span>
                 </div>
-                <DragonProgress value={Math.min(100, projectedTokens > 0 ? ((activeData.currentTokens || 0) / projectedTokens) * 100 : 0)} className="h-3 mb-2" />
+                <DragonProgress value={projectionProgress} className="h-3 mb-2" />
                 <div className="flex justify-between text-sm text-white/80">
                   <span>{t('pages.activeSession.progress.status')}: {tokenBurnRate > 100 ? `[${t('pages.activeSession.progress.highBurn')}]` : `[${t('pages.activeSession.progress.onTrack')}]`}</span>
                   <span>{t('pages.activeSession.progress.tokens')}: {formatNumber(projectedTokens)} / {t('pages.activeSession.progress.cost')}: {formatCurrency(projectedCost, currency)}</span>

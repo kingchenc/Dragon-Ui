@@ -202,51 +202,53 @@ export function ActivityChart({ data, currency = 'USD' }: ActivityChartProps) {
         <Bar data={chartData} options={options} plugins={[noSessionsPlugin]} />
       </div>
       
-      {/* Data labels under chart - Ensure consistent grid */}
-      <div className={`grid gap-1 text-xs ${
-        data.length === 7 ? 'grid-cols-7' : 
-        data.length === 6 ? 'grid-cols-6' : 
-        data.length === 5 ? 'grid-cols-5' :
-        data.length === 4 ? 'grid-cols-4' :
-        data.length === 3 ? 'grid-cols-3' :
-        data.length === 2 ? 'grid-cols-2' :
-        'grid-cols-1'
-      }`}>
-        {data.map((day, index) => {
-          const hasActivity = day.sessions > 0 || day.cost > 0 || day.tokens > 0
-          
-          return (
-            <div key={index} className={`text-center space-y-1 p-2 rounded ${
-              hasActivity ? 'bg-muted/20' : 'bg-muted/10 opacity-60'
-            }`}>
-              {hasActivity ? (
-                <>
-                  <div className="font-semibold text-dragon-primary">
-                    {formatCurrency(day.cost, currency)}
-                  </div>
-                  <div className="text-muted-foreground">
-                    {day.tokens.toLocaleString()}T
-                  </div>
-                  <div className="text-muted-foreground">
-                    {day.sessions}S
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="font-semibold text-muted-foreground">
-                    $0.00
-                  </div>
-                  <div className="text-muted-foreground text-xs">
-                    No sessions
-                  </div>
-                  <div className="text-muted-foreground text-xs opacity-50">
-                    -
-                  </div>
-                </>
-              )}
-            </div>
-          )
-        })}
+      {/* Data labels under chart - Only under day bars, exclude Y-axis area */}
+      <div className="flex justify-start ml-12 mr-4">
+        <div className={`grid gap-1 text-xs flex-1 ${
+          data.length === 7 ? 'grid-cols-7' : 
+          data.length === 6 ? 'grid-cols-6' : 
+          data.length === 5 ? 'grid-cols-5' :
+          data.length === 4 ? 'grid-cols-4' :
+          data.length === 3 ? 'grid-cols-3' :
+          data.length === 2 ? 'grid-cols-2' :
+          'grid-cols-1'
+        }`}>
+          {data.map((day, index) => {
+            const hasActivity = day.sessions > 0 || day.cost > 0 || day.tokens > 0
+            
+            return (
+              <div key={index} className={`text-center space-y-1 p-2 rounded ${
+                hasActivity ? 'bg-muted/20' : 'bg-muted/10 opacity-60'
+              }`}>
+                {hasActivity ? (
+                  <>
+                    <div className="font-semibold text-dragon-primary">
+                      {formatCurrency(day.cost, currency)}
+                    </div>
+                    <div className="text-muted-foreground">
+                      {day.tokens.toLocaleString()}T
+                    </div>
+                    <div className="text-muted-foreground">
+                      {day.sessions}S
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="font-semibold text-muted-foreground">
+                      $0.00
+                    </div>
+                    <div className="text-muted-foreground text-xs">
+                      No sessions
+                    </div>
+                    <div className="text-muted-foreground text-xs opacity-50">
+                      -
+                    </div>
+                  </>
+                )}
+              </div>
+            )
+          })}
+        </div>
       </div>
     </div>
   )

@@ -6,6 +6,7 @@
  */
 const { Worker } = require('worker_threads');
 const path = require('path');
+const { modelPriceService } = require('./model-price-service.cjs');
 
 class CoreDataService {
   constructor(dataLoader, pathManager) {
@@ -1468,11 +1469,7 @@ class CoreDataService {
    */
   async calculateModelBreakdown(usageEntries) {
     const modelMap = new Map();
-    const modelPricing = {
-      'claude-sonnet-4-20250514': { input: 3, output: 15, cacheWrite: 3.75, cacheRead: 0.3 },
-      'claude-opus-4-20250514': { input: 15, output: 75, cacheWrite: 18.75, cacheRead: 1.5 },
-      'claude-haiku-4-20250514': { input: 0.25, output: 1.25, cacheWrite: 0.3125, cacheRead: 0.025 }
-    };
+    // Use dynamic pricing from model price service instead of hardcoded values
 
     usageEntries.forEach(entry => {
       const model = entry.model;

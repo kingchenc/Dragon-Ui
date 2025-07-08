@@ -10,17 +10,32 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const packageRoot = path.dirname(__dirname);
 
-console.log('🐲 Starting Dragon UI - Claude Code Max Usage Dashboard...');
-
-// Check if better-sqlite3 needs rebuilding
-const needsRebuild = checkIfRebuildNeeded();
-if (needsRebuild) {
-  console.log('🔧 Rebuilding native modules for Electron...');
-  rebuildNativeModules(() => {
-    checkAndStart();
-  });
+// Check for CLI mode
+if (process.argv.includes('--cli')) {
+  console.log('🐲 Starting Dragon UI CLI...');
+  
+  // Import and start CLI mode
+  import(path.join(packageRoot, 'cli', 'index.cjs'))
+    .then(() => {
+      // CLI module handles everything
+    })
+    .catch(error => {
+      console.error('❌ Failed to start CLI mode:', error.message);
+      process.exit(1);
+    });
 } else {
-  checkAndStart();
+  console.log('🐲 Starting Dragon UI - Claude Code Max Usage Dashboard...');
+
+  // Check if better-sqlite3 needs rebuilding
+  const needsRebuild = checkIfRebuildNeeded();
+  if (needsRebuild) {
+    console.log('🔧 Rebuilding native modules for Electron...');
+    rebuildNativeModules(() => {
+      checkAndStart();
+    });
+  } else {
+    checkAndStart();
+  }
 }
 
 function checkIfRebuildNeeded() {
