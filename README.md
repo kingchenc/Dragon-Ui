@@ -83,6 +83,13 @@ dragon-ui-claude --cli
 </p>
 </details>
 
+<details open>
+<summary>💻 <strong>CLI Interface</strong></summary>
+<p align="center">
+  <img src="public/Cli_Page.png" alt="Dragon UI CLI Interface" />
+</p>
+</details>
+
 ## 🚀 Quick Start
 
 ### Easy Installation (Recommended)
