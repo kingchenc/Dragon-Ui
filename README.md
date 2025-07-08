@@ -23,8 +23,6 @@ dragon-ui-claude
 
 # CLI version  
 dragon-ui-claude-cli
-# or
-dragon-ui-claude --cli
 ```
 
 ![Electron](https://img.shields.io/badge/Electron-28.0.0-47848F?style=for-the-badge&logo=electron)
@@ -102,13 +100,10 @@ dragon-ui-claude
 
 # Run CLI version
 dragon-ui-claude-cli
-# or
-dragon-ui-claude --cli
 
 # Or run without installing
 npx dragon-ui-claude       # GUI version
 npx dragon-ui-claude-cli   # CLI version
-npx dragon-ui-claude --cli # CLI version (alternative)
 ```
 
 > **Why Dragon UI?** The fastest, most comprehensive **Claude Code Max** usage dashboard with real-time analytics, **dual interface options (GUI + CLI)**, multi-language support, and intelligent automation. No configuration needed - just install and run!

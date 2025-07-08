@@ -2,7 +2,7 @@
 
 /**
  * Dragon UI CLI Entry Point (CommonJS version for Windows compatibility)
- * Supports both dragon-ui-claude-cli and dragon-ui-claude --cli
+ * Supports dragon-ui-claude-cli command
  */
 
 const { program } = require('commander');
@@ -33,7 +33,7 @@ async function main() {
     .name('dragon-ui-claude-cli')
     .description('🐲 Dragon UI CLI - Claude Code Max Usage Dashboard')
     .version(version)
-    .option('-c, --cli', 'Start CLI mode (for dragon-ui-claude --cli compatibility)')
+    .option('-c, --cli', 'Start CLI mode')
     .option('--no-color', 'Disable colors')
     .option('--minimal', 'Use minimal table style')
     .option('--refresh <seconds>', 'Auto-refresh interval in seconds', '30')
@@ -47,15 +47,7 @@ async function main() {
       await startCLI(settings);
     });
 
-  // Handle dragon-ui-claude --cli
-  if (process.argv.includes('--cli')) {
-    // Clear screen for --cli flag usage too
-    clearScreen();
-    const settings = await loadSettings();
-    await startCLI(settings);
-  } else {
-    program.parse();
-  }
+  program.parse();
 }
 
 // Start the application

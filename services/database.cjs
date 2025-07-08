@@ -11,25 +11,44 @@ class DatabaseService {
     this.dbPath = dbPath;
     this.db = null;
     this.insertStmt = null;
+    this.repairAttempted = false; // Flag um Auto-Repair nur einmal auszuführen
     this.init();
   }
 
   init() {
     console.log('[DB] DB: Initializing SQLite database...');
     
-    // Create database connection
-    this.db = new Database(this.dbPath);
-    
-    // Enable WAL mode for better performance
-    this.db.pragma('journal_mode = WAL');
-    this.db.pragma('synchronous = NORMAL');
-    this.db.pragma('cache_size = 10000');
-    this.db.pragma('foreign_keys = ON');
-    
-    this.createTables();
-    this.prepareStatements();
-    
-    console.log('[OK] DB: Database initialized successfully');
+    try {
+      // Create database connection
+      this.db = new Database(this.dbPath);
+      
+      // Test database integrity
+      const integrityCheck = this.db.pragma('integrity_check');
+      if (integrityCheck[0].integrity_check !== 'ok') {
+        console.log('[REPAIR] DB: Database integrity check failed, attempting auto-repair...');
+        this.autoRepairDatabase();
+        return;
+      }
+      
+      // Enable WAL mode for better performance
+      this.db.pragma('journal_mode = WAL');
+      this.db.pragma('synchronous = NORMAL');
+      this.db.pragma('cache_size = 10000');
+      this.db.pragma('foreign_keys = ON');
+      
+      this.createTables();
+      this.prepareStatements();
+      
+      console.log('[OK] DB: Database initialized successfully');
+      
+    } catch (error) {
+      if (error.code === 'SQLITE_CORRUPT' || error.message.includes('malformed')) {
+        console.log('[REPAIR] DB: Database corrupted, attempting auto-repair...');
+        this.autoRepairDatabase();
+      } else {
+        throw error;
+      }
+    }
   }
 
   createTables() {
@@ -166,6 +185,40 @@ class DatabaseService {
       );
       return true;
     } catch (error) {
+      if ((error.code === 'SQLITE_CORRUPT' || error.message.includes('malformed')) && !this.repairAttempted) {
+        console.log('[REPAIR] DB: Corruption detected in insertEntry, triggering auto-repair...');
+        this.repairAttempted = true;
+        this.autoRepairDatabase();
+        // Nach Repair erneut versuchen
+        try {
+          this.insertStmt.run(
+            validatedTimestamp,
+            entry.sessionId,
+            entry.fullSessionId,
+            entry.model,
+            entry.project,
+            entry.input_tokens || 0,
+            entry.output_tokens || 0,
+            entry.cache_creation_input_tokens || 0,
+            entry.cache_read_input_tokens || 0,
+            entry.total_tokens || 0,
+            entry.cost || 0,
+            entry.file,
+            entry.uuid,
+            entry.cwd
+          );
+          return true;
+        } catch (retryError) {
+          console.log('[REPAIR] DB: Still failing after repair in insertEntry');
+          return false;
+        }
+      }
+      
+      if (error.code === 'SQLITE_CORRUPT' || error.message.includes('malformed')) {
+        console.log('[REPAIR] DB: Corruption detected but repair already attempted, skipping entry');
+        return false;
+      }
+      
       if (!error.message.includes('UNIQUE constraint failed')) {
         console.warn('[WARN] DB: Insert error:', error.message);
       }
@@ -193,8 +246,31 @@ class DatabaseService {
 
   // SELECT queries
   getLastTimestamp() {
-    const result = this.getLastTimestampStmt.get();
-    return result?.last_timestamp || null;
+    try {
+      const result = this.getLastTimestampStmt.get();
+      return result?.last_timestamp || null;
+    } catch (error) {
+      if ((error.code === 'SQLITE_CORRUPT' || error.message.includes('malformed')) && !this.repairAttempted) {
+        console.log('[REPAIR] DB: Corruption detected in getLastTimestamp, triggering auto-repair...');
+        this.repairAttempted = true;
+        this.autoRepairDatabase();
+        // Nach Repair erneut versuchen
+        try {
+          const result = this.getLastTimestampStmt.get();
+          return result?.last_timestamp || null;
+        } catch (retryError) {
+          console.log('[REPAIR] DB: Still failing after repair, returning null');
+          return null;
+        }
+      }
+      
+      if (error.code === 'SQLITE_CORRUPT' || error.message.includes('malformed')) {
+        console.log('[REPAIR] DB: Corruption detected but repair already attempted, returning null');
+        return null;
+      }
+      
+      throw error;
+    }
   }
 
   getAllEntries() {
@@ -1256,6 +1332,192 @@ class DatabaseService {
       models: models,
       modelCount: models.length
     };
+  }
+
+  /**
+   * Auto-Repair für beschädigte SQLite-Datenbanken
+   */
+  autoRepairDatabase() {
+    console.log('[REPAIR] DB: Starting auto-repair process...');
+    
+    try {
+      // Schritt 1: Backup der beschädigten Datenbank erstellen
+      const backupPath = this.dbPath + '.corrupted_backup_' + Date.now();
+      if (fs.existsSync(this.dbPath)) {
+        try {
+          fs.copyFileSync(this.dbPath, backupPath);
+          console.log(`[REPAIR] DB: Backup created at ${backupPath}`);
+        } catch (error) {
+          console.log('[REPAIR] DB: Could not create backup, proceeding with repair...');
+        }
+      }
+      
+      // Schritt 2: Versuche Daten zu retten
+      let rescuedData = [];
+      if (this.db) {
+        try {
+          // Versuche einzelne Tabellen zu lesen
+          const tables = this.db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();
+          
+          for (const table of tables) {
+            if (table.name === 'usage_entries') {
+              try {
+                const data = this.db.prepare(`SELECT * FROM ${table.name}`).all();
+                rescuedData = data;
+                console.log(`[REPAIR] DB: Rescued ${data.length} entries from ${table.name}`);
+              } catch (error) {
+                console.log(`[REPAIR] DB: Could not rescue data from ${table.name}: ${error.message}`);
+              }
+            }
+          }
+          
+          this.db.close();
+        } catch (error) {
+          console.log('[REPAIR] DB: Could not access corrupted database for rescue');
+        }
+      }
+      
+      // Schritt 3: Lösche beschädigte Datenbank
+      if (fs.existsSync(this.dbPath)) {
+        try {
+          fs.unlinkSync(this.dbPath);
+          console.log('[REPAIR] DB: Corrupted database file removed');
+        } catch (error) {
+          console.log('[REPAIR] DB: Could not remove corrupted database file');
+        }
+      }
+      
+      // Schritt 4: Erstelle neue Datenbank
+      console.log('[REPAIR] DB: Creating new database...');
+      this.db = new Database(this.dbPath);
+      
+      // Schritt 5: Aktiviere SQLite-Einstellungen
+      this.db.pragma('journal_mode = WAL');
+      this.db.pragma('synchronous = NORMAL');
+      this.db.pragma('cache_size = 10000');
+      this.db.pragma('foreign_keys = ON');
+      
+      // Schritt 6: Erstelle Tabellen
+      this.createTables();
+      this.prepareStatements();
+      
+      // Schritt 7: Wiederherstellen der geretteten Daten
+      if (rescuedData.length > 0) {
+        console.log(`[REPAIR] DB: Restoring ${rescuedData.length} rescued entries...`);
+        
+        const transaction = this.db.transaction((entries) => {
+          let restored = 0;
+          for (const entry of entries) {
+            try {
+              // Validiere und bereinige die Daten
+              const cleanedEntry = this.cleanEntryData(entry);
+              if (cleanedEntry) {
+                this.insertEntryDirect(cleanedEntry);
+                restored++;
+              }
+            } catch (error) {
+              // Ignoriere fehlerhafte Einträge
+            }
+          }
+          return restored;
+        });
+        
+        const restored = transaction(rescuedData);
+        console.log(`[REPAIR] DB: Successfully restored ${restored} entries`);
+      }
+      
+      console.log('[REPAIR] DB: Auto-repair completed successfully');
+      console.log('[REPAIR] DB: Database is now ready for use');
+      
+    } catch (error) {
+      console.error('[REPAIR] DB: Auto-repair failed:', error.message);
+      
+      // Fallback: Erstelle komplett neue Datenbank
+      try {
+        if (fs.existsSync(this.dbPath)) {
+          fs.unlinkSync(this.dbPath);
+        }
+        
+        this.db = new Database(this.dbPath);
+        this.db.pragma('journal_mode = WAL');
+        this.db.pragma('synchronous = NORMAL');
+        this.db.pragma('cache_size = 10000');
+        this.db.pragma('foreign_keys = ON');
+        
+        this.createTables();
+        this.prepareStatements();
+        
+        console.log('[REPAIR] DB: Fresh database created as fallback');
+      } catch (fallbackError) {
+        console.error('[REPAIR] DB: Fallback repair also failed:', fallbackError.message);
+        throw fallbackError;
+      }
+    }
+  }
+
+  /**
+   * Bereinige und validiere Entry-Daten
+   */
+  cleanEntryData(entry) {
+    try {
+      // Prüfe erforderliche Felder
+      if (!entry.timestamp || !entry.session_id) {
+        return null;
+      }
+      
+      // Validiere Timestamp
+      const date = new Date(entry.timestamp);
+      if (isNaN(date.getTime()) || date.getFullYear() < 2020 || date.getFullYear() > new Date().getFullYear() + 1) {
+        return null; // Ungültiger Timestamp
+      }
+      
+      // Bereinige numerische Felder
+      const cleanedEntry = {
+        timestamp: entry.timestamp,
+        session_id: entry.session_id,
+        model: entry.model || 'unknown',
+        project: entry.project || 'unknown',
+        input_tokens: Math.max(0, parseInt(entry.input_tokens) || 0),
+        output_tokens: Math.max(0, parseInt(entry.output_tokens) || 0),
+        cache_creation_input_tokens: Math.max(0, parseInt(entry.cache_creation_input_tokens) || 0),
+        cache_read_input_tokens: Math.max(0, parseInt(entry.cache_read_input_tokens) || 0),
+        cost: Math.max(0, parseFloat(entry.cost) || 0)
+      };
+      
+      // Berechne total_tokens
+      cleanedEntry.total_tokens = cleanedEntry.input_tokens + cleanedEntry.output_tokens + 
+                                   cleanedEntry.cache_creation_input_tokens + cleanedEntry.cache_read_input_tokens;
+      
+      return cleanedEntry;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
+   * Füge Entry direkt ohne Prepared Statement hinzu (für Repair)
+   */
+  insertEntryDirect(entry) {
+    const stmt = this.db.prepare(`
+      INSERT INTO usage_entries (
+        timestamp, session_id, model, project,
+        input_tokens, output_tokens, cache_creation_input_tokens, 
+        cache_read_input_tokens, total_tokens, cost
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    
+    stmt.run(
+      entry.timestamp,
+      entry.session_id,
+      entry.model,
+      entry.project,
+      entry.input_tokens,
+      entry.output_tokens,
+      entry.cache_creation_input_tokens,
+      entry.cache_read_input_tokens,
+      entry.total_tokens,
+      entry.cost
+    );
   }
 }
 
