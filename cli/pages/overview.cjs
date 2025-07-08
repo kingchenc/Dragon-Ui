@@ -17,20 +17,22 @@ async function showOverviewPage(dataAdapter, settings) {
     const data = await dataAdapter.getOverviewData();
     loadingStop();
     
-    // Main statistics
+    // Main statistics (like electron overview)
     console.log(colors.primary('📊 Usage Statistics'));
     console.log('─'.repeat(50));
     console.log('');
     
-    const statsTable = createStatsTable({
-      totalCost: data.totalCost,
-      totalSessions: data.totalSessions,
-      totalProjects: data.totalProjects,
-      totalTokens: data.totalTokens,
-      activeDays: data.activeDays,
-      lastActivity: data.lastActivity,
-      currency: data.currency
-    }, {
+    const mainStats = [
+      ['Total Cost', formatCurrency(data.totalCost, data.currency)],
+      ['Total Sessions', `${data.totalSessions} / 50`],
+      ['Average Cost/Session', formatCurrency(data.averageCostPerSession, data.currency)],
+      ['Total Tokens', formatNumber(data.totalTokens)],
+      ['Status', data.status],
+      ['Active Days', `${data.activeDays} / ${new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate()}`],
+      ['Models Used', data.models && data.models.length > 0 ? data.models.join(', ') : 'None']
+    ];
+    
+    const statsTable = createTable(['Metric', 'Value'], mainStats, {
       style: settings.tableStyle,
       compact: settings.compactMode
     });
@@ -38,132 +40,52 @@ async function showOverviewPage(dataAdapter, settings) {
     console.log(statsTable);
     console.log('');
     
-    // Current month breakdown
-    if (data.currentMonth && data.currentMonth.total_cost > 0) {
-      console.log(colors.primary('📅 Current Month'));
-      console.log('─'.repeat(50));
-      console.log('');
-      
-      const monthStats = [
-        ['Cost', formatCurrency(data.currentMonth.total_cost, data.currency)],
-        ['Sessions', formatNumber(data.currentMonth.session_count)],
-        ['Tokens', formatNumber(data.currentMonth.total_tokens)],
-        ['Avg per Session', data.currentMonth.session_count > 0 ? 
-          formatCurrency(data.currentMonth.total_cost / data.currentMonth.session_count, data.currency) : 
-          formatCurrency(0, data.currency)]
+    // Current Session Table
+    let sessionTable = '';
+    if (data.currentSession && data.currentSession.active) {
+      const sessionInfo = [
+        ['Started', formatDate(data.currentSession.started)],
+        ['Duration', `${Math.floor(data.currentSession.duration / 60)}h ${data.currentSession.duration % 60}m`],
+        ['Cost', formatCurrency(data.currentSession.cost, data.currency)],
+        ['Time Left', '4h 50m'],
+        ['Last Activity', formatDate(data.lastActivity)],
+        ['Session ID', data.currentSession.id ? data.currentSession.id.substring(0, 8) + '...' : 'Unknown']
       ];
       
-      const monthTable = createTable(['Metric', 'Value'], monthStats, {
+      sessionTable = createTable(['Property', 'Value'], sessionInfo, {
         style: settings.tableStyle,
-        compact: settings.compactMode
+        compact: true
       });
-      
-      console.log(monthTable);
-      console.log('');
+    } else {
+      sessionTable = '  No active session\n  Start using Claude to begin tracking';
     }
     
-    // Top projects
-    if (data.topProjects && data.topProjects.length > 0) {
-      console.log(colors.primary('🏆 Top Projects'));
-      console.log('─'.repeat(50));
-      console.log('');
-      
-      const projectRows = data.topProjects.slice(0, 5).map(project => [
-        project.project || 'Unknown',
-        formatCurrency(project.total_cost || 0, data.currency),
-        formatNumber(project.session_count || 0),
-        formatNumber(project.total_tokens || 0),
-        formatDate(project.last_activity)
-      ]);
-      
-      const projectsTable = createTable(
-        ['Project', 'Cost', 'Sessions', 'Tokens', 'Last Activity'], 
-        projectRows, 
-        {
-          style: settings.tableStyle,
-          compact: settings.compactMode
-        }
-      );
-      
-      console.log(projectsTable);
-      console.log('');
-    }
-    
-    // Recent activity
-    if (data.recentSessions && data.recentSessions.length > 0) {
-      console.log(colors.primary('⚡ Recent Activity'));
-      console.log('─'.repeat(50));
-      console.log('');
-      
-      const recentRows = data.recentSessions.slice(0, 5).map(session => [
-        session.session_id ? session.session_id.substring(0, 8) + '...' : 'Unknown',
-        session.project || 'Unknown',
-        formatCurrency(session.total_cost || 0, data.currency),
-        formatNumber(session.total_tokens || 0),
-        formatDate(session.start_time)
-      ]);
-      
-      const recentTable = createTable(
-        ['Session', 'Project', 'Cost', 'Tokens', 'Started'], 
-        recentRows, 
-        {
-          style: settings.tableStyle,
-          compact: settings.compactMode
-        }
-      );
-      
-      console.log(recentTable);
-      console.log('');
-    }
-    
-    // Database info
-    console.log(colors.primary('💾 Database Information'));
-    console.log('─'.repeat(50));
-    console.log('');
-    
-    const dbInfo = [
-      ['Total Entries', formatNumber(data.totalEntries)],
-      ['Database Size', `${data.databaseSize.toFixed(2)} MB`],
-      ['Last Updated', formatDate(data.lastUpdated)],
-      ['Currency', data.currency]
+    // Quick Stats Table
+    const quickStats = [
+      ['Total Cost', formatCurrency(data.totalCost, data.currency)],
+      ['Total Tokens', formatNumber(data.totalTokens)],
+      ['Sessions', `${data.totalSessions} / 50`],
+      ['Avg. Tokens/Session', formatNumber(data.avgTokensPerSession)]
     ];
     
-    const dbTable = createTable(['Property', 'Value'], dbInfo, {
+    const quickTable = createTable(['Metric', 'Value'], quickStats, {
       style: settings.tableStyle,
-      compact: settings.compactMode
+      compact: true
     });
     
-    console.log(dbTable);
+    // Current session (separate section)
+    console.log(colors.primary('⚡ Current Session'));
+    console.log('─'.repeat(50));
+    console.log('');
+    console.log(sessionTable);
     console.log('');
     
-    // Quick insights
-    if (data.totalSessions > 0) {
-      console.log(colors.primary('💡 Quick Insights'));
-      console.log('─'.repeat(50));
-      console.log('');
-      
-      const avgCostPerSession = data.totalCost / data.totalSessions;
-      const avgTokensPerSession = data.totalTokens / data.totalSessions;
-      const avgCostPerToken = data.totalTokens > 0 ? data.totalCost / data.totalTokens : 0;
-      const activityRate = data.activeDays > 0 && data.totalSessions > 0 ? 
-        (data.activeDays / (data.totalSessions / (data.totalSessions / data.activeDays))) * 100 : 0;
-      
-      const insights = [
-        `• Average cost per session: ${formatCurrency(avgCostPerSession, data.currency)}`,
-        `• Average tokens per session: ${formatNumber(Math.round(avgTokensPerSession))}`,
-        `• Cost per token: ${formatCurrency(avgCostPerToken, data.currency)}`,
-        `• Activity rate: ${colors.number(activityRate.toFixed(1) + '%')} of tracked days`,
-        data.lastActivity ? 
-          `• Last seen: ${formatDate(data.lastActivity)}` : 
-          '• No recent activity detected'
-      ];
-      
-      insights.forEach(insight => {
-        console.log('  ' + insight);
-      });
-      
-      console.log('');
-    }
+    // Quick stats (separate section)
+    console.log(colors.primary('📊 Quick Stats'));
+    console.log('─'.repeat(50));
+    console.log('');
+    console.log(quickTable);
+    console.log('');
     
   } catch (error) {
     console.log(colors.error('✗ Error loading overview data: ' + error.message));

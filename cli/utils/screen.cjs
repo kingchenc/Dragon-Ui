@@ -19,8 +19,14 @@ function getTerminalSize() {
  * Clear screen completely
  */
 function clearScreen() {
-  // Real clear like the 'clear' command
-  console.clear();
+  // Windows terminals are problematic with ANSI codes, use console.clear()
+  if (process.platform === 'win32') {
+    console.clear();
+    // Also try to reset cursor position after console.clear()
+    process.stdout.write('\x1b[H');
+  } else {
+    process.stdout.write('\x1b[3J\x1b[2J\x1b[1;1H');
+  }
 }
 
 /**

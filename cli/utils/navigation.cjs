@@ -49,7 +49,7 @@ function showPageHeader(title, subtitle = '') {
   const header = [
     '',
     colors.header('┌─────────────────────────────────────────────────────┐'),
-    colors.header(`│  🐲 ${title.padEnd(44)} │`),
+    colors.header(`│  🐲 ${title.padEnd(44)}    │`),
     colors.header('│  [0] Return to Menu                                 │'),
     colors.header('└─────────────────────────────────────────────────────┘'),
     ''
@@ -123,7 +123,8 @@ function getPageName(pageNumber) {
  * Clear screen
  */
 function clearScreen() {
-  console.clear();
+  const { clearScreen: screenClear } = require('./screen.cjs');
+  screenClear();
 }
 
 /**

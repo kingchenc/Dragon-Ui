@@ -12,6 +12,7 @@ const os = require('os');
 const { startCLI } = require('./dashboard.cjs');
 const { loadSettings } = require('./settings.cjs');
 const { initChalk } = require('./components/colors.cjs');
+const { clearScreen } = require('./utils/screen.cjs');
 
 // Get version from package.json
 const packageJsonPath = path.resolve(__dirname, '../package.json');
@@ -21,7 +22,7 @@ const version = packageJson.version;
 // Load settings from external module
 async function main() {
   // Clear screen immediately when CLI starts
-  console.clear();
+  clearScreen();
   
   // Initialize chalk first
   await initChalk();
@@ -49,7 +50,7 @@ async function main() {
   // Handle dragon-ui-claude --cli
   if (process.argv.includes('--cli')) {
     // Clear screen for --cli flag usage too
-    console.clear();
+    clearScreen();
     const settings = await loadSettings();
     await startCLI(settings);
   } else {

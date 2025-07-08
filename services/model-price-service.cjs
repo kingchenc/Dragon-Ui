@@ -29,6 +29,13 @@ class ModelPriceService {
   }
 
   /**
+   * Check if running in CLI mode (suppress logs for CLI)
+   */
+  isCLI() {
+    return process.argv.some(arg => arg.includes('cli') || arg.includes('dragon-ui-claude-cli'));
+  }
+
+  /**
    * Load cached prices from disk
    */
   loadCachedPrices() {
@@ -38,7 +45,7 @@ class ModelPriceService {
         
         // Check if cache contains old Opus 3 data - if so, clear it
         if (cachedData['claude-opus-3'] && !cachedData['claude-opus-4']) {
-          console.log('[PRICE] Detected old Opus 3 cache, clearing for Opus 4 update...');
+          if (!this.isCLI()) console.log('[PRICE] Detected old Opus 3 cache, clearing for Opus 4 update...');
           fs.unlinkSync(this.cacheFile);
           if (fs.existsSync(this.lastUpdateFile)) {
             fs.unlinkSync(this.lastUpdateFile);
@@ -49,19 +56,21 @@ class ModelPriceService {
         }
         
         this.currentPrices = { ...this.defaultPrices, ...cachedData };
-        // Show cached prices
-        Object.entries(this.currentPrices).forEach(([model, pricing]) => {
-          console.log(`[PRICE] ${model}: Input $${pricing.input}/1M, Output $${pricing.output}/1M (cached)`);
-        });
+        // Show cached prices (only in Electron UI)
+        if (!this.isCLI()) {
+          Object.entries(this.currentPrices).forEach(([model, pricing]) => {
+            console.log(`[PRICE] ${model}: Input $${pricing.input}/1M, Output $${pricing.output}/1M (cached)`);
+          });
+        }
       }
       
       if (fs.existsSync(this.lastUpdateFile)) {
         const updateData = JSON.parse(fs.readFileSync(this.lastUpdateFile, 'utf8'));
         this.lastUpdate = new Date(updateData.timestamp);
-        console.log(`[PRICE] Last price update: ${this.lastUpdate.toISOString()}`);
+        if (!this.isCLI()) console.log(`[PRICE] Last price update: ${this.lastUpdate.toISOString()}`);
       }
     } catch (error) {
-      console.error('[PRICE] Error loading cached prices:', error.message);
+      if (!this.isCLI()) console.error('[PRICE] Error loading cached prices:', error.message);
       this.currentPrices = { ...this.defaultPrices };
     }
   }
@@ -76,9 +85,9 @@ class ModelPriceService {
         timestamp: new Date().toISOString(),
         source: 'litellm'
       }, null, 2));
-      console.log('[PRICE] Model prices saved to cache');
+      if (!this.isCLI()) console.log('[PRICE] Model prices saved to cache');
     } catch (error) {
-      console.error('[PRICE] Error saving prices to cache:', error.message);
+      if (!this.isCLI()) console.error('[PRICE] Error saving prices to cache:', error.message);
     }
   }
 
@@ -87,7 +96,7 @@ class ModelPriceService {
    */
   async fetchLatestPrices() {
     return new Promise((resolve, reject) => {
-      console.log('[PRICE] Fetching latest model prices from LiteLLM...');
+      if (!this.isCLI()) console.log('[PRICE] Fetching latest model prices from LiteLLM...');
       
       const request = https.get(this.litellmUrl, (response) => {
         let data = '';
@@ -99,22 +108,22 @@ class ModelPriceService {
         response.on('end', () => {
           try {
             const priceData = JSON.parse(data);
-            console.log('[PRICE] Successfully fetched price data from LiteLLM');
+            if (!this.isCLI()) console.log('[PRICE] Successfully fetched price data from LiteLLM');
             resolve(priceData);
           } catch (error) {
-            console.error('[PRICE] Error parsing LiteLLM response:', error.message);
+            if (!this.isCLI()) console.error('[PRICE] Error parsing LiteLLM response:', error.message);
             reject(error);
           }
         });
       });
       
       request.on('error', (error) => {
-        console.error('[PRICE] Error fetching from LiteLLM:', error.message);
+        if (!this.isCLI()) console.error('[PRICE] Error fetching from LiteLLM:', error.message);
         reject(error);
       });
       
       request.setTimeout(10000, () => {
-        console.error('[PRICE] Request timeout fetching from LiteLLM');
+        if (!this.isCLI()) console.error('[PRICE] Request timeout fetching from LiteLLM');
         request.abort();
         reject(new Error('Request timeout'));
       });
@@ -159,7 +168,7 @@ class ModelPriceService {
             };
             
             if (!oldPrice || oldPrice.input !== newPrice.input || oldPrice.output !== newPrice.output) {
-              console.log(`[PRICE] ${mappedName}: Input $${inputPrice}/1M, Output $${outputPrice}/1M`);
+              if (!this.isCLI()) console.log(`[PRICE] ${mappedName}: Input $${inputPrice}/1M, Output $${outputPrice}/1M`);
             }
             
             updatedPrices[mappedName] = newPrice;
@@ -177,7 +186,7 @@ class ModelPriceService {
    */
   async updatePrices() {
     try {
-      console.log('[PRICE] Starting price update...');
+      if (!this.isCLI()) console.log('[PRICE] Starting price update...');
       const priceData = await this.fetchLatestPrices();
       
       const { updatedPrices, foundUpdates } = this.extractClaudePrices(priceData);
@@ -186,15 +195,15 @@ class ModelPriceService {
         this.currentPrices = updatedPrices;
         this.lastUpdate = new Date();
         this.savePricesToCache();
-        console.log('[PRICE] Model prices updated successfully');
+        if (!this.isCLI()) console.log('[PRICE] Model prices updated successfully');
         return true;
       } else {
-        console.log('[PRICE] No Claude model updates found in LiteLLM data');
+        if (!this.isCLI()) console.log('[PRICE] No Claude model updates found in LiteLLM data');
         return false;
       }
     } catch (error) {
-      console.error('[PRICE] Failed to update prices:', error.message);
-      console.log('[PRICE] Using cached/default prices');
+      if (!this.isCLI()) console.error('[PRICE] Failed to update prices:', error.message);
+      if (!this.isCLI()) console.log('[PRICE] Using cached/default prices');
       return false;
     }
   }
@@ -215,7 +224,7 @@ class ModelPriceService {
   startPeriodicUpdates() {
     // Force initial update after service changes
     setTimeout(() => {
-      console.log('[PRICE] Forcing initial price update for new Opus 4 mapping...');
+      if (!this.isCLI()) console.log('[PRICE] Forcing initial price update for new Opus 4 mapping...');
       this.updatePrices();
     }, 2000); // 2 seconds after startup
     
@@ -226,7 +235,7 @@ class ModelPriceService {
       }
     }, this.updateInterval);
     
-    console.log('[PRICE] Periodic price updates enabled (every hour)');
+    if (!this.isCLI()) console.log('[PRICE] Periodic price updates enabled (every hour)');
   }
 
   /**

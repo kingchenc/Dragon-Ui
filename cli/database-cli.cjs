@@ -16,14 +16,116 @@ class CLIDatabaseService {
   }
 
   getDbPath() {
-    // Use the same database path as the main application
-    return path.join(process.cwd(), 'usage.db');
+    const fs = require('fs');
+    
+    // Try multiple possible database locations, including npm global location
+    const possiblePaths = [
+      // NPM Global package location (where Electron UI runs from)
+      path.join(process.env.APPDATA || '', 'npm', 'node_modules', 'dragon-ui-claude', 'usage.db'),
+      path.join(os.homedir(), 'AppData', 'Roaming', 'npm', 'node_modules', 'dragon-ui-claude', 'usage.db'),
+      
+      // Development locations
+      path.join(process.cwd(), 'usage.db'),                    // Same directory as CLI
+      path.join(__dirname, '..', 'usage.db'),                  // Parent directory (Dragon-Ui)
+      path.join(process.cwd(), '..', 'usage.db'),              // Parent of current directory
+      'usage.db',                                               // Relative to current working directory
+      
+      // User data directories
+      path.join(os.homedir(), 'usage.db'),                    // User home directory
+      path.join(os.homedir(), '.dragon-ui', 'usage.db'),      // User data directory
+      path.join(process.env.APPDATA || '', 'dragon-ui', 'usage.db'), // Windows AppData
+      path.join(process.env.LOCALAPPDATA || '', 'dragon-ui', 'usage.db'), // Windows LocalAppData
+      
+      // Other possible locations
+      path.join(__dirname, '..', '..', 'usage.db'),           // Two levels up
+      path.join('C:', 'temp', 'usage.db'),                    // Temp directory
+      path.join('C:', 'Users', process.env.USERNAME || '', 'Desktop', 'usage.db'), // Desktop
+      
+      // Try to find npm global prefix location dynamically
+      ...((() => {
+        try {
+          const { execSync } = require('child_process');
+          const npmGlobalPrefix = execSync('npm config get prefix', { encoding: 'utf8' }).trim();
+          return [
+            path.join(npmGlobalPrefix, 'node_modules', 'dragon-ui-claude', 'usage.db'),
+            path.join(npmGlobalPrefix, 'usage.db')
+          ];
+        } catch (e) {
+          return [];
+        }
+      })())
+    ];
+    
+    let dbPath = null;
+    let newestDb = null;
+    let newestTime = 0;
+    
+    // Find the most recently modified database file (silent search)
+    for (const testPath of possiblePaths) {
+      const fullPath = path.resolve(testPath);
+      
+      if (fs.existsSync(fullPath)) {
+        const stats = fs.statSync(fullPath);
+        
+        // Use the most recently modified database
+        if (stats.mtime.getTime() > newestTime) {
+          newestTime = stats.mtime.getTime();
+          newestDb = fullPath;
+          this.lastDbModTime = newestTime;
+        }
+      }
+    }
+    
+    if (newestDb) {
+      return newestDb;
+    } else {
+      this.lastDbModTime = 0;
+      return path.join(process.cwd(), 'usage.db'); // Fallback
+    }
+  }
+
+  /**
+   * Check if database has been updated since last read
+   */
+  isDatabaseUpdated() {
+    try {
+      if (!fs.existsSync(this.dbPath)) return false;
+      
+      const stats = fs.statSync(this.dbPath);
+      const currentModTime = stats.mtime.getTime();
+      
+      if (currentModTime > this.lastDbModTime) {
+        this.lastDbModTime = currentModTime;
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * Refresh database if it has been updated
+   */
+  async refreshIfNeeded() {
+    if (this.isDatabaseUpdated()) {
+      // Close current database
+      if (this.db) {
+        this.db.close();
+        this.db = null;
+      }
+      
+      // Wait briefly for any file system sync
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      // Reinitialize with fresh data
+      await this.init();
+    }
   }
 
   async init() {
     try {
-      console.log('[CLI-DB] Initializing sql.js...');
-      
       // Initialize sql.js
       this.SQL = await initSqlJs();
       
@@ -31,23 +133,22 @@ class CLIDatabaseService {
       let filebuffer;
       if (fs.existsSync(this.dbPath)) {
         filebuffer = fs.readFileSync(this.dbPath);
-        console.log('[CLI-DB] Loaded existing database');
       } else {
-        console.log('[CLI-DB] Database file not found - CLI requires existing database from Electron');
         throw new Error('Database not found. Please run the Electron version first to create the database.');
       }
       
       // Create database instance
       this.db = new this.SQL.Database(filebuffer);
-      console.log('[CLI-DB] Connected to SQLite database');
       
     } catch (error) {
-      console.error('[CLI-DB] Failed to initialize:', error.message);
       throw error;
     }
   }
 
   async getSessionStats() {
+    // Check for database updates before querying
+    await this.refreshIfNeeded();
+    
     const query = `
       WITH session_segments AS (
         SELECT 
@@ -90,6 +191,9 @@ class CLIDatabaseService {
   }
 
   async getProjectStats() {
+    // Check for database updates before querying
+    await this.refreshIfNeeded();
+    
     const query = `
       SELECT 
         project,
@@ -119,6 +223,9 @@ class CLIDatabaseService {
   }
 
   async getMonthlyStats() {
+    // Check for database updates before querying
+    await this.refreshIfNeeded();
+    
     const query = `
       SELECT 
         strftime('%Y-%m', timestamp) as month,
@@ -147,6 +254,9 @@ class CLIDatabaseService {
   }
 
   async getDailyStats(days = 30) {
+    // Check for database updates before querying
+    await this.refreshIfNeeded();
+    
     const query = `
       SELECT 
         DATE(timestamp) as date,
@@ -177,6 +287,9 @@ class CLIDatabaseService {
   }
 
   async getDbInfo() {
+    // Check for database updates before querying
+    await this.refreshIfNeeded();
+    
     const results = {};
     
     // Get entry count
@@ -209,6 +322,9 @@ class CLIDatabaseService {
   }
 
   async getRealSessionCount() {
+    // Check for database updates before querying
+    await this.refreshIfNeeded();
+    
     const stmt = this.db.prepare('SELECT COUNT(DISTINCT session_id) as count FROM usage_entries');
     stmt.step();
     const result = stmt.getAsObject().count;
@@ -238,6 +354,153 @@ class CLIDatabaseService {
     stmt.free();
     
     return result;
+  }
+
+  async getAllModels() {
+    // Check for database updates before querying
+    await this.refreshIfNeeded();
+    
+    const query = `
+      SELECT DISTINCT model 
+      FROM usage_entries 
+      WHERE model IS NOT NULL
+      ORDER BY model
+    `;
+    
+    const stmt = this.db.prepare(query);
+    const result = [];
+    
+    while (stmt.step()) {
+      const row = stmt.getAsObject();
+      result.push(row.model);
+    }
+    stmt.free();
+    
+    return result;
+  }
+
+  async getCurrentSessionInfo() {
+    // Check for database updates before querying
+    await this.refreshIfNeeded();
+    
+    // Check for any entries in the last 30 minutes (same as electron)
+    const query = `
+      SELECT 
+        session_id,
+        project,
+        SUM(cost) as total_cost,
+        SUM(input_tokens + output_tokens + 
+            COALESCE(cache_creation_input_tokens, 0) + 
+            COALESCE(cache_read_input_tokens, 0)) as total_tokens,
+        COUNT(*) as entry_count,
+        MIN(timestamp) as session_start,
+        MAX(timestamp) as last_activity
+      FROM usage_entries 
+      WHERE timestamp > datetime('now', '-30 minutes')
+      GROUP BY session_id 
+      ORDER BY last_activity DESC
+      LIMIT 1
+    `;
+    
+    const stmt = this.db.prepare(query);
+    let result = null;
+    
+    if (stmt.step()) {
+      result = stmt.getAsObject();
+      // Also calculate duration in minutes
+      if (result.session_start) {
+        const startTime = new Date(result.session_start);
+        const now = new Date();
+        result.duration = Math.floor((now - startTime) / 60000); // minutes
+      }
+    }
+    stmt.free();
+    
+    return result;
+  }
+
+  /**
+   * Get last processed timestamp from database
+   */
+  getLastTimestamp() {
+    try {
+      const stmt = this.db.prepare('SELECT MAX(timestamp) as last_timestamp FROM usage_entries');
+      stmt.step();
+      const result = stmt.getAsObject();
+      stmt.free();
+      return result.last_timestamp;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
+   * Insert a single entry into database
+   */
+  insertEntry(entry) {
+    try {
+      // Use INSERT OR IGNORE to handle duplicates gracefully
+      const stmt = this.db.prepare(`
+        INSERT OR IGNORE INTO usage_entries (
+          timestamp, session_id, model, project,
+          input_tokens, output_tokens, cache_creation_input_tokens, 
+          cache_read_input_tokens, cost
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      stmt.run([
+        entry.timestamp,
+        entry.session_id,
+        entry.model,
+        entry.project,
+        entry.input_tokens || 0,
+        entry.output_tokens || 0,
+        entry.cache_creation_input_tokens || 0,
+        entry.cache_read_input_tokens || 0,
+        entry.cost || 0
+      ]);
+      
+      stmt.free();
+      
+      // Save to file after insert (for sql.js persistence)
+      this.saveToFile();
+      return true;
+    } catch (error) {
+      // Silent error - might be database lock or other issue
+      return false;
+    }
+  }
+
+  /**
+   * Insert batch of entries
+   */
+  insertBatch(entries) {
+    try {
+      for (const entry of entries) {
+        this.insertEntry(entry);
+      }
+      
+      // Save database to file after batch insert (important for sql.js!)
+      this.saveToFile();
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * Save database to file (required for sql.js persistence)
+   */
+  saveToFile() {
+    try {
+      if (this.db && this.dbPath) {
+        const data = this.db.export();
+        const fs = require('fs');
+        fs.writeFileSync(this.dbPath, data);
+      }
+    } catch (error) {
+      // Silent error
+    }
   }
 
   close() {

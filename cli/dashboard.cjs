@@ -38,6 +38,7 @@ class CLIDashboard {
     this.currentPage = 0; // 0 = main menu
     this.isRunning = false;
     this.refreshInterval = null;
+    this.autoRefreshInterval = null; // Auto-refresh timer like Electron UI
     this.rl = null;
     this.lastUpdateTime = 0;
     
@@ -67,11 +68,29 @@ class CLIDashboard {
       process.exit(1);
     }
 
+    // Auto-refresh data on startup to get latest JSONL entries
+    console.log('');
+    console.log(colors.info('🔄 Refreshing data...'));
+    console.log(colors.subtitle('• Scanning Claude project paths'));
+    console.log(colors.subtitle('• Processing new JSONL files'));
+    console.log(colors.subtitle('• Updating database with latest activity'));
+    console.log('');
+    
+    const startupRefresh = showLoading('Synchronizing with latest Claude activity...');
+    await this.dataAdapter.forceRefreshData();
+    startupRefresh();
+    
+    console.log(colors.success('✓ Data refreshed successfully'));
+    console.log('');
+
     // Clear screen before showing welcome
     clearScreen();
     
     // Show welcome screen
     await this.showWelcomeScreen();
+    
+    // Start auto-refresh like Electron UI
+    this.startAutoRefresh();
     
     // Start main loop
     await this.mainLoop();
@@ -286,9 +305,8 @@ class CLIDashboard {
     
     this.isRunning = false;
     
-    if (this.rl) {
-      this.rl.close();
-    }
+    // Cleanup auto-refresh and resources
+    this.cleanup();
     
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
@@ -398,6 +416,71 @@ class CLIDashboard {
     clearScreen();
     console.log(showHelp());
     await waitForInput();
+  }
+
+  /**
+   * Start auto-refresh like Electron UI
+   */
+  startAutoRefresh() {
+    // Clear any existing interval
+    if (this.autoRefreshInterval) {
+      clearInterval(this.autoRefreshInterval);
+    }
+
+    // Start auto-refresh using user's configured interval
+    this.autoRefreshInterval = setInterval(async () => {
+      if (this.isRunning) {
+        try {
+          // Force refresh database to get latest data
+          await this.dataAdapter.forceRefreshData();
+          
+          // Refresh current page display (including main menu)
+          await this.refreshCurrentPageSilent();
+          
+        } catch (error) {
+          // Silent error - don't interrupt user experience
+        }
+      }
+    }, this.settings.refreshInterval); // Use user's configured interval
+  }
+
+  /**
+   * Stop auto-refresh
+   */
+  stopAutoRefresh() {
+    if (this.autoRefreshInterval) {
+      clearInterval(this.autoRefreshInterval);
+      this.autoRefreshInterval = null;
+    }
+  }
+
+  /**
+   * Silently refresh current page without clearing screen
+   */
+  async refreshCurrentPageSilent() {
+    try {
+      // Show subtle refresh indicator in corner
+      const timestamp = new Date().toLocaleTimeString();
+      process.stdout.write(`\r${colors.subtitle(`⟳ ${timestamp}`)}`);
+      
+      // Wait briefly then clear the indicator
+      setTimeout(() => {
+        process.stdout.write('\r                    \r');
+      }, 1000);
+      
+    } catch (error) {
+      // Silent error
+    }
+  }
+
+  /**
+   * Cleanup on exit
+   */
+  cleanup() {
+    this.stopAutoRefresh();
+    if (this.rl) {
+      this.rl.close();
+    }
   }
 }
 
