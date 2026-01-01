@@ -106,7 +106,7 @@ function createWindow() {
       webSecurity: true,
       allowRunningInsecureContent: false,
       sandbox: false,
-      devTools: false // Completely disable dev tools
+      devTools: true // Enable dev tools for debugging
     },
     icon: path.join(__dirname, 'public/Dragon-Ui.ico'),
     title: 'Dragon UI - Claude Code Max Dashboard',
@@ -142,15 +142,20 @@ function createWindow() {
     event.preventDefault();
   });
   
-  // Disable all dev tools access
+  // Dev tools access enabled for debugging (F12, Ctrl+Shift+I)
+  // Direct keyboard shortcut for instant DevTools (bypasses IPC)
   mainWindow.webContents.on('before-input-event', (event, input) => {
-    // Disable F12, Ctrl+Shift+I, Ctrl+Shift+J, etc.
-    if (input.key === 'F12' || 
-        (input.control && input.shift && (input.key === 'I' || input.key === 'J' || input.key === 'C'))) {
+    if (input.key === 'F12' && input.type === 'keyDown') {
+      mainWindow.webContents.toggleDevTools();
+      event.preventDefault();
+    }
+    // Ctrl+Shift+I also opens DevTools
+    if (input.control && input.shift && input.key === 'I' && input.type === 'keyDown') {
+      mainWindow.webContents.toggleDevTools();
       event.preventDefault();
     }
   });
-  
+
   mainWindow.loadURL(startUrl);
   
   // Restore window state after the window is ready
@@ -224,6 +229,7 @@ function createMenu() {
       submenu: [
         { role: 'reload' },
         { role: 'forceReload' },
+        { role: 'toggleDevTools', accelerator: 'F12' },
         { type: 'separator' },
         { role: 'resetZoom' },
         { role: 'zoomIn' },
@@ -233,7 +239,7 @@ function createMenu() {
       ]
     }
   ];
-  
+
   const menu = Menu.buildFromTemplate(menuTemplate);
   Menu.setApplicationMenu(menu);
 }
@@ -485,6 +491,53 @@ ipcMain.handle('claude-projects-force-reload', async () => {
   }
 });
 
+// Statusline CLI sync handlers
+const CLI_SETTINGS_FILE = path.join(os.homedir(), '.dragon-ui-cli-settings.json');
+
+ipcMain.handle('statusline-export-to-cli', async (event, statuslineConfig) => {
+  try {
+    let settings = {};
+
+    // Read existing settings if file exists
+    if (fs.existsSync(CLI_SETTINGS_FILE)) {
+      const data = fs.readFileSync(CLI_SETTINGS_FILE, 'utf8');
+      settings = JSON.parse(data);
+    }
+
+    // Update statusline config
+    settings.statusline = statuslineConfig;
+
+    // Write back to file
+    fs.writeFileSync(CLI_SETTINGS_FILE, JSON.stringify(settings, null, 2), 'utf8');
+    console.log('[STATUSLINE] Exported config to CLI settings');
+    return { success: true };
+  } catch (error) {
+    console.error('[ERR] Statusline export error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('statusline-import-from-cli', async () => {
+  try {
+    if (!fs.existsSync(CLI_SETTINGS_FILE)) {
+      return { success: false, error: 'CLI settings file not found' };
+    }
+
+    const data = fs.readFileSync(CLI_SETTINGS_FILE, 'utf8');
+    const settings = JSON.parse(data);
+
+    if (!settings.statusline) {
+      return { success: false, error: 'No statusline config in CLI settings' };
+    }
+
+    console.log('[STATUSLINE] Imported config from CLI settings');
+    return { success: true, config: settings.statusline };
+  } catch (error) {
+    console.error('[ERR] Statusline import error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
 // Electron app handlers
 app.whenReady().then(createWindow);
 
@@ -524,7 +577,8 @@ ipcMain.handle('toggle-dev-tools', () => {
 
 ipcMain.handle('open-dev-tools', () => {
   if (mainWindow) {
-    mainWindow.webContents.openDevTools();
+    // Use detached mode for faster opening
+    mainWindow.webContents.openDevTools({ mode: 'detach' });
     return { success: true };
   }
   return { success: false, error: 'No main window' };
@@ -1038,4 +1092,479 @@ ipcMain.handle('model-prices-get-for-model', async (event, model) => {
   }
 });
 
-console.log('[OK] Modular Dragon UI main process initialized with model price service');
+// Terminal Service IPC Handlers
+const { terminalService } = require('./services/terminal-service.cjs');
+
+// Account Service IPC Handlers
+const { accountService } = require('./services/account-service.cjs');
+
+// Active terminal session listeners (for cleanup)
+const terminalListeners = new Map();
+
+ipcMain.handle('terminal-get-shells', async () => {
+  try {
+    const shells = terminalService.getAvailableShells();
+    return { success: true, shells };
+  } catch (error) {
+    console.error('[TERM] Get shells error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('terminal-create', async (event, options) => {
+  try {
+    console.log('[TERM] Creating terminal session:', options);
+
+    // Inject active account environment variables
+    let accountEnv = {};
+    try {
+      accountEnv = accountService.getActiveAccountEnv();
+      if (Object.keys(accountEnv).length > 0) {
+        console.log('[TERM] Injecting account env vars:', Object.keys(accountEnv).join(', '));
+      }
+    } catch (err) {
+      console.warn('[TERM] Could not get account env:', err.message);
+    }
+
+    // Merge account env with any provided env
+    const mergedOptions = {
+      ...options,
+      env: { ...accountEnv, ...(options.env || {}) }
+    };
+
+    const session = terminalService.createSession(mergedOptions);
+
+    // Set up event listeners for the session
+    const dataHandler = (data) => {
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send('terminal-data', { id: session.id, data });
+      }
+    };
+
+    const exitHandler = (exitInfo) => {
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send('terminal-exit', { id: session.id, ...exitInfo });
+      }
+      // Clean up listeners
+      session.removeListener('data', dataHandler);
+      session.removeListener('exit', exitHandler);
+      terminalListeners.delete(session.id);
+    };
+
+    session.on('data', dataHandler);
+    session.on('exit', exitHandler);
+
+    // Store listeners for cleanup
+    terminalListeners.set(session.id, { dataHandler, exitHandler });
+
+    // Start the session
+    const started = session.start();
+
+    if (started) {
+      console.log(`[TERM] Session ${session.id} started successfully`);
+      return { success: true, session: session.getInfo() };
+    } else {
+      return { success: false, error: 'Failed to start terminal session' };
+    }
+  } catch (error) {
+    console.error('[TERM] Create terminal error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('terminal-write', async (event, id, data) => {
+  try {
+    const session = terminalService.getSession(id);
+    if (session) {
+      const written = session.write(data);
+      return { success: written };
+    }
+    return { success: false, error: 'Session not found' };
+  } catch (error) {
+    console.error('[TERM] Write error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('terminal-resize', async (event, id, cols, rows) => {
+  try {
+    const session = terminalService.getSession(id);
+    if (session) {
+      session.resize(cols, rows);
+      return { success: true };
+    }
+    return { success: false, error: 'Session not found' };
+  } catch (error) {
+    console.error('[TERM] Resize error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('terminal-destroy', async (event, id) => {
+  try {
+    console.log(`[TERM] Destroying session ${id}`);
+    const destroyed = terminalService.destroySession(id);
+
+    // Clean up listeners
+    const listeners = terminalListeners.get(id);
+    if (listeners) {
+      terminalListeners.delete(id);
+    }
+
+    return { success: destroyed };
+  } catch (error) {
+    console.error('[TERM] Destroy error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('terminal-list', async () => {
+  try {
+    const sessions = terminalService.getAllSessions();
+    return { success: true, sessions };
+  } catch (error) {
+    console.error('[TERM] List error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('terminal-get-info', async (event, id) => {
+  try {
+    const session = terminalService.getSession(id);
+    if (session) {
+      return { success: true, session: session.getInfo() };
+    }
+    return { success: false, error: 'Session not found' };
+  } catch (error) {
+    console.error('[TERM] Get info error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Clean up all terminals on app quit
+app.on('before-quit', () => {
+  console.log('[TERM] Cleaning up terminal sessions...');
+  terminalService.destroyAllSessions();
+  terminalListeners.clear();
+});
+
+// Account Service IPC Handlers
+ipcMain.handle('account-get-all', async () => {
+  try {
+    const accounts = accountService.getAllAccounts();
+    return { success: true, accounts };
+  } catch (error) {
+    console.error('[ACCOUNT] Get all error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('account-get-active', async () => {
+  try {
+    const account = accountService.getActiveAccount();
+    return { success: true, account };
+  } catch (error) {
+    console.error('[ACCOUNT] Get active error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('account-create', async (event, accountData, apiKey) => {
+  try {
+    console.log('[ACCOUNT] Creating account:', accountData.name);
+    const account = accountService.createAccount(accountData, apiKey);
+    return { success: true, account };
+  } catch (error) {
+    console.error('[ACCOUNT] Create error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('account-update', async (event, id, updates) => {
+  try {
+    console.log('[ACCOUNT] Updating account:', id);
+    const account = accountService.updateAccount(id, updates);
+    return { success: true, account };
+  } catch (error) {
+    console.error('[ACCOUNT] Update error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('account-delete', async (event, id) => {
+  try {
+    console.log('[ACCOUNT] Deleting account:', id);
+    const result = accountService.deleteAccount(id);
+    return { success: result };
+  } catch (error) {
+    console.error('[ACCOUNT] Delete error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('account-set-active', async (event, id) => {
+  try {
+    console.log('[ACCOUNT] Setting active account:', id);
+    const account = accountService.setActiveAccount(id);
+    return { success: true, account };
+  } catch (error) {
+    console.error('[ACCOUNT] Set active error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('account-get-api-key', async (event, id) => {
+  try {
+    const apiKey = accountService.getApiKey(id);
+    // Mask the key for security (only show first 8 and last 4 chars)
+    const masked = apiKey.slice(0, 8) + '...' + apiKey.slice(-4);
+    return { success: true, apiKey, masked };
+  } catch (error) {
+    console.error('[ACCOUNT] Get API key error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('account-update-api-key', async (event, id, newApiKey) => {
+  try {
+    console.log('[ACCOUNT] Updating API key for:', id);
+    const result = accountService.updateApiKey(id, newApiKey);
+    return { success: result };
+  } catch (error) {
+    console.error('[ACCOUNT] Update API key error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('account-get-env', async () => {
+  try {
+    const env = accountService.getActiveAccountEnv();
+    return { success: true, env };
+  } catch (error) {
+    console.error('[ACCOUNT] Get env error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('account-export', async () => {
+  try {
+    const data = accountService.exportAccounts();
+    return { success: true, data };
+  } catch (error) {
+    console.error('[ACCOUNT] Export error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('account-import', async (event, data, apiKeys) => {
+  try {
+    console.log('[ACCOUNT] Importing accounts...');
+    const accounts = accountService.importAccounts(data, apiKeys);
+    return { success: true, accounts };
+  } catch (error) {
+    console.error('[ACCOUNT] Import error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// ==================== MCP (Model Context Protocol) Service ====================
+const { MCPService } = require('./services/mcp-service.cjs');
+const mcpService = new MCPService();
+
+// Initialize MCP service
+mcpService.initialize().then(() => {
+  console.log('[MCP] Service initialized');
+}).catch((err) => {
+  console.error('[MCP] Failed to initialize:', err);
+});
+
+// Forward MCP events to renderer
+mcpService.on('server-status', (data) => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('mcp-server-status', data);
+  }
+});
+
+mcpService.on('server-capabilities', (data) => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('mcp-server-capabilities', data);
+  }
+});
+
+mcpService.on('server-log', (data) => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('mcp-server-log', data);
+  }
+});
+
+mcpService.on('server-error', (data) => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('mcp-server-error', data);
+  }
+});
+
+// Get all MCP servers
+ipcMain.handle('mcp-get-servers', async () => {
+  try {
+    const servers = mcpService.getAllServers();
+    return { success: true, servers };
+  } catch (error) {
+    console.error('[MCP] Get servers error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Add custom MCP server
+ipcMain.handle('mcp-add-server', async (event, serverConfig) => {
+  try {
+    const result = mcpService.addServer(serverConfig);
+    return result;
+  } catch (error) {
+    console.error('[MCP] Add server error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Update custom MCP server
+ipcMain.handle('mcp-update-server', async (event, serverId, updates) => {
+  try {
+    const result = mcpService.updateServer(serverId, updates);
+    return result;
+  } catch (error) {
+    console.error('[MCP] Update server error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Remove custom MCP server
+ipcMain.handle('mcp-remove-server', async (event, serverId) => {
+  try {
+    const result = mcpService.removeServer(serverId);
+    return result;
+  } catch (error) {
+    console.error('[MCP] Remove server error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Connect to MCP server
+ipcMain.handle('mcp-connect', async (event, serverId) => {
+  try {
+    console.log('[MCP] Connecting to server:', serverId);
+    const result = await mcpService.connect(serverId);
+    return result;
+  } catch (error) {
+    console.error('[MCP] Connect error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Disconnect from MCP server
+ipcMain.handle('mcp-disconnect', async (event, serverId) => {
+  try {
+    console.log('[MCP] Disconnecting from server:', serverId);
+    const result = mcpService.disconnect(serverId);
+    return result;
+  } catch (error) {
+    console.error('[MCP] Disconnect error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Set auto-connect for MCP server
+ipcMain.handle('mcp-set-auto-connect', async (event, serverId, enabled) => {
+  try {
+    const result = mcpService.setAutoConnect(serverId, enabled);
+    return result;
+  } catch (error) {
+    console.error('[MCP] Set auto-connect error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Get MCP server info
+ipcMain.handle('mcp-get-server-info', async (event, serverId) => {
+  try {
+    const info = mcpService.getServerInfo(serverId);
+    return { success: true, server: info };
+  } catch (error) {
+    console.error('[MCP] Get server info error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Execute MCP tool
+ipcMain.handle('mcp-execute-tool', async (event, serverId, toolName, args) => {
+  try {
+    console.log('[MCP] Executing tool:', toolName, 'on server:', serverId);
+    const result = await mcpService.executeTool(serverId, toolName, args);
+    return result;
+  } catch (error) {
+    console.error('[MCP] Execute tool error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Read MCP resource
+ipcMain.handle('mcp-read-resource', async (event, serverId, uri) => {
+  try {
+    console.log('[MCP] Reading resource:', uri, 'from server:', serverId);
+    const result = await mcpService.readResource(serverId, uri);
+    return result;
+  } catch (error) {
+    console.error('[MCP] Read resource error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Get MCP prompt
+ipcMain.handle('mcp-get-prompt', async (event, serverId, promptName, args) => {
+  try {
+    console.log('[MCP] Getting prompt:', promptName, 'from server:', serverId);
+    const result = await mcpService.getPrompt(serverId, promptName, args);
+    return result;
+  } catch (error) {
+    console.error('[MCP] Get prompt error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Get all available tools from connected servers
+ipcMain.handle('mcp-get-all-tools', async () => {
+  try {
+    const tools = mcpService.getAllTools();
+    return { success: true, tools };
+  } catch (error) {
+    console.error('[MCP] Get all tools error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Get all available resources from connected servers
+ipcMain.handle('mcp-get-all-resources', async () => {
+  try {
+    const resources = mcpService.getAllResources();
+    return { success: true, resources };
+  } catch (error) {
+    console.error('[MCP] Get all resources error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Get all available prompts from connected servers
+ipcMain.handle('mcp-get-all-prompts', async () => {
+  try {
+    const prompts = mcpService.getAllPrompts();
+    return { success: true, prompts };
+  } catch (error) {
+    console.error('[MCP] Get all prompts error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Cleanup MCP on app quit
+app.on('before-quit', () => {
+  mcpService.shutdown();
+});
+
+console.log('[OK] Modular Dragon UI main process initialized with account service and MCP');

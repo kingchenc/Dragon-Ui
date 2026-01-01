@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, memo } from 'react'
 import { DragonCard, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { DragonBadge } from '@/components/ui/badge'
@@ -33,6 +33,9 @@ import {
 import { downloadData } from '@/lib/utils'
 import { SUPPORTED_CURRENCIES, currencyService } from '@/lib/currency-service'
 import { SUPPORTED_LANGUAGES } from '@/i18n/languages'
+import StatuslineConfigurator from '@/components/statusline/statusline-configurator'
+import { AccountManager } from '@/components/accounts'
+import { MCPServerManager } from '@/components/mcp'
 
 // Helper function to get current billing period display
 const getCurrentBillingPeriod = (billingDay: number) => {
@@ -64,6 +67,36 @@ const getCurrentBillingPeriod = (billingDay: number) => {
   return `${formatDate(periodStart)} - ${formatDate(new Date(periodEnd.getTime() - 1))}`
 }
 
+// Separate component for live clock to prevent full page re-renders
+const LiveClock = memo(function LiveClock({ timezone, timeFormat }: { timezone: string; timeFormat: '12h' | '24h' }) {
+  const [currentTime, setCurrentTime] = useState(new Date())
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const resolvedTimezone = timezone === 'auto' ? Intl.DateTimeFormat().resolvedOptions().timeZone : timezone
+
+  return (
+    <div className="text-right">
+      <div className="font-mono">
+        {currentTime.toLocaleString('en-US', {
+          timeZone: resolvedTimezone,
+          hour12: timeFormat === '12h',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hourCycle: timeFormat === '12h' ? 'h12' : 'h23'
+        })}
+      </div>
+      <div className="text-xs text-muted-foreground">
+        {resolvedTimezone}
+      </div>
+    </div>
+  )
+})
+
 export default function SettingsPage() {
   const { 
     settings, 
@@ -93,25 +126,12 @@ export default function SettingsPage() {
     active: [] 
   })
   
-  // Live timezone display
-  const [currentTime, setCurrentTime] = useState(new Date())
-  
   // Live currency rate display
   const [currentRate, setCurrentRate] = useState<number | null>(null)
-  
+
   // Dialog states
   const [cleanupDialogOpen, setCleanupDialogOpen] = useState(false)
   const [refreshDialogOpen, setRefreshDialogOpen] = useState(false)
-  
-  
-  // Update current time every second
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date())
-    }, 1000)
-    
-    return () => clearInterval(timer)
-  }, [])
   
   // Update currency rate when currency changes
   useEffect(() => {
@@ -124,7 +144,7 @@ export default function SettingsPage() {
     const loadPaths = async () => {
       try {
         const paths = await window.claudeMaxAPI.getClaudePaths()
-        console.log('[PATHS] Loaded Claude paths:', paths)
+        console.log('[PATHS] Loaded Claude paths:', JSON.stringify(paths, null, 2))
         // Ensure all arrays exist with fallback to empty arrays
         setPathsStatus({
           standard: paths?.standard || [],
@@ -222,11 +242,10 @@ export default function SettingsPage() {
 
   const updateCurrency = async (newCurrency: string) => {
     try {
-      // Use the store's changeCurrency method which handles everything
       await changeCurrency(newCurrency)
-      console.log('[CURRENCY] Currency changed successfully to:', newCurrency);
+      console.log('[CURRENCY] Currency changed successfully to:', newCurrency)
     } catch (error) {
-      console.warn('[CURRENCY] Failed to change currency:', error);
+      console.warn('[CURRENCY] Failed to change currency:', error)
       alert(t('pages.settings.advanced.currency.changeFailed'))
     }
   }
@@ -482,6 +501,54 @@ export default function SettingsPage() {
         </CardContent>
       </DragonCard>
 
+      {/* Statusline Configuration */}
+      <DragonCard className="transition-all duration-300 hover:shadow-lg">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <SettingsIcon className="h-5 w-5 text-dragon-primary" />
+            <span>Statusline Configuration</span>
+            <DragonBadge variant="dragon" className="text-xs">NEW</DragonBadge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <StatuslineConfigurator />
+        </CardContent>
+      </DragonCard>
+
+      {/* API Accounts */}
+      <DragonCard
+        variant="gradient"
+        className="transition-all duration-300 hover:shadow-lg hover:shadow-dragon-primary/20"
+      >
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Key className="h-5 w-5 text-dragon-primary" />
+            <span>API Accounts</span>
+            <DragonBadge variant="dragon" className="text-xs">NEW</DragonBadge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <AccountManager />
+        </CardContent>
+      </DragonCard>
+
+      {/* MCP Servers */}
+      <DragonCard
+        variant="gradient"
+        className="transition-all duration-300 hover:shadow-lg hover:shadow-dragon-accent/20"
+      >
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Server className="h-5 w-5 text-dragon-accent" />
+            <span>MCP Servers</span>
+            <DragonBadge variant="dragon" className="text-xs">NEW</DragonBadge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <MCPServerManager />
+        </CardContent>
+      </DragonCard>
+
       {/* Billing Cycle Settings */}
       <DragonCard 
         variant="gradient"
@@ -657,21 +724,7 @@ export default function SettingsPage() {
               </div>
               <div className="flex items-center space-x-2 text-sm">
                 <Globe className="h-4 w-4 text-dragon-primary" />
-                <div className="text-right">
-                  <div className="font-mono">
-                    {currentTime.toLocaleString('en-US', {
-                      timeZone: settings.timezone === 'auto' ? Intl.DateTimeFormat().resolvedOptions().timeZone : settings.timezone,
-                      hour12: settings.timeFormat === '12h',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      second: '2-digit',
-                      hourCycle: settings.timeFormat === '12h' ? 'h12' : 'h23'
-                    })}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {settings.timezone === 'auto' ? Intl.DateTimeFormat().resolvedOptions().timeZone : settings.timezone}
-                  </div>
-                </div>
+                <LiveClock timezone={settings.timezone} timeFormat={settings.timeFormat} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2">

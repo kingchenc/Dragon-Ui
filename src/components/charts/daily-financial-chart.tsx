@@ -1,3 +1,4 @@
+import React, { memo, useMemo } from 'react'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -36,20 +37,16 @@ interface DailyFinancialChartProps {
   currency: string
 }
 
-export function DailyFinancialChart({ data, currency }: DailyFinancialChartProps) {
-  if (!data || data.length === 0) {
-    return (
-      <div className="h-64 flex items-center justify-center text-muted-foreground">
-        No financial data available
-      </div>
-    )
-  }
+export const DailyFinancialChart = memo(function DailyFinancialChart({ data, currency }: DailyFinancialChartProps) {
+  // Memoize calculations
+  const { totalSpend, finalRunningTotal } = useMemo(() => ({
+    totalSpend: data?.reduce((sum, day) => sum + day.money, 0) || 0,
+    finalRunningTotal: data?.length > 0 ? data[data.length - 1].cumulativeMoney : 0
+  }), [data])
 
-  // Calculate totals for display
-  const totalSpend = data.reduce((sum, day) => sum + day.money, 0)
-  const finalRunningTotal = data.length > 0 ? data[data.length - 1].cumulativeMoney : 0
-
-  const chartData = {
+  const chartData = useMemo(() => {
+    if (!data || data.length === 0) return null
+    return {
     labels: data.map(day => day.formattedDate),
     datasets: [
       {
@@ -89,27 +86,17 @@ export function DailyFinancialChart({ data, currency }: DailyFinancialChartProps
         yAxisID: 'y1',
       }
     ]
-  }
+  }}, [data])
 
-  const options = {
+  const options = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
-    interaction: {
-      intersect: false,
-      mode: 'index' as const,
-    },
+    interaction: { intersect: false, mode: 'index' as const },
     plugins: {
       legend: {
         display: true,
         position: 'top' as const,
-        labels: {
-          color: '#94A3B8',
-          font: {
-            size: 12
-          },
-          usePointStyle: true,
-          pointStyle: 'line',
-        }
+        labels: { color: '#94A3B8', font: { size: 12 }, usePointStyle: true, pointStyle: 'line' }
       },
       tooltip: {
         backgroundColor: 'rgba(15, 23, 42, 0.95)',
@@ -120,112 +107,62 @@ export function DailyFinancialChart({ data, currency }: DailyFinancialChartProps
         cornerRadius: 8,
         displayColors: true,
         callbacks: {
-          title: (context: any) => {
-            const index = context[0].dataIndex
-            return data[index].date
-          },
+          title: (context: any) => data?.[context[0]?.dataIndex]?.date || '',
           label: (context: any) => {
-            const index = context.dataIndex
-            const day = data[index]
-            const datasetLabel = context.dataset.label
-            
-            if (datasetLabel === 'Daily Spend') {
-              return [
-                `Daily: ${formatCurrency(day.money, currency)}`,
-                `Sessions: ${day.sessionCount}`
-              ]
-            } else {
-              return `Total: ${formatCurrency(day.cumulativeMoney, currency)}`
+            const day = data?.[context.dataIndex]
+            if (!day) return ''
+            if (context.dataset.label === 'Daily Spend') {
+              return [`Daily: ${formatCurrency(day.money, currency)}`, `Sessions: ${day.sessionCount}`]
             }
+            return `Total: ${formatCurrency(day.cumulativeMoney, currency)}`
           }
         }
       }
     },
     scales: {
       x: {
-        grid: {
-          color: 'rgba(255, 255, 255, 0.1)',
-          drawBorder: false,
-        },
-        ticks: {
-          color: '#94A3B8',
-          font: {
-            size: 11
-          },
-          maxRotation: 45,
-        },
-        border: {
-          display: false
-        }
+        grid: { color: 'rgba(255, 255, 255, 0.1)', drawBorder: false },
+        ticks: { color: '#94A3B8', font: { size: 11 }, maxRotation: 45 },
+        border: { display: false }
       },
       y: {
         type: 'linear' as const,
         display: true,
         position: 'left' as const,
         beginAtZero: true,
-        grid: {
-          color: 'rgba(124, 58, 237, 0.1)',
-          drawBorder: false,
-        },
+        grid: { color: 'rgba(124, 58, 237, 0.1)', drawBorder: false },
         ticks: {
           color: '#7C3AED',
-          font: {
-            size: 11
-          },
-          callback: function(value: any) {
-            return formatCurrency(value, currency)
-          }
+          font: { size: 11 },
+          callback: (value: any) => formatCurrency(value, currency)
         },
-        border: {
-          display: false
-        },
-        title: {
-          display: true,
-          text: 'Daily Spend',
-          color: '#7C3AED',
-          font: {
-            size: 12,
-            weight: 'bold'
-          }
-        }
+        border: { display: false },
+        title: { display: true, text: 'Daily Spend', color: '#7C3AED', font: { size: 12, weight: 'bold' as const } }
       },
       y1: {
         type: 'linear' as const,
         display: true,
         position: 'right' as const,
         beginAtZero: true,
-        grid: {
-          drawOnChartArea: false,
-          color: 'rgba(245, 158, 11, 0.1)',
-        },
+        grid: { drawOnChartArea: false, color: 'rgba(245, 158, 11, 0.1)' },
         ticks: {
           color: '#F59E0B',
-          font: {
-            size: 11
-          },
-          callback: function(value: any) {
-            return formatCurrency(value, currency)
-          }
+          font: { size: 11 },
+          callback: (value: any) => formatCurrency(value, currency)
         },
-        border: {
-          display: false
-        },
-        title: {
-          display: true,
-          text: 'Running Total',
-          color: '#F59E0B',
-          font: {
-            size: 12,
-            weight: 'bold'
-          }
-        }
+        border: { display: false },
+        title: { display: true, text: 'Running Total', color: '#F59E0B', font: { size: 12, weight: 'bold' as const } }
       }
     },
-    elements: {
-      point: {
-        hoverBackgroundColor: '#F59E0B',
-      }
-    }
+    elements: { point: { hoverBackgroundColor: '#F59E0B' } }
+  }), [data, currency])
+
+  if (!chartData) {
+    return (
+      <div className="h-64 flex items-center justify-center text-muted-foreground">
+        No financial data available
+      </div>
+    )
   }
 
   return (
@@ -261,4 +198,4 @@ export function DailyFinancialChart({ data, currency }: DailyFinancialChartProps
       </div>
     </div>
   )
-}
+})

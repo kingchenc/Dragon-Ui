@@ -134,13 +134,32 @@ LoadingDots.displayName = "LoadingDots"
 
 const LoadingOverlay = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & { 
+  React.HTMLAttributes<HTMLDivElement> & {
     visible: boolean
     text?: string
+    blocking?: boolean // New prop - false = corner indicator, true = full screen
   }
->(({ className, visible, text = "Loading...", ...props }, ref) => {
+>(({ className, visible, text = "Loading...", blocking = false, ...props }, ref) => {
   if (!visible) return null
 
+  // Non-blocking: Small indicator in bottom-right corner
+  if (!blocking) {
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          "fixed bottom-4 right-4 z-50 flex items-center space-x-2 px-4 py-2 rounded-lg bg-background/90 border border-dragon-primary/20 shadow-lg backdrop-blur-sm",
+          className
+        )}
+        {...props}
+      >
+        <LoadingSpinner size="sm" variant="dragon" />
+        <span className="text-sm text-muted-foreground">{text}</span>
+      </div>
+    )
+  }
+
+  // Blocking: Full-screen overlay (only for critical operations)
   return (
     <div
       ref={ref}

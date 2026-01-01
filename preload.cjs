@@ -217,29 +217,99 @@ const claudeProjectsAPI = {
 contextBridge.exposeInMainWorld('electronAPI', {
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   exportData: (data, filename) => ipcRenderer.invoke('export-data', data, filename),
-  
+
   // Dev tools control
   toggleDevTools: () => ipcRenderer.invoke('toggle-dev-tools'),
   openDevTools: () => ipcRenderer.invoke('open-dev-tools'),
   closeDevTools: () => ipcRenderer.invoke('close-dev-tools'),
-  
+
   // Auto-update
   performUpdate: () => ipcRenderer.invoke('perform-update'),
-  
+
   // Model price service
   getModelPrices: () => ipcRenderer.invoke('model-prices-get-all'),
   getModelPricingStats: () => ipcRenderer.invoke('model-prices-get-stats'),
   forceUpdatePrices: () => ipcRenderer.invoke('model-prices-force-update'),
   getModelPricing: (model) => ipcRenderer.invoke('model-prices-get-for-model', model),
-  
+
+  // Terminal service
+  terminalGetShells: () => ipcRenderer.invoke('terminal-get-shells'),
+  terminalCreate: (options) => ipcRenderer.invoke('terminal-create', options),
+  terminalWrite: (id, data) => ipcRenderer.invoke('terminal-write', id, data),
+  terminalResize: (id, cols, rows) => ipcRenderer.invoke('terminal-resize', id, cols, rows),
+  terminalDestroy: (id) => ipcRenderer.invoke('terminal-destroy', id),
+  terminalList: () => ipcRenderer.invoke('terminal-list'),
+  terminalGetInfo: (id) => ipcRenderer.invoke('terminal-get-info', id),
+
+  // Terminal event listeners
+  onTerminalData: (callback) => {
+    ipcRenderer.on('terminal-data', (event, data) => callback(data));
+  },
+  onTerminalExit: (callback) => {
+    ipcRenderer.on('terminal-exit', (event, data) => callback(data));
+  },
+  removeTerminalListeners: () => {
+    ipcRenderer.removeAllListeners('terminal-data');
+    ipcRenderer.removeAllListeners('terminal-exit');
+  },
+
+  // Account service
+  accountGetAll: () => ipcRenderer.invoke('account-get-all'),
+  accountGetActive: () => ipcRenderer.invoke('account-get-active'),
+  accountCreate: (accountData, apiKey) => ipcRenderer.invoke('account-create', accountData, apiKey),
+  accountUpdate: (id, updates) => ipcRenderer.invoke('account-update', id, updates),
+  accountDelete: (id) => ipcRenderer.invoke('account-delete', id),
+  accountSetActive: (id) => ipcRenderer.invoke('account-set-active', id),
+  accountGetApiKey: (id) => ipcRenderer.invoke('account-get-api-key', id),
+  accountUpdateApiKey: (id, newApiKey) => ipcRenderer.invoke('account-update-api-key', id, newApiKey),
+  accountGetEnv: () => ipcRenderer.invoke('account-get-env'),
+  accountExport: () => ipcRenderer.invoke('account-export'),
+  accountImport: (data, apiKeys) => ipcRenderer.invoke('account-import', data, apiKeys),
+
+  // MCP (Model Context Protocol) service
+  mcpGetServers: () => ipcRenderer.invoke('mcp-get-servers'),
+  mcpAddServer: (serverConfig) => ipcRenderer.invoke('mcp-add-server', serverConfig),
+  mcpUpdateServer: (serverId, updates) => ipcRenderer.invoke('mcp-update-server', serverId, updates),
+  mcpRemoveServer: (serverId) => ipcRenderer.invoke('mcp-remove-server', serverId),
+  mcpConnect: (serverId) => ipcRenderer.invoke('mcp-connect', serverId),
+  mcpDisconnect: (serverId) => ipcRenderer.invoke('mcp-disconnect', serverId),
+  mcpSetAutoConnect: (serverId, enabled) => ipcRenderer.invoke('mcp-set-auto-connect', serverId, enabled),
+  mcpGetServerInfo: (serverId) => ipcRenderer.invoke('mcp-get-server-info', serverId),
+  mcpExecuteTool: (serverId, toolName, args) => ipcRenderer.invoke('mcp-execute-tool', serverId, toolName, args),
+  mcpReadResource: (serverId, uri) => ipcRenderer.invoke('mcp-read-resource', serverId, uri),
+  mcpGetPrompt: (serverId, promptName, args) => ipcRenderer.invoke('mcp-get-prompt', serverId, promptName, args),
+  mcpGetAllTools: () => ipcRenderer.invoke('mcp-get-all-tools'),
+  mcpGetAllResources: () => ipcRenderer.invoke('mcp-get-all-resources'),
+  mcpGetAllPrompts: () => ipcRenderer.invoke('mcp-get-all-prompts'),
+
+  // MCP event listeners
+  onMcpServerStatus: (callback) => {
+    ipcRenderer.on('mcp-server-status', (event, data) => callback(data));
+  },
+  onMcpServerCapabilities: (callback) => {
+    ipcRenderer.on('mcp-server-capabilities', (event, data) => callback(data));
+  },
+  onMcpServerLog: (callback) => {
+    ipcRenderer.on('mcp-server-log', (event, data) => callback(data));
+  },
+  onMcpServerError: (callback) => {
+    ipcRenderer.on('mcp-server-error', (event, data) => callback(data));
+  },
+  removeMcpListeners: () => {
+    ipcRenderer.removeAllListeners('mcp-server-status');
+    ipcRenderer.removeAllListeners('mcp-server-capabilities');
+    ipcRenderer.removeAllListeners('mcp-server-log');
+    ipcRenderer.removeAllListeners('mcp-server-error');
+  },
+
   // Generic invoke method for store.ts
   invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
-  
+
   // Listen for events (for auto-push from backend)
   on: (channel, callback) => {
     ipcRenderer.on(channel, (event, ...args) => callback(...args));
   },
-  
+
   // Listen for menu actions
   onRefreshData: (callback) => {
     ipcRenderer.on('refresh-data', callback);
@@ -247,16 +317,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onToggleTheme: (callback) => {
     ipcRenderer.on('toggle-theme', callback);
   },
-  
+
   // Remove listeners
   removeAllListeners: (channel) => {
     ipcRenderer.removeAllListeners(channel);
   },
-  
+
   // Window state management
   saveWindowState: () => ipcRenderer.invoke('save-window-state'),
   getWindowState: () => ipcRenderer.invoke('get-window-state'),
-  
+
   // Screenshot functionality
   takeFullPageScreenshot: () => ipcRenderer.invoke('take-full-page-screenshot'),
   onHotkeyScreenshot: (callback) => {

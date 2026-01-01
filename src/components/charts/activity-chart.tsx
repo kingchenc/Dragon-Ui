@@ -1,3 +1,4 @@
+import React, { memo, useMemo } from 'react'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -30,11 +31,47 @@ interface ActivityChartProps {
   currency?: string
 }
 
-export function ActivityChart({ data, currency = 'USD' }: ActivityChartProps) {
-  console.log('[CHART] ActivityChart received data:', data)
-  
-  if (!data || data.length === 0) {
-    console.log('[CHART] No data provided to ActivityChart')
+export const ActivityChart = memo(function ActivityChart({ data, currency = 'USD' }: ActivityChartProps) {
+  // Memoize chart data to prevent recalculation
+  const chartData = useMemo(() => {
+    if (!data || data.length === 0) return null
+
+    return {
+      labels: data.map(d => d.label || new Date(d.date).toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric'
+      })),
+      datasets: [
+        {
+          label: 'Daily Cost',
+          data: data.map(d => {
+            if (d.sessions === 0 && d.cost === 0 && d.tokens === 0) {
+              return 0.001
+            }
+            return d.cost
+          }),
+          backgroundColor: data.map(d => {
+            if (d.sessions === 0 && d.cost === 0 && d.tokens === 0) {
+              return 'rgba(156, 163, 175, 0.3)'
+            }
+            return 'rgba(99, 102, 241, 0.8)'
+          }),
+          borderColor: data.map(d => {
+            if (d.sessions === 0 && d.cost === 0 && d.tokens === 0) {
+              return 'rgba(156, 163, 175, 0.5)'
+            }
+            return 'rgb(99, 102, 241)'
+          }),
+          borderWidth: 1,
+          borderRadius: 4,
+          borderSkipped: false,
+        }
+      ],
+    }
+  }, [data])
+
+  if (!chartData) {
     return (
       <div className="flex items-center justify-center h-64 text-muted-foreground">
         <p>No activity data available</p>
@@ -42,115 +79,52 @@ export function ActivityChart({ data, currency = 'USD' }: ActivityChartProps) {
     )
   }
 
-  const chartData = {
-    labels: data.map(d => d.label || new Date(d.date).toLocaleDateString('en-US', { 
-      weekday: 'short', 
-      month: 'short', 
-      day: 'numeric' 
-    })),
-    datasets: [
-      {
-        label: 'Daily Cost',
-        data: data.map(d => {
-          // If no activity, show a minimal bar for visual consistency
-          if (d.sessions === 0 && d.cost === 0 && d.tokens === 0) {
-            return 0.001; // Very small value to show empty state
-          }
-          return d.cost;
-        }),
-        backgroundColor: data.map(d => {
-          // Different color for days with no activity
-          if (d.sessions === 0 && d.cost === 0 && d.tokens === 0) {
-            return 'rgba(156, 163, 175, 0.3)'; // Muted gray
-          }
-          return 'rgba(99, 102, 241, 0.8)'; // Normal blue
-        }),
-        borderColor: data.map(d => {
-          if (d.sessions === 0 && d.cost === 0 && d.tokens === 0) {
-            return 'rgba(156, 163, 175, 0.5)';
-          }
-          return 'rgb(99, 102, 241)';
-        }),
-        borderWidth: 1,
-        borderRadius: 4,
-        borderSkipped: false,
-      }
-    ],
-  }
-
-  // Custom plugin for drawing "No sessions" text
-  const noSessionsPlugin = {
+  // Memoize plugin and options to prevent re-renders
+  const noSessionsPlugin = useMemo(() => ({
     id: 'noSessionsLabel',
     afterDatasetsDraw: (chart: any) => {
       const ctx = chart.ctx
       const meta = chart.getDatasetMeta(0)
       const chartArea = chart.chartArea
-      
-      // Loop through each bar
+
       meta.data.forEach((bar: any, index: number) => {
         const item = data[index]
-        
-        // Only draw text on bars with no sessions
-        if (item.sessions === 0 && item.cost === 0 && item.tokens === 0) {
+        if (item?.sessions === 0 && item?.cost === 0 && item?.tokens === 0) {
           const barRect = bar.getProps(['x', 'y', 'width', 'height'])
-          
-          // Save the current context
           ctx.save()
-          
-          // Set up text properties - smaller font size
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.95)' // Almost white
-          ctx.font = 'bold 12px sans-serif' // Smaller font size
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.95)'
+          ctx.font = 'bold 12px sans-serif'
           ctx.textAlign = 'center'
           ctx.textBaseline = 'middle'
-          
-          // Position text in the middle of the chart area
           const centerX = barRect.x
           const chartHeight = chartArea.bottom - chartArea.top
-          const topY = chartArea.top + (chartHeight * 0.5) // 50% down from the top (20% higher than 70%)
-          
-          // Rotate the text to be diagonal
+          const topY = chartArea.top + (chartHeight * 0.5)
           ctx.translate(centerX, topY)
-          ctx.rotate(-Math.PI / 4) // -45 degrees for better visibility
-          
-          // Draw the text
+          ctx.rotate(-Math.PI / 4)
           ctx.fillText('No sessions', 0, 0)
-          
-          // Restore the context
           ctx.restore()
         }
       })
     }
-  }
+  }), [data])
 
-  const options = {
+  const options = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: {
-        display: false,
-      },
-      title: {
-        display: false,
-      },
+      legend: { display: false },
+      title: { display: false },
       tooltip: {
         callbacks: {
           label: function(context: any) {
-            const dataIndex = context.dataIndex
-            const item = data[dataIndex]
-            
-            // Handle zero values specially
-            if (item.sessions === 0 && item.cost === 0 && item.tokens === 0) {
-              return [
-                'No sessions today',
-                'Cost: $0.00',
-                'Tokens: 0'
-              ]
+            const item = data[context.dataIndex]
+            if (item?.sessions === 0 && item?.cost === 0 && item?.tokens === 0) {
+              return ['No sessions today', 'Cost: $0.00', 'Tokens: 0']
             }
-            
             return [
-              `Cost: ${formatCurrency(item.cost, currency)}`,
-              `Tokens: ${item.tokens.toLocaleString()}`,
-              `Sessions: ${item.sessions}`
+              `Cost: ${formatCurrency(item?.cost || 0, currency)}`,
+              `Tokens: ${(item?.tokens || 0).toLocaleString()}`,
+              `Sessions: ${item?.sessions || 0}`
             ]
           }
         },
@@ -163,43 +137,31 @@ export function ActivityChart({ data, currency = 'USD' }: ActivityChartProps) {
     },
     scales: {
       x: {
-        grid: {
-          display: false,
-        },
-        ticks: {
-          color: 'rgb(156, 163, 175)',
-          font: {
-            size: 12,
-          },
-        },
+        grid: { display: false },
+        ticks: { color: 'rgb(156, 163, 175)', font: { size: 12 } },
       },
       y: {
         beginAtZero: true,
-        grid: {
-          color: 'rgba(156, 163, 175, 0.1)',
-        },
+        grid: { color: 'rgba(156, 163, 175, 0.1)' },
         ticks: {
           color: 'rgb(156, 163, 175)',
-          font: {
-            size: 12,
-          },
+          font: { size: 12 },
           callback: function(value: any) {
-            // Don't show very small values (our zero-state indicators)
-            if (value < 0.01) {
-              return '$0.00'
-            }
+            if (value < 0.01) return '$0.00'
             return formatCurrency(value, currency)
           }
         },
       },
     },
-  }
+  }), [data, currency])
+
+  const plugins = useMemo(() => [noSessionsPlugin], [noSessionsPlugin])
 
   return (
     <div className="space-y-4">
       {/* Chart */}
       <div className="h-48">
-        <Bar data={chartData} options={options} plugins={[noSessionsPlugin]} />
+        <Bar data={chartData} options={options} plugins={plugins} />
       </div>
       
       {/* Data labels under chart - Only under day bars, exclude Y-axis area */}
@@ -252,4 +214,4 @@ export function ActivityChart({ data, currency = 'USD' }: ActivityChartProps) {
       </div>
     </div>
   )
-}
+})

@@ -16,7 +16,18 @@ const DEFAULT_SETTINGS = {
   showHeader: true,
   compactMode: false,
   currency: 'USD',
-  dateFormat: 'relative' // 'relative' or 'absolute'
+  dateFormat: 'relative', // 'relative' or 'absolute'
+  // Statusline configuration (synced with GUI when possible)
+  statusline: {
+    style: 'dragon', // 'modern' | 'classic' | 'minimal' | 'dragon'
+    lines: 1,
+    useColors: true,
+    useEmojis: true,
+    compact: false,
+    showElements: ['model', 'branch', 'cwd', 'tokens', 'cost'],
+    fontFamily: 'monospace',
+    fontSize: 12
+  }
 };
 
 /**
@@ -96,10 +107,79 @@ function resetSettings() {
   return settings;
 }
 
+/**
+ * Get statusline configuration
+ */
+function getStatuslineSettings() {
+  const settings = loadSettings();
+  return settings.statusline || DEFAULT_SETTINGS.statusline;
+}
+
+/**
+ * Update statusline configuration
+ */
+function updateStatuslineSettings(statuslineConfig) {
+  const settings = loadSettings();
+  settings.statusline = { ...settings.statusline, ...statuslineConfig };
+  saveSettings(settings);
+  return settings.statusline;
+}
+
+/**
+ * Apply a statusline preset (modern, classic, minimal, dragon)
+ */
+function applyStatuslinePreset(preset) {
+  const presets = {
+    modern: {
+      style: 'modern',
+      lines: 1,
+      useColors: true,
+      useEmojis: false,
+      compact: false,
+      showElements: ['model', 'branch', 'cwd', 'tokens']
+    },
+    classic: {
+      style: 'classic',
+      lines: 1,
+      useColors: false,
+      useEmojis: false,
+      compact: true,
+      showElements: ['model', 'branch', 'cwd', 'tokens']
+    },
+    minimal: {
+      style: 'minimal',
+      lines: 1,
+      useColors: true,
+      useEmojis: false,
+      compact: true,
+      showElements: ['model', 'branch', 'cost']
+    },
+    dragon: {
+      style: 'dragon',
+      lines: 2,
+      useColors: true,
+      useEmojis: true,
+      compact: false,
+      showElements: ['model', 'branch', 'cwd', 'tokens', 'cost', 'context', 'session']
+    }
+  };
+
+  const presetConfig = presets[preset];
+  if (!presetConfig) {
+    console.error(`Unknown preset: ${preset}. Available: modern, classic, minimal, dragon`);
+    return null;
+  }
+
+  return updateStatuslineSettings(presetConfig);
+}
+
 module.exports = {
   loadSettings,
   saveSettings,
   toggleSetting,
   setRefreshInterval,
-  resetSettings
+  resetSettings,
+  getStatuslineSettings,
+  updateStatuslineSettings,
+  applyStatuslinePreset
 };

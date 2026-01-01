@@ -5,6 +5,11 @@ import { LanguageCode, DEFAULT_LANGUAGE, changeLanguage as i18nChangeLanguage } 
 import { getAppVersion, fetchLatestVersion, compareVersions } from '@/lib/utils'
 import React from 'react'
 
+// Debounce utility to prevent multiple rapid refreshes
+let refreshDebounceTimer: NodeJS.Timeout | null = null
+let isRefreshing = false
+const REFRESH_DEBOUNCE_MS = 2000 // 2 second debounce
+
 // Extend window interface for TypeScript in this file
 declare global {
   interface Window {
@@ -399,60 +404,92 @@ export const useAppStore = create<AppState>()(
         console.log('[WARN] Store: Already initializing/initialized, skipping...')
         return
       }
-      
-      console.log('[INIT] Store: Initializing central data hub...')
-      
+
+      console.log('[INIT] Store: Initializing central data hub (progressive mode)...')
+
+      // IMMEDIATELY mark as initialized so UI can render with cached data
+      set({
+        isInitializing: true,
+        isInitialized: true, // Allow UI to render NOW
+        error: null
+      })
+
+      // Calculate tab views from cached/default data immediately
+      get().calculateTabViews()
+      console.log('[OK] Store: UI ready with cached data')
+
+      // Connect currency service (non-blocking)
+      currencyService.setStoreUpdater((rates, currency) => {
+        set({
+          exchangeRates: rates,
+          currency: currency,
+          lastCurrencyRefresh: Date.now()
+        })
+        get().calculateTabViews()
+      })
+
+      // Load fresh data in BACKGROUND (non-blocking)
       try {
-        set({ isInitializing: true, isLoading: true, error: null })
-        
-        // Connect currency service to store for direct updates
-        currencyService.setStoreUpdater((rates, currency) => {
-          set({
-            exchangeRates: rates,
-            currency: currency,
-            lastCurrencyRefresh: Date.now()
-          })
-          // Recalculate tab views with new currency data
-          get().calculateTabViews()
+        // Currency loads first (fast)
+        get().refreshCurrency().catch(err => {
+          console.warn('[WARN] Store: Currency refresh failed:', err.message)
         })
-        
-        // Load currency data
-        await get().refreshCurrency()
-        
-        // Load core data from backend
+
+        // Core data loads in background
+        set({ isLoading: true })
         await get().refreshCoreData()
-        
-        set({ 
-          isLoading: false, 
-          isInitializing: false, 
-          isInitialized: true 
-        })
-        console.log('[OK] Store: Central data hub initialized')
-        
+        set({ isLoading: false, isInitializing: false })
+        console.log('[OK] Store: Central data hub fully initialized')
+
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-        console.error('[ERR] Store: Initialization failed:', errorMessage)
-        set({ 
-          isLoading: false, 
-          isInitializing: false, 
-          isInitialized: false, 
-          error: errorMessage 
+        console.error('[ERR] Store: Background data load failed:', errorMessage)
+        set({
+          isLoading: false,
+          isInitializing: false,
+          error: errorMessage
         })
-        throw error
+        // Don't throw - UI should still work with cached data
       }
     },
     
-    // Refresh core data from backend
+    // Refresh core data from backend (with debounce to prevent spam)
     refreshCoreData: async () => {
+      // Debounce rapid refresh calls
+      if (isRefreshing) {
+        console.log('[DEBOUNCE] Store: Refresh already in progress, skipping...')
+        return
+      }
+
+      // Clear any pending debounce timer
+      if (refreshDebounceTimer) {
+        clearTimeout(refreshDebounceTimer)
+      }
+
+      // Check if we refreshed recently
+      const lastRefresh = get().lastRefresh
+      const timeSinceRefresh = Date.now() - lastRefresh
+      if (timeSinceRefresh < REFRESH_DEBOUNCE_MS && lastRefresh > 0) {
+        console.log(`[DEBOUNCE] Store: Last refresh was ${timeSinceRefresh}ms ago, debouncing...`)
+        return new Promise<void>((resolve) => {
+          refreshDebounceTimer = setTimeout(async () => {
+            await get().refreshCoreData()
+            resolve()
+          }, REFRESH_DEBOUNCE_MS - timeSinceRefresh)
+        })
+      }
+
+      isRefreshing = true
+
       try {
         console.log('[LOAD] Store: Refreshing core data from backend...')
-        
+
         // Get all data from core-data service via IPC with billing cycle
         const currentState = get()
         const result = await window.electronAPI.invoke('claude-projects-core-data', {
           billingCycleDay: currentState.settings.billingCycleDay || 1
         })
-        
+
         if (result.success) {
           // Store ALL data in RAM - this is the single source of truth!
           set(state => ({
@@ -462,20 +499,22 @@ export const useAppStore = create<AppState>()(
             },
             lastRefresh: Date.now()
           }))
-          
+
           // Recalculate tab views
           get().calculateTabViews()
-          
+
           console.log('[OK] Store: Core data refreshed - 75+ values loaded')
         } else {
           throw new Error(result.error || 'Failed to refresh core data')
         }
-        
+
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error'
         console.error('[ERR] Store: Core data refresh failed:', errorMessage)
         set({ error: errorMessage })
         throw error
+      } finally {
+        isRefreshing = false
       }
     },
     

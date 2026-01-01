@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { StatsCard, StatsGrid } from '@/components/dashboard/stats-card'
 import { DragonCard, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { DragonLoading } from '@/components/ui/loading'
@@ -24,7 +24,22 @@ export default function OverviewPage() {
   const { data: activeData, isLoading: isLoadingActive } = useActiveData()
   
   const { t } = useTranslation()
-    
+
+  // Memoize sorted data to prevent re-renders
+  const sortedActivityData = useMemo(() => {
+    if (!overviewData?.activityData) return []
+    return [...overviewData.activityData].sort((a, b) =>
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    )
+  }, [overviewData?.activityData])
+
+  const sortedFinancialData = useMemo(() => {
+    if (!overviewData?.dailyFinancialData) return []
+    return [...overviewData.dailyFinancialData].sort((a, b) =>
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    )
+  }, [overviewData?.dailyFinancialData])
+
   if (isLoadingOverview) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -252,8 +267,8 @@ export default function OverviewPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ActivityChart 
-            data={overviewData.activityData ? [...overviewData.activityData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) : []} 
+          <ActivityChart
+            data={sortedActivityData}
             currency={overviewData.currency}
           />
         </CardContent>
@@ -279,8 +294,8 @@ export default function OverviewPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <DailyFinancialChart 
-            data={overviewData.dailyFinancialData ? [...overviewData.dailyFinancialData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) : []} 
+          <DailyFinancialChart
+            data={sortedFinancialData}
             currency={overviewData.currency}
           />
         </CardContent>

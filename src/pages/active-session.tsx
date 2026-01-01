@@ -73,9 +73,6 @@ export default function ActiveSessionPage() {
   
   // Calculate projection progress (current vs projected end-of-session)
   const projectionProgress = Math.min(100, projectedTokens > 0 ? ((activeData.currentTokens || 0) / projectedTokens) * 100 : 0)
-  
-  console.log(`[DEBUG] Progress Values: Session=${sessionProgress.toFixed(1)}%, Usage=${usageProgress.toFixed(1)}%, Projection=${projectionProgress.toFixed(1)}%`)
-  console.log(`[DEBUG] Projection Debug: Current=${formatNumber(activeData.currentTokens || 0)} tokens, Cost=${formatCurrency(currentCost || 0, currency)}, Rate=${costPerToken.toFixed(6)}/token, Projected=${formatNumber(projectedTokens)} tokens, Cost=${formatCurrency(projectedCost, currency)}`)
 
   return (
     <div className="space-y-6">

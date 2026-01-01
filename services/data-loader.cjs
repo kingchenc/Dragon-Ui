@@ -1,9 +1,15 @@
 const fs = require('fs');
+const fsPromises = require('fs').promises;
 const path = require('path');
 const glob = require('glob');
 const DatabaseService = require('./database.cjs');
 const { sshService } = require('./ssh-service.cjs');
 const { modelPriceService } = require('./model-price-service.cjs');
+
+/**
+ * Yield control back to event loop to prevent UI blocking
+ */
+const yieldToEventLoop = () => new Promise(resolve => setImmediate(resolve));
 
 /**
  * Data Loader Service
@@ -39,38 +45,57 @@ class DataLoaderService {
     // Get last processed timestamp from DB
     const lastTimestamp = this.db.getLastTimestamp();
     console.log(`[DB] DataLoader: Last DB timestamp: ${lastTimestamp}`);
-    
+
     let newEntriesProcessed = 0;
-    this.allUsageEntries = [];
-    
+    // DON'T clear allUsageEntries here - we keep cached data until we have fresh data
+    // This prevents returning empty arrays if database isn't ready yet
+
     for (const basePath of activePaths) {
       console.log(`[SCAN] DataLoader: Scanning path: ${basePath}`);
-      
-      // Find all JSONL files
+
+      // Yield before scanning each path
+      await yieldToEventLoop();
+
+      // Find all JSONL files (async)
       let jsonlFiles = [];
       if (basePath.startsWith('\\\\wsl$')) {
-        jsonlFiles = this.findJsonlFilesWSL(basePath);
+        jsonlFiles = await this.findJsonlFilesWSL(basePath);
       } else {
+        // Use glob.sync but yield after
         const pattern = path.join(basePath, '**/*.jsonl').replace(/\\/g, '/');
         jsonlFiles = glob.sync(pattern);
+        await yieldToEventLoop();
       }
-      
+
       console.log(`[FILE] DataLoader: Found ${jsonlFiles.length} JSONL files`);
-      
-      // Process each JSONL file (only new entries)
-      for (const file of jsonlFiles) {
-        const newEntries = await this.processJsonlFileIncremental(file, lastTimestamp);
-        newEntriesProcessed += newEntries;
+
+      // Process each JSONL file (only new entries) with yield between files
+      for (let i = 0; i < jsonlFiles.length; i++) {
+        const file = jsonlFiles[i];
+        console.log(`[PROC] DataLoader: Processing file ${i + 1}/${jsonlFiles.length}: ${file}`);
+        try {
+          const newEntries = await this.processJsonlFileIncremental(file, lastTimestamp);
+          newEntriesProcessed += newEntries;
+          console.log(`[PROC] DataLoader: File ${i + 1} processed, ${newEntries} new entries`);
+        } catch (fileErr) {
+          console.error(`[ERR] DataLoader: Failed to process file ${file}:`, fileErr.message);
+        }
+
+        // Yield every 5 files
+        if (i > 0 && i % 5 === 0) {
+          await yieldToEventLoop();
+        }
       }
     }
     
     // If first run or no new entries, load all entries from DB
-    if (!lastTimestamp || newEntriesProcessed === 0) {
-      console.log('[STATS] DataLoader: Loading all entries from database...');
+    console.log(`[DB] DataLoader: Loading entries from database (lastTimestamp: ${lastTimestamp}, newEntries: ${newEntriesProcessed})...`);
+    try {
       this.allUsageEntries = this.db.getAllEntries();
-    } else {
-      console.log('[DATA] DataLoader: Loading all entries from database after incremental update...');
-      this.allUsageEntries = this.db.getAllEntries();
+      console.log(`[DB] DataLoader: Database returned ${this.allUsageEntries.length} entries`);
+    } catch (dbErr) {
+      console.error(`[ERR] DataLoader: Database error:`, dbErr.message);
+      this.allUsageEntries = [];
     }
     
     const endTime = performance.now();
@@ -91,60 +116,82 @@ class DataLoaderService {
 
   /**
    * Process a single JSONL file incrementally (only new entries)
+   * Now fully async with chunked processing to prevent UI blocking
    */
   async processJsonlFileIncremental(file, lastTimestamp) {
     let newEntriesCount = 0;
     const newEntries = [];
-    const processedHashes = new Set(); // Duplicate detection using message+request IDs
-    
+    const processedHashes = new Set();
+    const CHUNK_SIZE = 500; // Process 500 lines before yielding
+
     try {
-      const content = fs.readFileSync(file, 'utf8');
+      // Try async first, fallback to sync for WSL paths
+      let content;
+      try {
+        content = await fsPromises.readFile(file, 'utf8');
+      } catch (asyncErr) {
+        console.log(`[FALLBACK] DataLoader: Async read failed for ${file}, using sync...`);
+        content = fs.readFileSync(file, 'utf8');
+      }
       const lines = content.trim().split('\n');
-      
-      for (const line of lines) {
+
+      // Process in chunks to prevent blocking
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
         if (!line.trim()) continue;
-        
+
         try {
           const entry = JSON.parse(line);
-          
+
           // Only process assistant messages with usage data
           if (!entry.timestamp || entry.type !== 'assistant') continue;
           if (!entry.message?.usage) continue;
           if (typeof entry.message.usage.input_tokens !== 'number') continue;
           if (typeof entry.message.usage.output_tokens !== 'number') continue;
-          
+
           // Skip if entry is older than last processed timestamp
           if (lastTimestamp && entry.timestamp <= lastTimestamp) continue;
-          
+
           // Duplicate detection using messageId + requestId
           const uniqueHash = this.createUniqueHash(entry);
           if (uniqueHash && processedHashes.has(uniqueHash)) {
-            console.log(`[DUPLICATE] Skipping duplicate entry: ${uniqueHash}`);
-            continue; // Skip duplicate
+            continue; // Skip duplicate silently
           }
           if (uniqueHash) {
             processedHashes.add(uniqueHash);
           }
-          
+
           // Extract and process the entry
           const usageEntry = this.createUsageEntry(entry, file);
           newEntries.push(usageEntry);
           newEntriesCount++;
-          
+
         } catch (parseError) {
           continue; // Skip invalid JSON
         }
+
+        // Yield control every CHUNK_SIZE entries to prevent blocking
+        if (i > 0 && i % CHUNK_SIZE === 0) {
+          await yieldToEventLoop();
+        }
       }
-      
-      // Batch insert new entries into database
+
+      // Batch insert new entries into database (in chunks)
       if (newEntries.length > 0) {
-        this.db.insertBatch(newEntries);
+        const DB_CHUNK_SIZE = 1000;
+        for (let i = 0; i < newEntries.length; i += DB_CHUNK_SIZE) {
+          const chunk = newEntries.slice(i, i + DB_CHUNK_SIZE);
+          this.db.insertBatch(chunk);
+          if (i + DB_CHUNK_SIZE < newEntries.length) {
+            await yieldToEventLoop();
+          }
+        }
       }
-      
+
     } catch (fileError) {
       console.warn(`[WARN] DataLoader: Could not read ${file}:`, fileError.message);
     }
-    
+
     return newEntriesCount;
   }
 
@@ -313,14 +360,17 @@ class DataLoaderService {
   }
 
   /**
-   * WSL-compatible file finder
+   * WSL-compatible file finder - uses sync for WSL paths (async doesn't work reliably)
    */
-  findJsonlFilesWSL(basePath) {
+  async findJsonlFilesWSL(basePath) {
     const jsonlFiles = [];
-    
+    let dirCount = 0;
+
     const scanDirectory = (dir) => {
       try {
+        // Use sync for WSL paths - async fs.promises doesn't work reliably with WSL
         const entries = fs.readdirSync(dir);
+
         for (const entry of entries) {
           const fullPath = path.join(dir, entry);
           try {
@@ -334,11 +384,13 @@ class DataLoaderService {
             continue;
           }
         }
+
+        dirCount++;
       } catch (error) {
         console.warn(`DataLoader: Cannot scan directory ${dir}:`, error.message);
       }
     };
-    
+
     scanDirectory(basePath);
     return jsonlFiles;
   }
@@ -458,11 +510,16 @@ class DataLoaderService {
   }
 
   /**
-   * Get all loaded usage entries (now from database)
+   * Get all loaded usage entries (from cache or database)
    */
   getAllUsageEntries() {
-    // Always return fresh data from database
-    this.allUsageEntries = this.db.getAllEntries();
+    // Return cached data if available - loadAllUsageEntries() already populated it
+    // Only query DB if cache is empty (e.g., on first call before loadAllUsageEntries)
+    if (this.allUsageEntries.length === 0) {
+      console.log('[DB] DataLoader: Cache empty, loading from database...');
+      this.allUsageEntries = this.db.getAllEntries();
+      console.log(`[DB] DataLoader: Loaded ${this.allUsageEntries.length} entries from database`);
+    }
     return this.allUsageEntries;
   }
 

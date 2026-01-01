@@ -523,6 +523,9 @@ class DatabaseService {
   }
 
   getDailyFinancialStats(days = 30) {
+    // Validate days parameter to prevent SQL injection
+    const safeDays = Math.max(1, Math.min(365, parseInt(days, 10) || 30));
+
     // Simple calendar day grouping: All financial activity per day
     const stmt = this.db.prepare(`
       SELECT 
@@ -536,12 +539,12 @@ class DatabaseService {
       WHERE timestamp IS NOT NULL 
         AND timestamp != '' 
         AND date(timestamp) >= '2020-01-01'
-        AND timestamp >= datetime('now', '-${days} days')
+        AND timestamp >= datetime('now', '-${safeDays} days')
       GROUP BY date(timestamp)
       ORDER BY date ASC
     `);
     const result = stmt.all();
-    console.log(`[DB] 💰 Daily financial stats (calendar day based) for last ${days} days: ${result.length} entries`);
+    console.log(`[DB] 💰 Daily financial stats (calendar day based) for last ${safeDays} days: ${result.length} entries`);
     
     // Calculate running total for enhanced chart
     let runningTotal = 0;
@@ -558,9 +561,12 @@ class DatabaseService {
   }
 
   getDailyStats(days = 7) {
+    // Validate days parameter to prevent SQL injection
+    const safeDays = Math.max(1, Math.min(365, parseInt(days, 10) || 7));
+
     // Generate complete date range first
     const dateRange = [];
-    for (let i = 0; i < days; i++) {
+    for (let i = 0; i < safeDays; i++) {
       const date = new Date();
       date.setDate(date.getDate() - i);
       dateRange.push(date.toISOString().split('T')[0]);
@@ -579,13 +585,13 @@ class DatabaseService {
         MIN(timestamp) as first_activity,
         MAX(timestamp) as last_activity
       FROM usage_entries 
-      WHERE timestamp >= datetime('now', '-${days} days')
-        AND timestamp IS NOT NULL 
+      WHERE timestamp >= datetime('now', '-${safeDays} days')
+        AND timestamp IS NOT NULL
         AND date(timestamp) >= '2020-01-01'
       GROUP BY date(timestamp)
       ORDER BY date DESC
     `);
-    
+
     const usageData = stmt.all().reduce((acc, row) => {
       acc[row.date] = {
         ...row,
@@ -593,7 +599,7 @@ class DatabaseService {
       };
       return acc;
     }, {});
-    
+
     // Fill in complete date range with zeros for missing days
     const dailyData = dateRange.map(date => {
       return usageData[date] || {
@@ -608,8 +614,8 @@ class DatabaseService {
         last_activity: null
       };
     });
-    
-    console.log(`[DB] 📅 Daily stats (calendar day based): ${dailyData.length} days, complete ${days}-day range`);
+
+    console.log(`[DB] 📅 Daily stats (calendar day based): ${dailyData.length} days, complete ${safeDays}-day range`);
     
     return dailyData;
   }

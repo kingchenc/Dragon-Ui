@@ -10,17 +10,19 @@ import { useAppStore } from '@/lib/store'
 import { useTimeFormatting } from '@/lib/hooks'
 import { useTranslation, initializeLanguage, changeLanguage } from '@/i18n'
 import { getAppVersion } from '@/lib/utils'
-import { 
-  BarChart3, 
-  Zap, 
-  FolderOpen, 
-  Clock, 
-  Calendar, 
-  Activity, 
+import {
+  BarChart3,
+  Zap,
+  FolderOpen,
+  Clock,
+  Calendar,
+  Activity,
   Settings,
   RefreshCw,
   AlertCircle,
-  Download
+  Download,
+  Terminal,
+  Bug
 } from 'lucide-react'
 
 // Import page components (we'll create these next)
@@ -31,6 +33,9 @@ import MonthlyUsagePage from '@/pages/monthly-usage'
 import DailyUsagePage from '@/pages/daily-usage'
 import ActiveSessionPage from '@/pages/active-session'
 import SettingsPage from '@/pages/settings'
+import StatuslineRenderer from '@/components/statusline/statusline-renderer'
+import { TerminalPanel, useTerminalStore } from '@/components/terminal'
+import { AccountSwitcher } from '@/components/accounts'
 
 function App() {
   const { 
@@ -58,6 +63,9 @@ function App() {
   const appRef = useRef<HTMLDivElement>(null)
   const isMinimized = useRef(false)
   const [showUpdatePopup, setShowUpdatePopup] = React.useState(false)
+
+  // Terminal state
+  const { isVisible: isTerminalVisible, toggleVisibility: toggleTerminal, panelHeight } = useTerminalStore()
 
   // Handle app minimize/restore states
   useEffect(() => {
@@ -138,6 +146,20 @@ function App() {
       // Cleanup if needed
     }
   }, [])
+
+  // Terminal keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+` to toggle terminal
+      if (e.ctrlKey && e.key === '`') {
+        e.preventDefault()
+        toggleTerminal()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [toggleTerminal])
 
   // Apply compact scale to CSS custom property (only when compactMode is enabled)
   useEffect(() => {
@@ -269,6 +291,32 @@ function App() {
                 <span>{t('app.refresh')}</span>
               </Button>
 
+              <AccountSwitcher
+                onManageClick={() => setActiveTab('settings')}
+                compact
+              />
+
+              <Button
+                variant={isTerminalVisible ? "default" : "outline"}
+                size="sm"
+                onClick={toggleTerminal}
+                className={`flex items-center space-x-2 ${isTerminalVisible ? 'bg-dragon-primary hover:bg-dragon-primary/90' : ''}`}
+                title="Toggle Terminal (Ctrl+`)"
+              >
+                <Terminal className="h-4 w-4" />
+                <span className="hidden lg:inline">Terminal</span>
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => window.electronAPI?.openDevTools?.()}
+                className="flex items-center"
+                title="Open DevTools (F12)"
+              >
+                <Bug className="h-4 w-4" />
+              </Button>
+
               <ThemeToggle variant="dragon" />
             </div>
           </div>
@@ -298,7 +346,7 @@ function App() {
       )}
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6">
+      <main className="container mx-auto px-4 py-6" style={{ paddingBottom: isTerminalVisible ? panelHeight + 24 : undefined }}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           {/* Tab Navigation */}
           <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:inline-flex dragon-scales glass-effect">
@@ -351,6 +399,9 @@ function App() {
         </Tabs>
       </main>
 
+      {/* Statusline */}
+      <StatuslineRenderer />
+
       {/* Footer */}
       <footer className="border-t bg-background/50">
         <div className="container mx-auto px-4 py-6">
@@ -375,6 +426,9 @@ function App() {
         latestVersion={latestVersion || 'unknown'}
         onUpdate={performUpdate}
       />
+
+      {/* Terminal Panel */}
+      <TerminalPanel />
     </div>
   )
 }
