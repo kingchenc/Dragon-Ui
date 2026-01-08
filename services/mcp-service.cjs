@@ -236,8 +236,11 @@ class MCPConnection extends EventEmitter {
         const message = JSON.parse(line);
 
         if (message.id !== undefined && this.pendingRequests.has(message.id)) {
-          // Response to a request
-          const { resolve } = this.pendingRequests.get(message.id);
+          // Response to a request - clear timeout and resolve
+          const { resolve, timeoutId } = this.pendingRequests.get(message.id);
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+          }
           this.pendingRequests.delete(message.id);
           resolve(message);
         } else if (message.method) {
@@ -287,22 +290,25 @@ class MCPConnection extends EventEmitter {
         params
       };
 
-      this.pendingRequests.set(id, { resolve, reject });
-
-      try {
-        this.process.stdin.write(JSON.stringify(message) + '\n');
-      } catch (err) {
-        this.pendingRequests.delete(id);
-        reject(err);
-      }
-
-      // Timeout after 30 seconds
-      setTimeout(() => {
+      // Store timeout ID with the request so we can clear it
+      const timeoutId = setTimeout(() => {
         if (this.pendingRequests.has(id)) {
           this.pendingRequests.delete(id);
           reject(new Error('Request timeout'));
         }
       }, 30000);
+
+      // Store resolve, reject, and timeoutId together
+      this.pendingRequests.set(id, { resolve, reject, timeoutId });
+
+      try {
+        this.process.stdin.write(JSON.stringify(message) + '\n');
+      } catch (err) {
+        // Clear timeout and remove request on error
+        clearTimeout(timeoutId);
+        this.pendingRequests.delete(id);
+        reject(err);
+      }
     });
   }
 

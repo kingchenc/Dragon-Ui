@@ -12,6 +12,7 @@ class DatabaseService {
     this.db = null;
     this.insertStmt = null;
     this.repairAttempted = false; // Flag um Auto-Repair nur einmal auszuführen
+    this.repairInProgress = false; // Mutex to prevent concurrent repairs
     this.init();
   }
 
@@ -40,7 +41,11 @@ class DatabaseService {
       this.prepareStatements();
       
       console.log('[OK] DB: Database initialized successfully');
-      
+
+      // Debug: Show what's in the database
+      const info = this.getDbInfo();
+      console.log(`[DB] Database contains: ${info.entryCount} entries, ${info.dbSizeMB}MB, last: ${info.lastTimestamp}`);
+
     } catch (error) {
       if (error.code === 'SQLITE_CORRUPT' || error.message.includes('malformed')) {
         console.log('[REPAIR] DB: Database corrupted, attempting auto-repair...');
@@ -274,7 +279,18 @@ class DatabaseService {
   }
 
   getAllEntries() {
-    return this.getAllEntriesStmt.all();
+    try {
+      const entries = this.getAllEntriesStmt.all();
+      console.log(`[DB] getAllEntries: Returning ${entries.length} entries from database`);
+      if (entries.length > 0) {
+        console.log(`[DB] First entry timestamp: ${entries[0].timestamp}`);
+        console.log(`[DB] Last entry timestamp: ${entries[entries.length - 1].timestamp}`);
+      }
+      return entries;
+    } catch (error) {
+      console.error(`[ERR] DB getAllEntries failed:`, error.message);
+      return [];
+    }
   }
 
   getEntriesAfter(timestamp) {
@@ -527,23 +543,24 @@ class DatabaseService {
     const safeDays = Math.max(1, Math.min(365, parseInt(days, 10) || 30));
 
     // Simple calendar day grouping: All financial activity per day
+    // Use parameterized query to prevent SQL injection
     const stmt = this.db.prepare(`
-      SELECT 
+      SELECT
         date(timestamp) as date,
         SUM(cost) as total_cost,
         COUNT(DISTINCT session_id) as session_count,
         COUNT(*) as entry_count,
         MIN(timestamp) as first_activity,
         MAX(timestamp) as last_activity
-      FROM usage_entries 
-      WHERE timestamp IS NOT NULL 
-        AND timestamp != '' 
+      FROM usage_entries
+      WHERE timestamp IS NOT NULL
+        AND timestamp != ''
         AND date(timestamp) >= '2020-01-01'
-        AND timestamp >= datetime('now', '-${safeDays} days')
+        AND timestamp >= datetime('now', ? || ' days')
       GROUP BY date(timestamp)
       ORDER BY date ASC
     `);
-    const result = stmt.all();
+    const result = stmt.all('-' + safeDays);
     console.log(`[DB] 💰 Daily financial stats (calendar day based) for last ${safeDays} days: ${result.length} entries`);
     
     // Calculate running total for enhanced chart
@@ -572,9 +589,9 @@ class DatabaseService {
       dateRange.push(date.toISOString().split('T')[0]);
     }
     
-    // Get actual usage data
+    // Get actual usage data - use parameterized query to prevent SQL injection
     const stmt = this.db.prepare(`
-      SELECT 
+      SELECT
         date(timestamp) as date,
         SUM(cost) as total_cost,
         SUM(input_tokens + output_tokens + cache_creation_input_tokens + cache_read_input_tokens) as total_tokens,
@@ -584,15 +601,15 @@ class DatabaseService {
         COUNT(*) as entry_count,
         MIN(timestamp) as first_activity,
         MAX(timestamp) as last_activity
-      FROM usage_entries 
-      WHERE timestamp >= datetime('now', '-${safeDays} days')
+      FROM usage_entries
+      WHERE timestamp >= datetime('now', ? || ' days')
         AND timestamp IS NOT NULL
         AND date(timestamp) >= '2020-01-01'
       GROUP BY date(timestamp)
       ORDER BY date DESC
     `);
 
-    const usageData = stmt.all().reduce((acc, row) => {
+    const usageData = stmt.all('-' + safeDays).reduce((acc, row) => {
       acc[row.date] = {
         ...row,
         models: row.models ? row.models.split(',').filter(m => m && m.trim()) : []
@@ -769,30 +786,35 @@ class DatabaseService {
   }
 
   getDailyStatsBySessionStart(days = 7) {
+    // Validate days parameter
+    const safeDays = Math.max(1, Math.min(365, parseInt(days, 10) || 7));
+    const daysParam = '-' + safeDays;
+
     // Get daily stats where sessions are attributed to their START date
+    // Use parameterized query to prevent SQL injection
     const stmt = this.db.prepare(`
-      SELECT 
+      SELECT
         session_start_dates.start_date as date,
         COALESCE(SUM(all_entries.cost), 0) as total_cost,
         COALESCE(SUM(all_entries.input_tokens + all_entries.output_tokens + all_entries.cache_creation_input_tokens + all_entries.cache_read_input_tokens), 0) as total_tokens,
         COUNT(DISTINCT session_start_dates.session_id) as session_count,
         COUNT(DISTINCT all_entries.model) as model_count
       FROM (
-        SELECT 
+        SELECT
           session_id,
           date(MIN(timestamp)) as start_date
-        FROM usage_entries 
-        WHERE timestamp >= datetime('now', '-${days} days')
+        FROM usage_entries
+        WHERE timestamp >= datetime('now', ? || ' days')
         GROUP BY session_id
       ) session_start_dates
       LEFT JOIN usage_entries all_entries ON session_start_dates.session_id = all_entries.session_id
-      WHERE session_start_dates.start_date >= date('now', '-${days} days')
+      WHERE session_start_dates.start_date >= date('now', ? || ' days')
       GROUP BY session_start_dates.start_date
       ORDER BY session_start_dates.start_date DESC
     `);
     
-    const dailyData = stmt.all();
-    
+    const dailyData = stmt.all(daysParam, daysParam);
+
     // For each day, get the models used by sessions that started that day
     const enhancedDailyData = dailyData.map(day => {
       const modelsStmt = this.db.prepare(`
@@ -815,11 +837,11 @@ class DatabaseService {
       };
     });
 
-    // Ensure we always have exactly 7 days (fill missing days with zeros)
+    // Ensure we always have exactly the requested days (fill missing days with zeros)
     const today = new Date();
     const fullDailyData = [];
-    
-    for (let i = 0; i < days; i++) {
+
+    for (let i = 0; i < safeDays; i++) {
       const targetDate = new Date(today);
       targetDate.setDate(today.getDate() - i); // Go back in time: today, yesterday, etc.
       const dateStr = targetDate.toISOString().split('T')[0]; // YYYY-MM-DD format
@@ -1342,10 +1364,18 @@ class DatabaseService {
 
   /**
    * Auto-Repair für beschädigte SQLite-Datenbanken
+   * Uses mutex to prevent concurrent repairs
    */
   autoRepairDatabase() {
+    // Mutex check - prevent concurrent repairs
+    if (this.repairInProgress) {
+      console.log('[REPAIR] DB: Repair already in progress, skipping...');
+      return;
+    }
+
+    this.repairInProgress = true;
     console.log('[REPAIR] DB: Starting auto-repair process...');
-    
+
     try {
       // Schritt 1: Backup der beschädigten Datenbank erstellen
       const backupPath = this.dbPath + '.corrupted_backup_' + Date.now();
@@ -1458,6 +1488,9 @@ class DatabaseService {
         console.error('[REPAIR] DB: Fallback repair also failed:', fallbackError.message);
         throw fallbackError;
       }
+    } finally {
+      // Always release the mutex
+      this.repairInProgress = false;
     }
   }
 

@@ -499,7 +499,7 @@
         },
         "config": {
           "host": "Host",
-          "ipPlaceholder": "192.168.1.100",
+          "hostPlaceholder": "192.168.1.100",
           "port": "Porta",
           "username": "Nome de usuário",
           "usernamePlaceholder": "admin",

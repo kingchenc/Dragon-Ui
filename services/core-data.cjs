@@ -26,6 +26,7 @@ class CoreDataService {
     this.lastRefreshTime = 0;
     this.processedEntryIds = new Set();
     this.isInitialLoad = true;
+    this.backgroundWorker = null; // For cleanup on app close
     
     // Core calculated data - the 75 unique values
     this.coreData = {
@@ -219,15 +220,31 @@ class CoreDataService {
    */
   async calculateCoreData() {
     if (this.isLoading) return this.coreData;
-    
+
     this.isLoading = true;
     const currentTime = Date.now();
-    
+
     try {
-      // Get fresh data from DataLoader
+      // STEP 1: Get cached DB data FIRST (instant, no file scanning)
+      // This ensures UI displays data immediately on startup
+      let allEntries = this.dataLoader.getAllUsageEntries();
+      console.log(`[FAST] CoreDataService: Got ${allEntries.length} cached entries from DB`);
+
+      // STEP 2: If we have cached data, use it immediately
+      // Then trigger background scan for new entries
       const activePaths = this.pathManager.getAllPaths().active;
-      await this.dataLoader.loadAllUsageEntries(activePaths);
-      const allEntries = this.dataLoader.getAllUsageEntries();
+
+      if (allEntries.length > 0 && this.isInitialLoad) {
+        // Process cached data first, scan files in SEPARATE WORKER THREAD
+        console.log(`[FAST] CoreDataService: Processing cached data immediately, file scan in worker thread`);
+
+        // Run file scan in Worker thread - completely non-blocking
+        this.runBackgroundScanInWorker(activePaths);
+      } else {
+        // No cached data or incremental update - do full scan
+        await this.dataLoader.loadAllUsageEntries(activePaths);
+        allEntries = this.dataLoader.getAllUsageEntries();
+      }
       
       if (this.isInitialLoad) {
         // First load - process everything
@@ -459,9 +476,9 @@ class CoreDataService {
     try {
       const now = Date.now();
       const db = this.dataLoader.getDatabase(); // Get database from dataLoader
-      const recentEntries = db.getRecentEntries(30); // Last 30 minutes
-      
-      console.log(`[ACTIVE UPDATE] Found ${recentEntries.length} entries in last 30 minutes`);
+      const recentEntries = db.getRecentEntries(300); // Last 5 hours (300 minutes) = Anthropic session window
+
+      console.log(`[ACTIVE UPDATE] Found ${recentEntries.length} entries in last 5 hours (Anthropic session window)`);
       
       let activeSessionId = null;
       if (recentEntries.length > 0) {
@@ -485,16 +502,27 @@ class CoreDataService {
         const sessionEntries = db.getSessionEntries(activeSessionId);
         
         if (sessionEntries.length > 0) {
-          const sessionStart = new Date(Math.min(...sessionEntries.map(e => new Date(e.timestamp).getTime())));
-          const sessionEnd = new Date(Math.max(...sessionEntries.map(e => new Date(e.timestamp).getTime())));
-          const sessionCost = sessionEntries.reduce((sum, e) => sum + (e.cost || 0), 0);
-          const sessionTokens = sessionEntries.reduce((sum, e) => sum + ((e.input_tokens || 0) + (e.output_tokens || 0) + (e.cache_creation_input_tokens || 0) + (e.cache_read_input_tokens || 0)), 0);
-          
-          const durationMinutes = Math.floor((sessionEnd.getTime() - sessionStart.getTime()) / (1000 * 60));
-          const timeLeftMinutes = Math.max(0, 300 - durationMinutes); // 5 hours = 300 minutes
-          
-          console.log(`[ACTIVE UPDATE] Current Session: ${sessionEntries.length} entries, cost=$${sessionCost.toFixed(4)}, tokens=${sessionTokens}, duration=${durationMinutes}min`);
-          
+          const fiveHoursAgo = new Date(now.getTime() - (5 * 60 * 60 * 1000)); // 5 hours in ms
+
+          // Filter entries to only those within the current 5-hour Anthropic session window
+          const windowEntries = sessionEntries.filter(e => new Date(e.timestamp) >= fiveHoursAgo);
+
+          // Use windowEntries if available, otherwise fall back to sessionEntries
+          const entriesToUse = windowEntries.length > 0 ? windowEntries : sessionEntries;
+
+          // Use first entry within the window as session start
+          const sessionStart = new Date(Math.min(...entriesToUse.map(e => new Date(e.timestamp).getTime())));
+          const sessionEnd = new Date(Math.max(...entriesToUse.map(e => new Date(e.timestamp).getTime())));
+          const sessionCost = entriesToUse.reduce((sum, e) => sum + (e.cost || 0), 0);
+          const sessionTokens = entriesToUse.reduce((sum, e) => sum + ((e.input_tokens || 0) + (e.output_tokens || 0) + (e.cache_creation_input_tokens || 0) + (e.cache_read_input_tokens || 0)), 0);
+
+          // Duration = time since first entry (capped at 300 min)
+          const rawDuration = Math.floor((now.getTime() - sessionStart.getTime()) / (1000 * 60));
+          const durationMinutes = Math.min(rawDuration, 300); // Cap at 5 hours
+          const timeLeftMinutes = Math.max(0, 300 - durationMinutes);
+
+          console.log(`[ACTIVE UPDATE] Session: ${entriesToUse.length} entries, duration=${durationMinutes}min, timeLeft=${timeLeftMinutes}min`);
+
           updates.started = sessionStart.toISOString();
           updates.duration = durationMinutes;
           updates.currentCost = sessionCost;
@@ -528,7 +556,25 @@ class CoreDataService {
     return new Promise((resolve, reject) => {
       const workerPath = path.join(__dirname, 'core-data-worker.cjs');
       const worker = new Worker(workerPath);
-      
+      let timeoutId = null;
+      let isCompleted = false;
+
+      // Helper to cleanup resources
+      const cleanup = () => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+        if (!isCompleted) {
+          isCompleted = true;
+          try {
+            worker.terminate();
+          } catch (err) {
+            // Ignore termination errors
+          }
+        }
+      };
+
       // Send data to worker
       worker.postMessage({
         type: 'calculateAllData',
@@ -539,12 +585,12 @@ class CoreDataService {
         isIncremental: isIncremental,
         existingData: isIncremental ? this.coreData : null
       });
-      
+
       // Handle worker messages
       worker.on('message', (message) => {
         if (message.type === 'progress') {
           console.log(`[LOAD] Worker Progress: ${message.message} (${message.progress.toFixed(1)}%)`);
-          
+
           // Optionally send progress to UI
           if (this.autoPushCallback) {
             this.autoPushCallback({
@@ -563,7 +609,7 @@ class CoreDataService {
           console.log(`[DEBUG] MAIN: Current Month Cost: $${message.data.currentMonthCost?.toFixed(2) || 0}`);
           console.log(`[DEBUG] MAIN: Current Month: ${message.data.currentMonth}`);
           console.log(`[DEBUG] MAIN: Monthly Data Array Length: ${message.data.monthlyData?.length || 0}`);
-          
+
           // Debug first monthly entry
           if (message.data.monthlyData && message.data.monthlyData.length > 0) {
             const firstMonth = message.data.monthlyData[0];
@@ -573,14 +619,14 @@ class CoreDataService {
               isCurrent: firstMonth.isCurrent || firstMonth.isCurrentMonth
             });
           }
-          
+
           if (message.data.currentMonthCost > message.data.totalCost) {
             console.error('[CURRENCY BUG] MAIN: CURRENCY BUG DETECTED! Current Month ($${message.data.currentMonthCost?.toFixed(2)}) > Total Cost ($${message.data.totalCost?.toFixed(2)})');
-            
+
             // FORCE FIX the impossible values
             message.data.currentMonthCost = message.data.totalCost;
             message.data.currentPeriod = message.data.totalCost;
-            
+
             // Also fix the monthly data entry
             if (message.data.monthlyData) {
               const currentMonthEntry = message.data.monthlyData.find(m => m.isCurrent || m.isCurrentMonth);
@@ -589,31 +635,125 @@ class CoreDataService {
                 console.log(`[FIX] MAIN: Also fixed monthly data entry to $${message.data.totalCost?.toFixed(2)}`);
               }
             }
-            
+
             console.log(`[FIX] MAIN: Fixed Current Month to match Total Cost: $${message.data.totalCost?.toFixed(2)}`);
           }
-          
-          worker.terminate();
+
+          cleanup();
           resolve(message.data);
         } else if (message.type === 'error') {
-          worker.terminate();
+          cleanup();
           reject(new Error(message.error));
         }
       });
-      
+
       worker.on('error', (error) => {
-        worker.terminate();
+        cleanup();
         reject(error);
       });
-      
-      // Set timeout to prevent hanging
-      setTimeout(() => {
-        worker.terminate();
-        reject(new Error('Worker calculation timed out after 2 minutes'));
+
+      // Set timeout to prevent hanging - store ID so we can clear it
+      timeoutId = setTimeout(() => {
+        if (!isCompleted) {
+          cleanup();
+          reject(new Error('Worker calculation timed out after 2 minutes'));
+        }
       }, 120000); // 2 minutes timeout
     });
   }
-  
+
+  /**
+   * Run background file scan in a separate Worker thread
+   * This is completely non-blocking and won't affect UI rendering
+   */
+  runBackgroundScanInWorker(activePaths) {
+    const workerPath = path.join(__dirname, 'data-loader-worker.cjs');
+
+    try {
+      const worker = new Worker(workerPath);
+      let timeoutId = null;
+      let isCompleted = false;
+
+      // Helper to cleanup resources
+      const cleanup = () => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+        if (!isCompleted) {
+          isCompleted = true;
+          try {
+            worker.terminate();
+          } catch (err) {
+            // Ignore termination errors
+          }
+          if (this.backgroundWorker === worker) {
+            this.backgroundWorker = null;
+          }
+        }
+      };
+
+      console.log('[BG-WORKER] Starting file scan in separate thread...');
+
+      worker.postMessage({
+        type: 'scan',
+        activePaths: activePaths
+      });
+
+      worker.on('message', (message) => {
+        if (message.type === 'progress') {
+          console.log(`[BG-WORKER] Progress: ${message.processed}/${message.total} files, ${message.newEntries} new entries`);
+        } else if (message.type === 'result') {
+          console.log(`[BG-WORKER] Completed: ${message.data.newEntriesProcessed} new entries from ${message.data.totalFiles} files`);
+          console.log(`[BG-WORKER] Total entries in DB: ${message.data.totalEntries}`);
+          cleanup();
+        } else if (message.type === 'error') {
+          console.error('[BG-WORKER] Error:', message.error);
+          cleanup();
+        }
+      });
+
+      worker.on('error', (error) => {
+        // Ignore EPIPE errors (parent closed)
+        if (error.code !== 'EPIPE' && error.code !== 'ERR_IPC_CHANNEL_CLOSED') {
+          console.error('[BG-WORKER] Worker error:', error.message);
+        }
+        cleanup();
+      });
+
+      worker.on('exit', (code) => {
+        if (code !== 0) {
+          console.log(`[BG-WORKER] Worker exited with code ${code}`);
+        }
+        // Ensure cleanup even on unexpected exit
+        if (!isCompleted) {
+          isCompleted = true;
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+            timeoutId = null;
+          }
+          if (this.backgroundWorker === worker) {
+            this.backgroundWorker = null;
+          }
+        }
+      });
+
+      // Store worker reference for cleanup
+      this.backgroundWorker = worker;
+
+      // Timeout after 5 minutes - store ID so we can clear it
+      timeoutId = setTimeout(() => {
+        if (!isCompleted) {
+          console.log('[BG-WORKER] Timeout - terminating worker');
+          cleanup();
+        }
+      }, 300000);
+
+    } catch (error) {
+      console.error('[BG-WORKER] Failed to start worker:', error.message);
+    }
+  }
+
   /**
    * Get data for specific tab with refresh check
    */
@@ -929,26 +1069,40 @@ class CoreDataService {
   
   async calculateTimeAndDuration(usageEntries) {
     if (usageEntries.length > 0) {
-      // Get most recent entry for current session
-      const sortedEntries = usageEntries.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-      const mostRecent = sortedEntries[0];
-      
-      this.coreData.started = mostRecent.timestamp;
-      this.coreData.lastActivity = mostRecent.timestamp;
-      this.coreData.dateTime = mostRecent.timestamp;
-      
-      // Calculate time ago and duration
       const now = new Date();
-      const startTime = new Date(mostRecent.timestamp);
-      const diffMs = now - startTime;
-      const diffMinutes = Math.floor(diffMs / (1000 * 60));
-      
-      this.coreData.duration = diffMinutes;
-      this.coreData.timeAgo = `${diffMinutes}m ago`;
-      
-      // Calculate session time left (5 hour limit)
+      const fiveHoursAgo = new Date(now.getTime() - (5 * 60 * 60 * 1000)); // 5 hours in ms
+
+      // Filter entries to only those within the current 5-hour Anthropic session window
+      const windowEntries = usageEntries.filter(e => new Date(e.timestamp) >= fiveHoursAgo);
+
+      // Use windowEntries if available, otherwise fall back to all entries
+      const entriesToUse = windowEntries.length > 0 ? windowEntries : usageEntries;
+
+      // Sort entries by timestamp
+      const sortedEntries = entriesToUse.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      const firstEntry = sortedEntries[0];
+      const lastEntry = sortedEntries[sortedEntries.length - 1];
+
+      this.coreData.started = firstEntry.timestamp;
+      this.coreData.lastActivity = lastEntry.timestamp;
+      this.coreData.dateTime = lastEntry.timestamp;
+
+      // Calculate duration = time since first entry (capped at 300 min)
+      const sessionStart = new Date(firstEntry.timestamp);
+      const durationMs = now - sessionStart;
+      const rawDuration = Math.floor(durationMs / (1000 * 60));
+      const durationMinutes = Math.min(rawDuration, 300); // Cap at 5 hours
+
+      this.coreData.duration = durationMinutes;
+
+      // Calculate time ago for last activity
+      const lastActivityTime = new Date(lastEntry.timestamp);
+      const lastActivityAgo = Math.floor((now - lastActivityTime) / (1000 * 60));
+      this.coreData.timeAgo = `${lastActivityAgo}m ago`;
+
+      // Calculate session time left (5 hour limit from session start)
       const sessionLimitMinutes = 300; // 5 hours
-      this.coreData.sessionTimeLeft = Math.max(0, sessionLimitMinutes - diffMinutes);
+      this.coreData.sessionTimeLeft = Math.max(0, sessionLimitMinutes - durationMinutes);
       this.coreData.timeLeft = this.coreData.sessionTimeLeft;
     }
   }
@@ -1736,6 +1890,21 @@ class CoreDataService {
   setAutoPush(callback) {
     this.autoPushCallback = callback;
     console.log('[AUTO] CoreDataService: Auto-push enabled for store.ts');
+  }
+
+  /**
+   * Cleanup method - terminate background workers on app close
+   */
+  cleanup() {
+    if (this.backgroundWorker) {
+      console.log('[CLEANUP] CoreDataService: Terminating background worker...');
+      try {
+        this.backgroundWorker.terminate();
+      } catch (err) {
+        // Ignore errors during cleanup
+      }
+      this.backgroundWorker = null;
+    }
   }
 }
 

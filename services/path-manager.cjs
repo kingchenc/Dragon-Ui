@@ -1,34 +1,48 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const { getMultiDirectoryConfig, getProjectDirectories, findAllProjectFiles } = require('./multi-directory-config.cjs');
 
 /**
  * Path Manager Service
  * Handles Claude project path detection and management
+ * Now integrates with MultiDirectoryConfig for comma-separated CLAUDE_CONFIG_DIR support
  */
 class PathManagerService {
   constructor() {
     this.standardPaths = [];
     this.customPaths = [];
+    this.multiDirConfig = null;
     this.detectStandardPaths();
   }
 
   /**
    * Detect standard Claude project paths
+   * Now uses MultiDirectoryConfig for CLAUDE_CONFIG_DIR support
    */
   detectStandardPaths() {
     this.standardPaths = [];
     console.log('[SCAN] PathManager: Starting Claude path detection...');
-    
+
     const platform = os.platform();
     console.log(`[SYS] PathManager: Platform detected: ${platform}`);
-    
-    if (platform === 'win32') {
-      this.detectWindowsPaths();
+
+    // Check for CLAUDE_CONFIG_DIR environment variable first
+    this.multiDirConfig = getMultiDirectoryConfig();
+    const envDirs = this.multiDirConfig.getDirectories();
+
+    if (envDirs.length > 0) {
+      console.log(`[CONFIG] PathManager: Found ${envDirs.length} directories from configuration`);
+      this.standardPaths = [...envDirs];
     } else {
-      this.detectUnixPaths();
+      // Fall back to platform-specific detection
+      if (platform === 'win32') {
+        this.detectWindowsPaths();
+      } else {
+        this.detectUnixPaths();
+      }
     }
-    
+
     console.log(`[SCAN] PathManager: Detected ${this.standardPaths.length} standard Claude paths`);
     return this.standardPaths;
   }
@@ -203,9 +217,83 @@ class PathManagerService {
       activeCount: allPaths.active.length,
       inactiveCount: (allPaths.standard.length + allPaths.custom.length) - allPaths.active.length
     };
-    
+
     console.log('[DATA] PathManager Stats:', stats);
     return stats;
+  }
+
+  /**
+   * Get multi-directory configuration info
+   * @returns {Object}
+   */
+  getMultiDirInfo() {
+    if (!this.multiDirConfig) {
+      this.multiDirConfig = getMultiDirectoryConfig();
+    }
+    return this.multiDirConfig.getInfo();
+  }
+
+  /**
+   * Add a directory to the multi-directory config
+   * @param {string} dirPath
+   * @param {number} priority
+   * @returns {boolean}
+   */
+  addConfigDirectory(dirPath, priority = -1) {
+    if (!this.multiDirConfig) {
+      this.multiDirConfig = getMultiDirectoryConfig();
+    }
+
+    const result = this.multiDirConfig.addDirectory(dirPath, priority);
+    if (result) {
+      this.forceRefreshPaths();
+    }
+    return result;
+  }
+
+  /**
+   * Remove a directory from the multi-directory config
+   * @param {string} dirPath
+   * @returns {boolean}
+   */
+  removeConfigDirectory(dirPath) {
+    if (!this.multiDirConfig) {
+      this.multiDirConfig = getMultiDirectoryConfig();
+    }
+
+    const result = this.multiDirConfig.removeDirectory(dirPath);
+    if (result) {
+      this.forceRefreshPaths();
+    }
+    return result;
+  }
+
+  /**
+   * Find all JSONL files across all configured directories
+   * @returns {Array<{file: string, dir: string}>}
+   */
+  findAllJSONLFiles() {
+    if (!this.multiDirConfig) {
+      this.multiDirConfig = getMultiDirectoryConfig();
+    }
+    return this.multiDirConfig.findAllJSONLFiles();
+  }
+
+  /**
+   * Get the environment variable value for CLAUDE_CONFIG_DIR
+   * @returns {string|null}
+   */
+  getConfigDirEnvVar() {
+    return process.env.CLAUDE_CONFIG_DIR || null;
+  }
+
+  /**
+   * Check if multi-directory mode is active
+   * @returns {boolean}
+   */
+  isMultiDirectoryMode() {
+    const envVar = this.getConfigDirEnvVar();
+    return envVar && (envVar.includes(',') || envVar.includes(path.delimiter));
   }
 }
 

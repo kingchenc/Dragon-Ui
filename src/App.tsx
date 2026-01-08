@@ -25,15 +25,16 @@ import {
   Bug
 } from 'lucide-react'
 
-// Import page components (we'll create these next)
+// Import page components
 import OverviewPage from '@/pages/overview'
-import ProjectsPage from '@/pages/projects' 
+import ProjectsPage from '@/pages/projects'
 import SessionsPage from '@/pages/sessions'
 import MonthlyUsagePage from '@/pages/monthly-usage'
 import DailyUsagePage from '@/pages/daily-usage'
 import ActiveSessionPage from '@/pages/active-session'
 import SettingsPage from '@/pages/settings'
-import StatuslineRenderer from '@/components/statusline/statusline-renderer'
+import { PageErrorBoundary } from '@/components/ui/page-error-boundary'
+// StatuslineRenderer removed - statusline is for CLI/console output only, not UI display
 import { TerminalPanel, useTerminalStore } from '@/components/terminal'
 import { AccountSwitcher } from '@/components/accounts'
 
@@ -369,38 +370,51 @@ function App() {
           {/* Tab Content */}
           <div className="min-h-[600px]">
             <TabsContent value="overview" className="space-y-6">
-              <OverviewPage />
+              <PageErrorBoundary pageName="Overview" onRetry={handleRefresh}>
+                <OverviewPage />
+              </PageErrorBoundary>
             </TabsContent>
 
             <TabsContent value="projects" className="space-y-6">
-              <ProjectsPage />
+              <PageErrorBoundary pageName="Projects" onRetry={handleRefresh}>
+                <ProjectsPage />
+              </PageErrorBoundary>
             </TabsContent>
 
             <TabsContent value="sessions" className="space-y-6">
-              <SessionsPage />
+              <PageErrorBoundary pageName="Sessions" onRetry={handleRefresh}>
+                <SessionsPage />
+              </PageErrorBoundary>
             </TabsContent>
 
             <TabsContent value="monthly" className="space-y-6">
-              <MonthlyUsagePage />
+              <PageErrorBoundary pageName="Monthly Usage" onRetry={handleRefresh}>
+                <MonthlyUsagePage />
+              </PageErrorBoundary>
             </TabsContent>
 
             <TabsContent value="daily" className="space-y-6">
-              <DailyUsagePage />
+              <PageErrorBoundary pageName="Daily Usage" onRetry={handleRefresh}>
+                <DailyUsagePage />
+              </PageErrorBoundary>
             </TabsContent>
 
             <TabsContent value="active" className="space-y-6">
-              <ActiveSessionPage />
+              <PageErrorBoundary pageName="Active Session" onRetry={handleRefresh}>
+                <ActiveSessionPage />
+              </PageErrorBoundary>
             </TabsContent>
 
             <TabsContent value="settings" className="space-y-6">
-              <SettingsPage />
+              <PageErrorBoundary pageName="Settings" onRetry={handleRefresh}>
+                <SettingsPage />
+              </PageErrorBoundary>
             </TabsContent>
           </div>
         </Tabs>
       </main>
 
-      {/* Statusline */}
-      <StatuslineRenderer />
+      {/* Statusline removed from UI - it's for CLI/console output only */}
 
       {/* Footer */}
       <footer className="border-t bg-background/50">

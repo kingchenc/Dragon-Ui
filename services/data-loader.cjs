@@ -8,8 +8,9 @@ const { modelPriceService } = require('./model-price-service.cjs');
 
 /**
  * Yield control back to event loop to prevent UI blocking
+ * Uses setTimeout(0) instead of setImmediate for better UI responsiveness
  */
-const yieldToEventLoop = () => new Promise(resolve => setImmediate(resolve));
+const yieldToEventLoop = () => new Promise(resolve => setTimeout(resolve, 0));
 
 /**
  * Data Loader Service
@@ -72,18 +73,21 @@ class DataLoaderService {
       // Process each JSONL file (only new entries) with yield between files
       for (let i = 0; i < jsonlFiles.length; i++) {
         const file = jsonlFiles[i];
-        console.log(`[PROC] DataLoader: Processing file ${i + 1}/${jsonlFiles.length}: ${file}`);
         try {
           const newEntries = await this.processJsonlFileIncremental(file, lastTimestamp);
           newEntriesProcessed += newEntries;
-          console.log(`[PROC] DataLoader: File ${i + 1} processed, ${newEntries} new entries`);
         } catch (fileErr) {
           console.error(`[ERR] DataLoader: Failed to process file ${file}:`, fileErr.message);
         }
 
-        // Yield every 5 files
-        if (i > 0 && i % 5 === 0) {
+        // Yield every 10 files to allow UI updates
+        if (i > 0 && i % 10 === 0) {
           await yieldToEventLoop();
+        }
+
+        // Log progress every 100 files (not every file - reduces blocking)
+        if ((i + 1) % 100 === 0 || i === jsonlFiles.length - 1) {
+          console.log(`[PROC] DataLoader: Processed ${i + 1}/${jsonlFiles.length} files, ${newEntriesProcessed} new entries`);
         }
       }
     }

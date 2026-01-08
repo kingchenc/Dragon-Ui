@@ -327,8 +327,6 @@ export default function SettingsPage() {
         return
       }
       
-      console.log('Testing SSH connection:', settings.sshConfig)
-      
       // Use window API for SSH connection test
       if (window.electronAPI?.invoke) {
         const result = await window.electronAPI.invoke('ssh-test-connection', settings.sshConfig)

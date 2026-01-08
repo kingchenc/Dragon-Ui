@@ -859,12 +859,15 @@ export const useAppStore = create<AppState>()(
         
         // Update store currency
         set({ currency: newCurrency })
-        
+
+        // Re-fetch core data with new currency (backend converts costs)
+        await get().refreshCoreData()
+
         // Recalculate all tab views with new currency
         get().calculateTabViews()
-        
+
         set({ isLoadingCurrency: false })
-        console.log(`[OK] Store: Currency changed to ${newCurrency} and all views updated`)
+        console.log(`[OK] Store: Currency changed to ${newCurrency}, data re-fetched and views updated`)
         
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error'
@@ -1091,111 +1094,130 @@ export const useAppStore = create<AppState>()(
 )
 
 // Simple hooks for tabs - they just read from store, no IPC calls!
+// Note: refreshCoreData is a stable Zustand action reference, excluded from deps
 export const useOverviewData = () => {
-  const { overviewData, isLoading, refreshCoreData } = useAppStore()
-  
+  const overviewData = useAppStore(state => state.overviewData)
+  const isLoading = useAppStore(state => state.isLoading)
+  const refreshCoreData = useAppStore(state => state.refreshCoreData)
+
   React.useEffect(() => {
     if (!overviewData && !isLoading) {
       refreshCoreData().catch(console.error)
     }
-  }, [overviewData, isLoading, refreshCoreData])
-  
+  }, [overviewData, isLoading]) // refreshCoreData is stable, excluded intentionally
+
   return {
     data: overviewData,
-    isLoading: isLoading,
+    isLoading,
     refresh: refreshCoreData
   }
 }
 
 export const useProjectsData = () => {
-  const { projectsData, isLoading, refreshCoreData } = useAppStore()
-  
+  const projectsData = useAppStore(state => state.projectsData)
+  const isLoading = useAppStore(state => state.isLoading)
+  const refreshCoreData = useAppStore(state => state.refreshCoreData)
+
   React.useEffect(() => {
     if (!projectsData && !isLoading) {
       refreshCoreData().catch(console.error)
     }
-  }, [projectsData, isLoading, refreshCoreData])
-  
+  }, [projectsData, isLoading]) // refreshCoreData is stable, excluded intentionally
+
   return {
     data: projectsData,
-    isLoading: isLoading,
+    isLoading,
     refresh: refreshCoreData
   }
 }
 
 export const useSessionsData = () => {
-  const { sessionsData, isLoading, refreshCoreData } = useAppStore()
-  
+  const sessionsData = useAppStore(state => state.sessionsData)
+  const isLoading = useAppStore(state => state.isLoading)
+  const refreshCoreData = useAppStore(state => state.refreshCoreData)
+
   React.useEffect(() => {
     if (!sessionsData && !isLoading) {
       refreshCoreData().catch(console.error)
     }
-  }, [sessionsData, isLoading, refreshCoreData])
-  
+  }, [sessionsData, isLoading]) // refreshCoreData is stable, excluded intentionally
+
   return {
     data: sessionsData,
-    isLoading: isLoading,
+    isLoading,
     refresh: refreshCoreData
   }
 }
 
 export const useMonthlyData = () => {
-  const { monthlyData, isLoading, refreshCoreData } = useAppStore()
-  
+  const monthlyData = useAppStore(state => state.monthlyData)
+  const isLoading = useAppStore(state => state.isLoading)
+  const refreshCoreData = useAppStore(state => state.refreshCoreData)
+
   React.useEffect(() => {
     if (!monthlyData && !isLoading) {
       refreshCoreData().catch(console.error)
     }
-  }, [monthlyData, isLoading, refreshCoreData])
-  
+  }, [monthlyData, isLoading]) // refreshCoreData is stable, excluded intentionally
+
   return {
     data: monthlyData,
-    isLoading: isLoading,
+    isLoading,
     refresh: refreshCoreData
   }
 }
 
 export const useDailyData = () => {
-  const { dailyData, isLoading, refreshCoreData } = useAppStore()
-  
+  const dailyData = useAppStore(state => state.dailyData)
+  const isLoading = useAppStore(state => state.isLoading)
+  const refreshCoreData = useAppStore(state => state.refreshCoreData)
+
   React.useEffect(() => {
     if (!dailyData && !isLoading) {
       refreshCoreData().catch(console.error)
     }
-  }, [dailyData, isLoading, refreshCoreData])
-  
+  }, [dailyData, isLoading]) // refreshCoreData is stable, excluded intentionally
+
   return {
     data: dailyData,
-    isLoading: isLoading,
+    isLoading,
     refresh: refreshCoreData
   }
 }
 
 export const useActiveData = () => {
-  const { activeData, isLoading, refreshCoreData } = useAppStore()
-  
+  const activeData = useAppStore(state => state.activeData)
+  const isLoading = useAppStore(state => state.isLoading)
+  const refreshCoreData = useAppStore(state => state.refreshCoreData)
+
+  // Initial data fetch
   React.useEffect(() => {
     if (!activeData && !isLoading) {
       refreshCoreData().catch(console.error)
     }
-  }, [activeData, isLoading, refreshCoreData])
-  
+  }, [activeData, isLoading]) // refreshCoreData is stable, excluded intentionally
+
   // Smart auto-refresh - only when window is active and not loading
+  // Using ref to track isLoading to avoid recreating interval on loading state changes
+  const isLoadingRef = React.useRef(isLoading)
+  React.useEffect(() => {
+    isLoadingRef.current = isLoading
+  }, [isLoading])
+
   React.useEffect(() => {
     let interval: NodeJS.Timeout | null = null
     let isPaused = false
-    
+
     const startSmartRefresh = () => {
       // Only refresh if window is visible, not loading, and not paused
-      if (!document.hidden && !isLoading && !isPaused) {
-        console.log('[REFRESH] Smart refresh: Incremental update check')
+      if (!document.hidden && !isLoadingRef.current && !isPaused) {
         refreshCoreData().catch(console.error)
       }
     }
-    
+
     // Start with longer interval for active session (30 seconds)
     interval = setInterval(startSmartRefresh, 30000)
-    
+
     // Pause refresh when window is hidden to save resources
     const handleVisibilityChange = () => {
       if (document.hidden) {
@@ -1203,60 +1225,52 @@ export const useActiveData = () => {
         if (interval) {
           clearInterval(interval)
           interval = null
-          console.log('[PAUSE] Smart refresh: Paused (window hidden)')
         }
       } else {
         isPaused = false
         if (!interval) {
           interval = setInterval(startSmartRefresh, 30000)
-          console.log('[RESUME] Smart refresh: Resumed (window visible)')
-          // Delayed refresh when window becomes visible to avoid lag
-          setTimeout(() => {
-            startSmartRefresh()
-          }, 500)
+          // Delayed refresh when window becomes visible
+          setTimeout(startSmartRefresh, 500)
         }
       }
     }
-    
+
     // Listen for app minimize/restore events
     const handleAppMinimized = () => {
       isPaused = true
       if (interval) {
         clearInterval(interval)
         interval = null
-        console.log('[PAUSE] Smart refresh: Paused (app minimized)')
       }
     }
-    
+
     const handleAppRestored = () => {
       isPaused = false
       if (!interval) {
         interval = setInterval(startSmartRefresh, 30000)
-        console.log('[RESUME] Smart refresh: Resumed (app restored)')
-        // Delayed refresh when app is restored to avoid blocking UI
-        setTimeout(() => {
-          startSmartRefresh()
-        }, 1000)
+        // Delayed refresh when app is restored
+        setTimeout(startSmartRefresh, 1000)
       }
     }
-    
+
     document.addEventListener('visibilitychange', handleVisibilityChange)
-    
+
     // Listen for electron events if available
     if (window.electronAPI) {
       window.electronAPI.onAppMinimized?.(handleAppMinimized)
       window.electronAPI.onAppRestored?.(handleAppRestored)
     }
-    
+
     return () => {
       if (interval) clearInterval(interval)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [isLoading, refreshCoreData])
-  
+  }, []) // Empty deps - uses refs for dynamic values, refreshCoreData is stable
+
   return {
     data: activeData,
-    isLoading: isLoading,
+    isLoading,
     refresh: refreshCoreData
   }
 }
@@ -1295,10 +1309,11 @@ if (typeof window !== 'undefined' && window.electronAPI) {
   document.documentElement.classList.toggle('dark', theme === 'dark')
   
   // Listen for auto-pushed core data updates from backend
+  // Use requestAnimationFrame to batch updates and prevent React timing issues
+  let pendingUpdate: any = null
   window.electronAPI.on('core-data-updated', (coreData: any) => {
     console.log('[IPC] Store: Received auto-pushed core data from backend')
-    const store = useAppStore.getState()
-    
+
     // Check if this is a progress update
     if (coreData._loadingProgress) {
       useAppStore.setState({
@@ -1306,20 +1321,30 @@ if (typeof window !== 'undefined' && window.electronAPI) {
       })
       return
     }
-    
-    // Update core data directly
-    store.setError(null)
-    useAppStore.setState(state => ({
-      coreData: {
-        ...state.coreData,
-        ...coreData
-      },
-      lastRefresh: Date.now(),
-      loadingProgress: null // Clear progress when data is complete
-    }))
-    
-    // Recalculate tab views
-    store.calculateTabViews()
+
+    // Queue update and batch with requestAnimationFrame to prevent React hook errors
+    pendingUpdate = coreData
+    requestAnimationFrame(() => {
+      if (!pendingUpdate) return
+      const data = pendingUpdate
+      pendingUpdate = null
+
+      try {
+        const store = useAppStore.getState()
+        store.setError(null)
+        useAppStore.setState(state => ({
+          coreData: {
+            ...state.coreData,
+            ...data
+          },
+          lastRefresh: Date.now(),
+          loadingProgress: null
+        }))
+        store.calculateTabViews()
+      } catch (err) {
+        console.warn('[IPC] Store update warning:', err)
+      }
+    })
   })
   
   // Only initialize in electron renderer

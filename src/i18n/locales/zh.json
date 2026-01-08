@@ -499,7 +499,7 @@
         },
         "config": {
           "host": "主机",
-          "ipPlaceholder": "192.168.1.100",
+          "hostPlaceholder": "192.168.1.100",
           "port": "端口",
           "username": "用户名",
           "usernamePlaceholder": "admin",

@@ -14,19 +14,8 @@ class CoreDataWorker {
     this.currency = 'USD';
     this.exchangeRates = {};
     this.db = new DatabaseService();
-    
-    // Ensure cache token columns exist in worker thread
-    try {
-      this.db.db.exec(`ALTER TABLE usage_entries ADD COLUMN cache_creation_input_tokens INTEGER DEFAULT 0`);
-    } catch (e) {
-      // Column already exists, ignore
-    }
-    
-    try {
-      this.db.db.exec(`ALTER TABLE usage_entries ADD COLUMN cache_read_input_tokens INTEGER DEFAULT 0`);
-    } catch (e) {
-      // Column already exists, ignore
-    }
+    // NOTE: Do NOT run ALTER TABLE here - it causes deadlocks with main thread
+    // The columns are created by main thread's DatabaseService on startup
   }
   
   // Extract main project name from full path (group subfolders)
@@ -451,17 +440,17 @@ class CoreDataWorker {
       })
     }));
 
-    // Active session detection using DB
+    // Active session detection using DB - use 5 hour window (Anthropic session length)
     const now = Date.now();
-    const recentEntries = this.db.getRecentEntries(30); // Last 30 minutes
-    
-    console.log(`[ACTIVE DEBUG] Found ${recentEntries.length} entries in last 30 minutes`);
+    const recentEntries = this.db.getRecentEntries(300); // Last 5 hours (300 minutes) = Anthropic session window
+
+    console.log(`[ACTIVE DEBUG] Found ${recentEntries.length} entries in last 5 hours (Anthropic session window)`);
     if (recentEntries.length > 0) {
       const latest = recentEntries[0];
       const minutesAgo = Math.round((now - new Date(latest.timestamp).getTime()) / (1000 * 60));
       console.log(`[ACTIVE DEBUG] Latest entry: ${latest.session_id}, ${minutesAgo}min ago`);
     }
-    
+
     let activeSessionId = null;
     if (recentEntries.length > 0) {
       // Find the most recent session
@@ -481,27 +470,48 @@ class CoreDataWorker {
       const sessionEntries = this.db.getSessionEntries(activeSessionId);
       
       if (sessionEntries.length > 0) {
-        const sessionStart = new Date(Math.min(...sessionEntries.map(e => new Date(e.timestamp).getTime())));
-        const sessionEnd = new Date(Math.max(...sessionEntries.map(e => new Date(e.timestamp).getTime())));
-        const sessionCost = sessionEntries.reduce((sum, e) => sum + this.convertCurrency(e.cost || 0), 0);
-        const sessionTokens = sessionEntries.reduce((sum, e) => sum + ((e.input_tokens || 0) + (e.output_tokens || 0) + (e.cache_creation_input_tokens || 0) + (e.cache_read_input_tokens || 0)), 0);
-        
-        const durationMinutes = Math.floor((sessionEnd.getTime() - sessionStart.getTime()) / (1000 * 60));
-        const timeLeftMinutes = Math.max(0, 300 - durationMinutes); // 5 hours = 300 minutes
-        
-        console.log(`[DEBUG] Current Session Debug: ${sessionEntries.length} entries, cost=$${sessionCost.toFixed(4)}, tokens=${sessionTokens}, duration=${durationMinutes}min`);
-        
-        result.started = sessionStart.toISOString();
-        result.duration = durationMinutes;
-        result.currentCost = sessionCost;
-        result.currentTokens = sessionTokens; // Add current session tokens
-        result.timeLeft = timeLeftMinutes;
-        result.sessionTimeLeft = timeLeftMinutes;
-        result.lastActivity = sessionEnd.toISOString();
-        result.status = timeLeftMinutes > 0 ? 'active' : 'expired';
-        result.sessionStatus = result.status;
-        
-        console.log(`[DEBUG] Active Session Calculated: Cost=$${sessionCost.toFixed(2)}, Tokens=${sessionTokens}, Duration=${durationMinutes}min`);
+        const now = new Date();
+        const fiveHoursAgo = new Date(now.getTime() - (5 * 60 * 60 * 1000)); // 5 hours in ms
+
+        // Debug: check timestamps
+        const latestEntry = sessionEntries.reduce((latest, e) =>
+          new Date(e.timestamp) > new Date(latest.timestamp) ? e : latest, sessionEntries[0]);
+        console.log(`[DEBUG] Now: ${now.toISOString()}, 5h ago: ${fiveHoursAgo.toISOString()}`);
+        console.log(`[DEBUG] Latest entry: ${latestEntry.timestamp}, Session entries: ${sessionEntries.length}`);
+
+        // Filter entries to only those within the current 5-hour Anthropic session window
+        const windowEntries = sessionEntries.filter(e => new Date(e.timestamp) >= fiveHoursAgo);
+        console.log(`[DEBUG] Window entries: ${windowEntries.length} (filtered from ${sessionEntries.length})`);
+
+        // Use windowEntries if available, otherwise fall back to recent entries
+        const entriesToUse = windowEntries.length > 0 ? windowEntries : sessionEntries;
+
+        if (entriesToUse.length > 0) {
+          // Use first entry within the window as session start
+          const sessionStart = new Date(Math.min(...entriesToUse.map(e => new Date(e.timestamp).getTime())));
+          const sessionEnd = new Date(Math.max(...entriesToUse.map(e => new Date(e.timestamp).getTime())));
+          const sessionCost = entriesToUse.reduce((sum, e) => sum + this.convertCurrency(e.cost || 0), 0);
+          const sessionTokens = entriesToUse.reduce((sum, e) => sum + ((e.input_tokens || 0) + (e.output_tokens || 0) + (e.cache_creation_input_tokens || 0) + (e.cache_read_input_tokens || 0)), 0);
+
+          // Duration = time since first entry in window (capped at 300 min)
+          const rawDuration = Math.floor((now.getTime() - sessionStart.getTime()) / (1000 * 60));
+          const durationMinutes = Math.min(rawDuration, 300); // Cap at 5 hours
+          const timeLeftMinutes = Math.max(0, 300 - durationMinutes);
+
+          console.log(`[DEBUG] Session: start=${sessionStart.toISOString()}, rawDuration=${rawDuration}min, capped=${durationMinutes}min, timeLeft=${timeLeftMinutes}min`);
+
+          result.started = sessionStart.toISOString();
+          result.duration = durationMinutes;
+          result.currentCost = sessionCost;
+          result.currentTokens = sessionTokens;
+          result.timeLeft = timeLeftMinutes;
+          result.sessionTimeLeft = timeLeftMinutes;
+          result.lastActivity = sessionEnd.toISOString();
+          result.status = timeLeftMinutes > 0 ? 'active' : 'expired';
+          result.sessionStatus = result.status;
+
+          console.log(`[DEBUG] Active Session: Cost=$${sessionCost.toFixed(2)}, Tokens=${sessionTokens}, Duration=${durationMinutes}min, TimeLeft=${timeLeftMinutes}min`);
+        }
       }
     } else {
       result.status = 'idle';
@@ -570,22 +580,35 @@ class CoreDataWorker {
       startTime: lastSessionData.startTime,
       endTime: lastSessionData.endTime,
       duration: lastSessionData.duration,
-      project: this.extractProjectName(lastSessionData.project), // Extract clean project name
-      lastActivity: lastSessionData.lastActivity
+      project: this.extractProjectName(lastSessionData.project),
+      lastActivity: lastSessionData.lastActivity,
+      models: Array.isArray(lastSessionData.models) ? lastSessionData.models : [],
+      modelCount: Array.isArray(lastSessionData.models) ? lastSessionData.models.length : 0
     } : null;
     
     // Enhanced daily data array for charts and history with session-start-date grouping
+    const today = new Date().toISOString().split('T')[0];
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    const threeDaysAgo = new Date(Date.now() - 3 * 86400000).toISOString().split('T')[0];
+
     result.dailyData = dailyStats.map(day => {
+      const isToday = day.date === today;
+      const isYesterday = day.date === yesterday;
+      const isRecent = day.date >= threeDaysAgo;
+
       return {
         date: day.date,
         totalCost: this.convertCurrency(day.total_cost),
         totalTokens: day.total_tokens,
         sessionCount: day.session_count,
-        sessions: day.session_count, // Add sessions field for frontend compatibility
+        sessions: day.session_count,
         models: day.models || [],
         modelCount: day.model_count || 0,
-        costPer1KTokens: day.total_tokens > 0 ? 
-          parseFloat(((day.total_cost / day.total_tokens) * 1000).toFixed(6)) : 0
+        costPer1KTokens: day.total_tokens > 0 ?
+          parseFloat(((day.total_cost / day.total_tokens) * 1000).toFixed(6)) : 0,
+        isToday,
+        isYesterday,
+        isRecent
       };
     });
     
@@ -965,11 +988,11 @@ class CoreDataWorker {
 // Worker message handling
 if (parentPort) {
   const worker = new CoreDataWorker();
-  
+
   parentPort.on('message', async (data) => {
     try {
       const { type, ...params } = data;
-      
+
       if (type === 'calculateAllData') {
         const result = await worker.calculateAllData(
           params.usageEntries, 

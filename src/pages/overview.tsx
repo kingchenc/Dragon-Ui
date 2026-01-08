@@ -1,29 +1,68 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, Component, useState, useEffect } from 'react'
 import { StatsCard, StatsGrid } from '@/components/dashboard/stats-card'
 import { DragonCard, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { DragonLoading } from '@/components/ui/loading'
 import { useOverviewData, useActiveData } from '@/lib/store'
 import { useTranslation } from '@/i18n'
-import { 
-  DollarSign, 
-  Zap, 
-  TrendingUp, 
+import {
+  DollarSign,
+  Zap,
+  TrendingUp,
   Clock,
   Target,
   BarChart3,
-  Activity
+  Activity,
+  AlertCircle
 } from 'lucide-react'
 import { formatCurrency, formatNumber, getRelativeTime, formatTime, formatDate } from '@/lib/utils'
 import { useTimeFormatting } from '@/lib/hooks'
 import { ActivityChart } from '@/components/charts/activity-chart'
 import { DailyFinancialChart } from '@/components/charts/daily-financial-chart'
 
+// Chart Error Boundary - prevents chart errors from crashing the whole page
+class ChartErrorBoundary extends Component<
+  { children: React.ReactNode; fallbackText?: string },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode; fallbackText?: string }) {
+    super(props)
+    this.state = { hasError: false }
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error: Error) {
+    console.warn('[Chart] Chart rendering error:', error.message)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex items-center justify-center h-48 text-muted-foreground">
+          <AlertCircle className="h-5 w-5 mr-2" />
+          <span>{this.props.fallbackText || 'Chart temporarily unavailable'}</span>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
 export default function OverviewPage() {
   // Simple store reads - no calculations needed!
   const { data: overviewData, isLoading: isLoadingOverview, refresh: refreshOverview } = useOverviewData()
   const { data: activeData, isLoading: isLoadingActive } = useActiveData()
-  
+
   const { t } = useTranslation()
+
+  // Delay chart rendering to avoid React hook timing issues
+  const [chartsReady, setChartsReady] = useState(false)
+  useEffect(() => {
+    const timer = setTimeout(() => setChartsReady(true), 100)
+    return () => clearTimeout(timer)
+  }, [])
 
   // Memoize sorted data to prevent re-renders
   const sortedActivityData = useMemo(() => {
@@ -267,15 +306,23 @@ export default function OverviewPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ActivityChart
-            data={sortedActivityData}
-            currency={overviewData.currency}
-          />
+          {chartsReady ? (
+            <ChartErrorBoundary fallbackText="Activity chart loading...">
+              <ActivityChart
+                data={sortedActivityData}
+                currency={overviewData.currency}
+              />
+            </ChartErrorBoundary>
+          ) : (
+            <div className="h-48 flex items-center justify-center text-muted-foreground">
+              Loading chart...
+            </div>
+          )}
         </CardContent>
       </DragonCard>
 
       {/* Daily Financial Chart - All Sessions */}
-      <DragonCard 
+      <DragonCard
         variant="scales"
         className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-purple-500/20 dragon-flame-border relative z-10 hover:z-20"
       >
@@ -286,7 +333,7 @@ export default function OverviewPage() {
             {overviewData.dailyFinancialData && overviewData.dailyFinancialData.length > 0 && (
               <span className="text-sm text-muted-foreground ml-auto">
                 {t('pages.overview.financialChart.total', 'Total')}: {formatCurrency(
-                  overviewData.dailyFinancialData.length > 0 ? overviewData.dailyFinancialData[overviewData.dailyFinancialData.length - 1].cumulativeMoney : 0, 
+                  overviewData.dailyFinancialData.length > 0 ? overviewData.dailyFinancialData[overviewData.dailyFinancialData.length - 1].cumulativeMoney : 0,
                   overviewData.currency
                 )}
               </span>
@@ -294,10 +341,18 @@ export default function OverviewPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <DailyFinancialChart
-            data={sortedFinancialData}
-            currency={overviewData.currency}
-          />
+          {chartsReady ? (
+            <ChartErrorBoundary fallbackText="Financial chart loading...">
+              <DailyFinancialChart
+                data={sortedFinancialData}
+                currency={overviewData.currency}
+              />
+            </ChartErrorBoundary>
+          ) : (
+            <div className="h-48 flex items-center justify-center text-muted-foreground">
+              Loading chart...
+            </div>
+          )}
         </CardContent>
       </DragonCard>
     </div>

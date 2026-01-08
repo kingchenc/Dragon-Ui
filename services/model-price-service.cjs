@@ -14,6 +14,49 @@ class ModelPriceService {
     this.lastUpdateFile = path.join(os.homedir(), '.dragon-ui-price-update.json');
     this.litellmUrl = 'https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json';
     
+    // Context window sizes for each model (in tokens)
+    // Sources: Anthropic, OpenAI, Zhipu AI official documentation (Dec 2025)
+    this.contextWindows = {
+      // Claude 4.5 (Extended context)
+      'claude-opus-4.5': { max: 200000, usable: 160000, output: 32000 },
+      'claude-sonnet-4.5': { max: 200000, usable: 160000, output: 16000 },
+      'claude-haiku-4.5': { max: 200000, usable: 160000, output: 8192 },
+
+      // Claude 4
+      'claude-sonnet-4': { max: 200000, usable: 160000, output: 16000 },
+      'claude-opus-4': { max: 200000, usable: 160000, output: 32000 },
+
+      // Claude 3.5
+      'claude-3.5-sonnet': { max: 200000, usable: 160000, output: 8192 },
+      'claude-3.5-haiku': { max: 200000, usable: 160000, output: 8192 },
+
+      // Claude 3 (Legacy)
+      'claude-3-opus': { max: 200000, usable: 160000, output: 4096 },
+      'claude-3-sonnet': { max: 200000, usable: 160000, output: 4096 },
+      'claude-3-haiku': { max: 200000, usable: 160000, output: 4096 },
+
+      // OpenAI GPT-5 Series (Extended)
+      'gpt-5': { max: 1000000, usable: 800000, output: 100000 },
+      'gpt-5-codex': { max: 1000000, usable: 800000, output: 100000 },
+      'gpt-5-codex-mini': { max: 200000, usable: 160000, output: 16384 },
+      'gpt-5.1-codex': { max: 1000000, usable: 800000, output: 100000 },
+
+      // OpenAI GPT-4.5/4o
+      'gpt-4.5-preview': { max: 128000, usable: 100000, output: 16384 },
+      'gpt-4o': { max: 128000, usable: 100000, output: 16384 },
+      'gpt-4o-mini': { max: 128000, usable: 100000, output: 16384 },
+
+      // Zhipu GLM
+      'glm-4.7': { max: 128000, usable: 100000, output: 8192 },
+      'glm-4.6': { max: 128000, usable: 100000, output: 8192 },
+      'glm-4.6v': { max: 128000, usable: 100000, output: 8192 },
+      'glm-4.5': { max: 128000, usable: 100000, output: 8192 },
+      'glm-4': { max: 128000, usable: 100000, output: 4096 }
+    };
+
+    // Default context window for unknown models
+    this.defaultContextWindow = { max: 200000, usable: 160000, output: 8192 };
+
     // Default fallback prices (per million tokens in USD)
     // Sources: Anthropic, OpenAI, Zhipu AI official pricing (Dec 2025)
     this.defaultPrices = {
@@ -57,6 +100,31 @@ class ModelPriceService {
       'glm-4.6v': { input: 0.30, output: 0.90, cacheWrite: 0.30, cacheRead: 0.06 },
       'glm-4.5': { input: 0.40, output: 1.60, cacheWrite: 0.40, cacheRead: 0.08 },
       'glm-4': { input: 0.30, output: 1.20, cacheWrite: 0.30, cacheRead: 0.06 }
+    };
+
+    // Provider prefixes for Tier 2 detection
+    this.providerPrefixes = {
+      'anthropic': ['claude-'],
+      'openai': ['gpt-', 'o1-', 'o3-'],
+      'zhipu': ['glm-'],
+      'nanogpt': ['nano-', 'glm-'],
+      'minimax': ['minimax-'],
+      'zai': ['claude-'],
+      'bedrock': ['anthropic.claude-', 'amazon.'],
+      'vertex': ['claude-'],
+      'azure': ['gpt-']
+    };
+
+    // Short aliases for quick model detection
+    this.shortAliases = {
+      'son': 'claude-sonnet-4.5',
+      'sonnet': 'claude-sonnet-4.5',
+      'opus': 'claude-opus-4.5',
+      'haiku': 'claude-haiku-4.5',
+      '4o': 'gpt-4o',
+      '4omini': 'gpt-4o-mini',
+      'codex': 'gpt-5-codex',
+      'glm': 'glm-4.7'
     };
 
     // Model name mappings for detection (alias -> canonical name)
@@ -134,11 +202,10 @@ class ModelPriceService {
         }
         
         this.currentPrices = { ...this.defaultPrices, ...cachedData };
-        // Show cached prices (only in Electron UI)
+        // Show cached prices summary (only in Electron UI)
         if (!this.isCLI()) {
-          Object.entries(this.currentPrices).forEach(([model, pricing]) => {
-            console.log(`[PRICE] ${model}: Input $${pricing.input}/1M, Output $${pricing.output}/1M (cached)`);
-          });
+          const priceCount = Object.keys(this.currentPrices).length;
+          console.log(`[PRICE] Loaded ${priceCount} model prices from cache`);
         }
       }
       
@@ -249,11 +316,8 @@ class ModelPriceService {
             batch: oldPrice?.batch || { input: inputPrice * 0.5, output: outputPrice * 0.5 }
           };
 
-          // Only log if price actually changed
+          // Track if price actually changed (no individual logging - too spammy)
           if (!oldPrice || oldPrice.input !== newPrice.input || oldPrice.output !== newPrice.output) {
-            if (!this.isCLI()) {
-              console.log(`[PRICE] ${normalizedName}: Input $${inputPrice.toFixed(2)}/1M, Output $${outputPrice.toFixed(2)}/1M`);
-            }
             foundUpdates = true;
           }
 
@@ -279,7 +343,8 @@ class ModelPriceService {
         this.currentPrices = updatedPrices;
         this.lastUpdate = new Date();
         this.savePricesToCache();
-        if (!this.isCLI()) console.log('[PRICE] Model prices updated successfully');
+        const priceCount = Object.keys(updatedPrices).length;
+        if (!this.isCLI()) console.log(`[PRICE] Updated ${priceCount} model prices from LiteLLM`);
         return true;
       } else {
         if (!this.isCLI()) console.log('[PRICE] No Claude model updates found in LiteLLM data');
@@ -322,47 +387,201 @@ class ModelPriceService {
     if (!this.isCLI()) console.log('[PRICE] Periodic price updates enabled (every hour)');
   }
 
+  // ============ 3-TIER MODEL DETECTION SYSTEM ============
+
   /**
-   * Normalize model name to canonical form using aliases
+   * Detect model using 3-tier fallback system
+   * Tier 1: Exact match
+   * Tier 2: Provider prefix stripping (e.g., anthropic/claude-sonnet-4.5)
+   * Tier 3: Scored fuzzy matching
+   *
+   * @param {string} modelString - Model name to detect
+   * @returns {object} - { model, tier, score, original }
    */
-  normalizeModelName(model) {
-    if (!model) return null;
+  detectModel(modelString) {
+    if (!modelString) return { model: null, tier: 0, score: 0, original: null };
 
-    const lowerModel = model.toLowerCase().trim();
+    const original = modelString;
+    const input = modelString.toLowerCase().trim();
 
-    // Direct match in prices
-    if (this.currentPrices[lowerModel]) {
-      return lowerModel;
+    // Tier 1: Exact match
+    const tier1Result = this.tier1ExactMatch(input);
+    if (tier1Result) {
+      return { model: tier1Result, tier: 1, score: 100, original };
     }
 
-    // Check aliases
+    // Tier 2: Provider prefix stripping
+    const tier2Result = this.tier2ProviderPrefix(input);
+    if (tier2Result) {
+      return { model: tier2Result, tier: 2, score: 90, original };
+    }
+
+    // Tier 3: Fuzzy matching with scoring
+    const tier3Result = this.tier3FuzzyMatch(input);
+    if (tier3Result.model && tier3Result.score >= 50) {
+      return { model: tier3Result.model, tier: 3, score: tier3Result.score, original };
+    }
+
+    return { model: null, tier: 0, score: 0, original };
+  }
+
+  /**
+   * Tier 1: Exact match in prices or aliases
+   */
+  tier1ExactMatch(input) {
+    // Direct match in current prices
+    if (this.currentPrices[input]) {
+      return input;
+    }
+
+    // Check exact alias matches
     for (const [canonical, aliases] of Object.entries(this.modelAliases)) {
-      if (aliases.some(alias => lowerModel.includes(alias.toLowerCase()) || alias.toLowerCase().includes(lowerModel))) {
+      if (aliases.some(alias => alias.toLowerCase() === input)) {
         return canonical;
       }
     }
 
-    // Fuzzy matching for common patterns
-    if (lowerModel.includes('opus') && lowerModel.includes('4.5')) return 'claude-opus-4.5';
-    if (lowerModel.includes('sonnet') && lowerModel.includes('4.5')) return 'claude-sonnet-4.5';
-    if (lowerModel.includes('haiku') && lowerModel.includes('4.5')) return 'claude-haiku-4.5';
-    if (lowerModel.includes('opus') && lowerModel.includes('4')) return 'claude-opus-4';
-    if (lowerModel.includes('sonnet') && lowerModel.includes('4')) return 'claude-sonnet-4';
-    if (lowerModel.includes('opus') && lowerModel.includes('3')) return 'claude-3-opus';
-    if (lowerModel.includes('sonnet') && lowerModel.includes('3.5')) return 'claude-3.5-sonnet';
-    if (lowerModel.includes('sonnet') && lowerModel.includes('3')) return 'claude-3-sonnet';
-    if (lowerModel.includes('haiku') && lowerModel.includes('3.5')) return 'claude-3.5-haiku';
-    if (lowerModel.includes('haiku') && lowerModel.includes('3')) return 'claude-3-haiku';
-    if (lowerModel.includes('gpt-5') || lowerModel.includes('gpt5')) return 'gpt-5';
-    if (lowerModel.includes('gpt-4o-mini')) return 'gpt-4o-mini';
-    if (lowerModel.includes('gpt-4o')) return 'gpt-4o';
-    if (lowerModel.includes('codex')) return 'gpt-5-codex';
-    if (lowerModel.includes('glm-4.7') || lowerModel.includes('glm4.7')) return 'glm-4.7';
-    if (lowerModel.includes('glm-4.6v')) return 'glm-4.6v';
-    if (lowerModel.includes('glm-4.6')) return 'glm-4.6';
-    if (lowerModel.includes('glm-4')) return 'glm-4';
+    // Check short aliases
+    if (this.shortAliases[input]) {
+      return this.shortAliases[input];
+    }
 
     return null;
+  }
+
+  /**
+   * Tier 2: Extract model from provider-prefixed string
+   * e.g., "anthropic/claude-sonnet-4.5" -> "claude-sonnet-4.5"
+   */
+  tier2ProviderPrefix(input) {
+    // Check for provider/model format
+    if (input.includes('/')) {
+      const parts = input.split('/');
+      const provider = parts[0];
+      const modelPart = parts.slice(1).join('/');
+
+      // Try exact match on extracted model
+      const exactMatch = this.tier1ExactMatch(modelPart);
+      if (exactMatch) {
+        return exactMatch;
+      }
+
+      // Try stripping known provider prefixes
+      for (const [providerName, prefixes] of Object.entries(this.providerPrefixes)) {
+        for (const prefix of prefixes) {
+          if (modelPart.startsWith(prefix)) {
+            const extracted = modelPart;
+            const exactMatch = this.tier1ExactMatch(extracted);
+            if (exactMatch) return exactMatch;
+          }
+        }
+      }
+    }
+
+    // Check for embedded provider prefixes (bedrock format: anthropic.claude-3-sonnet)
+    for (const [providerName, prefixes] of Object.entries(this.providerPrefixes)) {
+      for (const prefix of prefixes) {
+        if (input.startsWith(prefix)) {
+          // Try the full string as is
+          const exactMatch = this.tier1ExactMatch(input);
+          if (exactMatch) return exactMatch;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Tier 3: Fuzzy matching with scoring system
+   * Returns highest-scoring match above threshold
+   */
+  tier3FuzzyMatch(input) {
+    const candidates = Object.keys(this.currentPrices);
+    let bestMatch = { model: null, score: 0 };
+
+    for (const candidate of candidates) {
+      const score = this.calculateFuzzyScore(input, candidate);
+      if (score > bestMatch.score) {
+        bestMatch = { model: candidate, score };
+      }
+    }
+
+    return bestMatch;
+  }
+
+  /**
+   * Calculate fuzzy match score between input and candidate
+   * Max score: 100 (exact match)
+   */
+  calculateFuzzyScore(input, candidate) {
+    const inputLower = input.toLowerCase();
+    const candidateLower = candidate.toLowerCase();
+    let score = 0;
+
+    // Exact match (100 points)
+    if (inputLower === candidateLower) return 100;
+
+    // Substring inclusion (50 points)
+    if (candidateLower.includes(inputLower)) score += 50;
+    else if (inputLower.includes(candidateLower)) score += 40;
+
+    // Provider priority (30 points for Anthropic/Claude)
+    if (candidate.startsWith('claude-')) score += 30;
+    else if (candidate.startsWith('gpt-')) score += 20;
+    else if (candidate.startsWith('glm-')) score += 15;
+
+    // Version number matching (20 points)
+    const inputVersion = this.extractVersion(inputLower);
+    const candidateVersion = this.extractVersion(candidateLower);
+    if (inputVersion && candidateVersion && inputVersion === candidateVersion) {
+      score += 20;
+    }
+
+    // Model family matching (15 points)
+    const families = ['opus', 'sonnet', 'haiku', 'gpt', 'glm', 'codex'];
+    for (const family of families) {
+      if (inputLower.includes(family) && candidateLower.includes(family)) {
+        score += 15;
+        break;
+      }
+    }
+
+    // Common character ratio (up to 10 points)
+    const commonChars = this.countCommonChars(inputLower, candidateLower);
+    const maxLen = Math.max(inputLower.length, candidateLower.length);
+    score += Math.min(10, Math.floor((commonChars / maxLen) * 10));
+
+    return score;
+  }
+
+  /**
+   * Extract version number from model string
+   */
+  extractVersion(str) {
+    const match = str.match(/(\d+\.?\d*)/);
+    return match ? match[1] : null;
+  }
+
+  /**
+   * Count common characters between two strings
+   */
+  countCommonChars(str1, str2) {
+    const chars1 = new Set(str1);
+    const chars2 = new Set(str2);
+    let count = 0;
+    for (const char of chars1) {
+      if (chars2.has(char)) count++;
+    }
+    return count;
+  }
+
+  /**
+   * Normalize model name to canonical form (wrapper for detectModel)
+   */
+  normalizeModelName(model) {
+    const result = this.detectModel(model);
+    return result.model;
   }
 
   /**
@@ -430,6 +649,331 @@ class ModelPriceService {
   async forceUpdate() {
     console.log('[PRICE] Forcing price update...');
     return await this.updatePrices();
+  }
+
+  // ============ TIERED PRICING SUPPORT ============
+
+  /**
+   * Tiered pricing thresholds and multipliers
+   * Claude models have tiered pricing for tokens > 200k
+   */
+  getTieredPricingConfig(model) {
+    const normalizedModel = this.normalizeModelName(model);
+
+    // Claude models have tiered pricing at 200k threshold
+    if (normalizedModel && normalizedModel.startsWith('claude-')) {
+      return {
+        enabled: true,
+        threshold: 200000,
+        tier2Multiplier: 0.5 // 50% discount for tokens above threshold
+      };
+    }
+
+    // GPT-5 has tiered pricing at 128k threshold
+    if (normalizedModel && normalizedModel.startsWith('gpt-5')) {
+      return {
+        enabled: true,
+        threshold: 128000,
+        tier2Multiplier: 0.75
+      };
+    }
+
+    return { enabled: false, threshold: 0, tier2Multiplier: 1.0 };
+  }
+
+  /**
+   * Calculate cost with tiered pricing support
+   * @param {number} inputTokens - Total input tokens
+   * @param {number} outputTokens - Total output tokens
+   * @param {string} model - Model name
+   * @param {object} options - { cachedTokens, cacheWriteTokens }
+   * @returns {object} - { total, input, output, cached, breakdown }
+   */
+  calculateTieredCost(inputTokens, outputTokens, model, options = {}) {
+    const pricing = this.getModelPrices(model);
+    const tieredConfig = this.getTieredPricingConfig(model);
+    const cachedTokens = options.cachedTokens || 0;
+    const cacheWriteTokens = options.cacheWriteTokens || 0;
+
+    let inputCost = 0;
+    let outputCost = 0;
+    let cachedCost = 0;
+    let cacheWriteCost = 0;
+    let breakdown = { tier1: {}, tier2: {} };
+
+    // Calculate input cost with tiering
+    if (tieredConfig.enabled && inputTokens > tieredConfig.threshold) {
+      const tier1Tokens = tieredConfig.threshold;
+      const tier2Tokens = inputTokens - tieredConfig.threshold;
+
+      const tier1Cost = (tier1Tokens / 1000000) * pricing.input;
+      const tier2Cost = (tier2Tokens / 1000000) * pricing.input * tieredConfig.tier2Multiplier;
+
+      inputCost = tier1Cost + tier2Cost;
+      breakdown.tier1.input = { tokens: tier1Tokens, cost: tier1Cost };
+      breakdown.tier2.input = { tokens: tier2Tokens, cost: tier2Cost };
+    } else {
+      inputCost = (inputTokens / 1000000) * pricing.input;
+      breakdown.tier1.input = { tokens: inputTokens, cost: inputCost };
+    }
+
+    // Calculate output cost with tiering
+    if (tieredConfig.enabled && outputTokens > tieredConfig.threshold) {
+      const tier1Tokens = tieredConfig.threshold;
+      const tier2Tokens = outputTokens - tieredConfig.threshold;
+
+      const tier1Cost = (tier1Tokens / 1000000) * pricing.output;
+      const tier2Cost = (tier2Tokens / 1000000) * pricing.output * tieredConfig.tier2Multiplier;
+
+      outputCost = tier1Cost + tier2Cost;
+      breakdown.tier1.output = { tokens: tier1Tokens, cost: tier1Cost };
+      breakdown.tier2.output = { tokens: tier2Tokens, cost: tier2Cost };
+    } else {
+      outputCost = (outputTokens / 1000000) * pricing.output;
+      breakdown.tier1.output = { tokens: outputTokens, cost: outputCost };
+    }
+
+    // Cache costs (no tiering)
+    if (cachedTokens > 0 && pricing.cacheRead) {
+      cachedCost = (cachedTokens / 1000000) * pricing.cacheRead;
+    }
+    if (cacheWriteTokens > 0 && pricing.cacheWrite) {
+      cacheWriteCost = (cacheWriteTokens / 1000000) * pricing.cacheWrite;
+    }
+
+    const total = inputCost + outputCost + cachedCost + cacheWriteCost;
+
+    return {
+      total,
+      input: inputCost,
+      output: outputCost,
+      cached: cachedCost,
+      cacheWrite: cacheWriteCost,
+      breakdown,
+      tieredPricing: tieredConfig.enabled,
+      threshold: tieredConfig.threshold
+    };
+  }
+
+  /**
+   * Simple cost calculation (without tiering, for backwards compatibility)
+   */
+  calculateSimpleCost(inputTokens, outputTokens, model, cachedTokens = 0) {
+    const pricing = this.getModelPrices(model);
+
+    const inputCost = (inputTokens / 1000000) * pricing.input;
+    const outputCost = (outputTokens / 1000000) * pricing.output;
+    const cachedCost = cachedTokens > 0 && pricing.cacheRead
+      ? (cachedTokens / 1000000) * pricing.cacheRead
+      : 0;
+
+    return {
+      total: inputCost + outputCost + cachedCost,
+      input: inputCost,
+      output: outputCost,
+      cached: cachedCost
+    };
+  }
+
+  // ============ OFFLINE MODE SUPPORT ============
+
+  /**
+   * Check if we're in offline mode
+   */
+  isOffline() {
+    return this._offlineMode === true;
+  }
+
+  /**
+   * Set offline mode
+   */
+  setOfflineMode(enabled) {
+    this._offlineMode = enabled;
+    if (!this.isCLI()) {
+      console.log(`[PRICE] Offline mode ${enabled ? 'enabled' : 'disabled'}`);
+    }
+  }
+
+  /**
+   * Get pricing source info
+   */
+  getPricingSource() {
+    if (this._offlineMode) {
+      return {
+        source: 'offline',
+        lastUpdate: this.lastUpdate,
+        cacheAge: this.lastUpdate ? Math.floor((Date.now() - this.lastUpdate.getTime()) / (1000 * 60 * 60 * 24)) : null,
+        warning: this.lastUpdate
+          ? `Using offline pricing (last updated: ${this.getCacheAge()} ago)`
+          : 'Using hardcoded default pricing'
+      };
+    }
+
+    if (this.lastUpdate) {
+      return {
+        source: 'litellm',
+        lastUpdate: this.lastUpdate,
+        cacheAge: this.getCacheAge(),
+        warning: null
+      };
+    }
+
+    return {
+      source: 'defaults',
+      lastUpdate: null,
+      cacheAge: null,
+      warning: 'Using hardcoded default pricing'
+    };
+  }
+
+  /**
+   * Get human-readable cache age
+   */
+  getCacheAge() {
+    if (!this.lastUpdate) return 'never';
+
+    const ms = Date.now() - this.lastUpdate.getTime();
+    const hours = Math.floor(ms / (1000 * 60 * 60));
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return `${days} day${days > 1 ? 's' : ''}`;
+    if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''}`;
+    return 'just now';
+  }
+
+  // ============ CONTEXT WINDOW DETECTION ============
+
+  /**
+   * Get context window size for a model
+   * @param {string} model - Model name or alias
+   * @returns {object} - { max, usable, output } token limits
+   */
+  getContextWindow(model) {
+    const normalizedModel = this.normalizeModelName(model);
+
+    if (normalizedModel && this.contextWindows[normalizedModel]) {
+      return this.contextWindows[normalizedModel];
+    }
+
+    // Return default context window for unknown models
+    return this.defaultContextWindow;
+  }
+
+  /**
+   * Calculate context usage percentage
+   * @param {number} usedTokens - Total tokens used in context
+   * @param {string} model - Model name or alias
+   * @param {boolean} useUsableLimit - Use 80% usable limit instead of max
+   * @returns {object} - { percentage, used, max, status, warning }
+   */
+  calculateContextUsage(usedTokens, model, useUsableLimit = true) {
+    const contextWindow = this.getContextWindow(model);
+    const limit = useUsableLimit ? contextWindow.usable : contextWindow.max;
+    const percentage = (usedTokens / limit) * 100;
+
+    let status = 'normal';
+    let warning = null;
+
+    if (percentage >= 90) {
+      status = 'critical';
+      warning = 'Context window almost full. Consider starting a new session.';
+    } else if (percentage >= 75) {
+      status = 'warning';
+      warning = 'Context window is filling up.';
+    } else if (percentage >= 50) {
+      status = 'moderate';
+    }
+
+    return {
+      percentage: Math.min(100, percentage),
+      used: usedTokens,
+      max: limit,
+      absoluteMax: contextWindow.max,
+      outputLimit: contextWindow.output,
+      status,
+      warning,
+      formatted: this.formatContextUsage(usedTokens, limit)
+    };
+  }
+
+  /**
+   * Format context usage for display
+   * @param {number} used - Used tokens
+   * @param {number} max - Max tokens
+   * @returns {string} - Formatted string like "45.2k / 200k"
+   */
+  formatContextUsage(used, max) {
+    const formatTokens = (tokens) => {
+      if (tokens >= 1000000) {
+        return `${(tokens / 1000000).toFixed(1)}M`;
+      } else if (tokens >= 1000) {
+        return `${(tokens / 1000).toFixed(1)}k`;
+      }
+      return tokens.toString();
+    };
+
+    return `${formatTokens(used)} / ${formatTokens(max)}`;
+  }
+
+  /**
+   * Check if model has extended context (1M+)
+   * @param {string} model - Model name or alias
+   * @returns {boolean}
+   */
+  hasExtendedContext(model) {
+    const contextWindow = this.getContextWindow(model);
+    return contextWindow.max >= 1000000;
+  }
+
+  /**
+   * Get remaining context tokens
+   * @param {number} usedTokens - Total tokens used
+   * @param {string} model - Model name or alias
+   * @param {boolean} useUsableLimit - Use 80% usable limit
+   * @returns {number} - Remaining tokens
+   */
+  getRemainingContext(usedTokens, model, useUsableLimit = true) {
+    const contextWindow = this.getContextWindow(model);
+    const limit = useUsableLimit ? contextWindow.usable : contextWindow.max;
+    return Math.max(0, limit - usedTokens);
+  }
+
+  /**
+   * Estimate remaining output capacity
+   * @param {number} usedContextTokens - Tokens used in context
+   * @param {string} model - Model name or alias
+   * @returns {number} - Estimated remaining output tokens
+   */
+  getOutputCapacity(usedContextTokens, model) {
+    const contextWindow = this.getContextWindow(model);
+    const remainingContext = this.getRemainingContext(usedContextTokens, model, false);
+    return Math.min(contextWindow.output, remainingContext);
+  }
+
+  /**
+   * Get all context window configurations
+   * @returns {object} - All context window configurations
+   */
+  getAllContextWindows() {
+    return { ...this.contextWindows };
+  }
+
+  /**
+   * Get extended model info including context window
+   * @param {string} model - Model name or alias
+   * @returns {object} - Full model info with pricing and context
+   */
+  getExtendedModelInfo(model) {
+    const normalizedModel = this.normalizeModelName(model);
+    if (!normalizedModel) return null;
+
+    return {
+      canonical: normalizedModel,
+      pricing: this.currentPrices[normalizedModel],
+      contextWindow: this.contextWindows[normalizedModel] || this.defaultContextWindow,
+      aliases: this.modelAliases[normalizedModel] || [normalizedModel],
+      hasExtendedContext: this.hasExtendedContext(normalizedModel)
+    };
   }
 }
 

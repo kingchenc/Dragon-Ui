@@ -258,10 +258,31 @@ console.log('[INIT] All services ready - database-powered calculations enabled')
 
 console.log('[OK] Core services initialized (simplified architecture)');
 
+/**
+ * Safe IPC send helper - prevents crashes when renderer is not ready or destroyed
+ * @param {string} channel - IPC channel name
+ * @param {any} data - Data to send
+ * @returns {boolean} - Whether send was successful
+ */
+function safeIPCSend(channel, data) {
+  try {
+    if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
+      mainWindow.webContents.send(channel, data);
+      return true;
+    }
+    return false;
+  } catch (err) {
+    // Ignore errors during send - renderer may have closed
+    if (err.message && !err.message.includes('destroyed')) {
+      console.warn(`[IPC] Safe send failed for ${channel}:`, err.message);
+    }
+    return false;
+  }
+}
+
 // Enable auto-push to store when core data changes
 coreDataService.setAutoPush((coreData) => {
-  if (mainWindow && mainWindow.webContents) {
-    mainWindow.webContents.send('core-data-updated', coreData);
+  if (safeIPCSend('core-data-updated', coreData)) {
     console.log('[IPC] Core data pushed to store.ts via IPC');
   }
 });
@@ -550,9 +571,73 @@ app.on('window-all-closed', () => {
   }
 });
 
+// Consolidated cleanup handler for app quit
+let isCleaningUp = false;
 app.on('before-quit', () => {
-  // Save window state before quitting
-  saveWindowState();
+  // Prevent multiple cleanup runs
+  if (isCleaningUp) return;
+  isCleaningUp = true;
+
+  console.log('[QUIT] Starting consolidated cleanup...');
+
+  // 1. Save window state
+  try {
+    saveWindowState();
+    console.log('[QUIT] Window state saved');
+  } catch (err) {
+    console.warn('[QUIT] Failed to save window state:', err.message);
+  }
+
+  // 2. Clean up terminal sessions
+  try {
+    console.log('[QUIT] Cleaning up terminal sessions...');
+    for (const [id, listeners] of terminalListeners) {
+      try {
+        const session = terminalService.getSession(id);
+        if (session) {
+          session.removeListener('data', listeners.dataHandler);
+          session.removeListener('exit', listeners.exitHandler);
+        }
+      } catch {
+        // Ignore individual cleanup errors
+      }
+    }
+    terminalListeners.clear();
+    terminalService.destroyAllSessions();
+    console.log('[QUIT] Terminal sessions cleaned up');
+  } catch (err) {
+    console.warn('[QUIT] Failed to cleanup terminals:', err.message);
+  }
+
+  // 3. Clean up background workers
+  try {
+    if (coreDataService && coreDataService.cleanup) {
+      coreDataService.cleanup();
+      console.log('[QUIT] Core data service cleaned up');
+    }
+  } catch (err) {
+    console.warn('[QUIT] Failed to cleanup core data service:', err.message);
+  }
+
+  // 4. Shutdown MCP service
+  try {
+    if (mcpService) {
+      mcpService.shutdown();
+      console.log('[QUIT] MCP service shutdown');
+    }
+  } catch (err) {
+    console.warn('[QUIT] Failed to shutdown MCP service:', err.message);
+  }
+
+  // 5. Unregister global shortcuts
+  try {
+    globalShortcut.unregisterAll();
+    console.log('[QUIT] Global shortcuts unregistered');
+  } catch (err) {
+    console.warn('[QUIT] Failed to unregister shortcuts:', err.message);
+  }
+
+  console.log('[QUIT] Cleanup complete');
 });
 
 app.on('activate', () => {
@@ -936,10 +1021,7 @@ app.whenReady().then(() => {
   console.log('[OK] Screenshot hotkey DISABLED for now');
 });
 
-// Unregister shortcuts when app is quitting
-app.on('will-quit', () => {
-  globalShortcut.unregisterAll();
-});
+// Note: Shortcut unregistration is handled in consolidated before-quit handler
 
 // SSH Service IPC Handlers
 ipcMain.handle('ssh-set-config', async (event, config) => {
@@ -1136,15 +1218,11 @@ ipcMain.handle('terminal-create', async (event, options) => {
 
     // Set up event listeners for the session
     const dataHandler = (data) => {
-      if (mainWindow && mainWindow.webContents) {
-        mainWindow.webContents.send('terminal-data', { id: session.id, data });
-      }
+      safeIPCSend('terminal-data', { id: session.id, data });
     };
 
     const exitHandler = (exitInfo) => {
-      if (mainWindow && mainWindow.webContents) {
-        mainWindow.webContents.send('terminal-exit', { id: session.id, ...exitInfo });
-      }
+      safeIPCSend('terminal-exit', { id: session.id, ...exitInfo });
       // Clean up listeners
       session.removeListener('data', dataHandler);
       session.removeListener('exit', exitHandler);
@@ -1203,14 +1281,23 @@ ipcMain.handle('terminal-resize', async (event, id, cols, rows) => {
 ipcMain.handle('terminal-destroy', async (event, id) => {
   try {
     console.log(`[TERM] Destroying session ${id}`);
-    const destroyed = terminalService.destroySession(id);
 
-    // Clean up listeners
+    // Clean up listeners before destroying session
     const listeners = terminalListeners.get(id);
     if (listeners) {
+      const session = terminalService.getSession(id);
+      if (session) {
+        try {
+          session.removeListener('data', listeners.dataHandler);
+          session.removeListener('exit', listeners.exitHandler);
+        } catch (listenerErr) {
+          // Ignore listener removal errors
+        }
+      }
       terminalListeners.delete(id);
     }
 
+    const destroyed = terminalService.destroySession(id);
     return { success: destroyed };
   } catch (error) {
     console.error('[TERM] Destroy error:', error);
@@ -1241,12 +1328,7 @@ ipcMain.handle('terminal-get-info', async (event, id) => {
   }
 });
 
-// Clean up all terminals on app quit
-app.on('before-quit', () => {
-  console.log('[TERM] Cleaning up terminal sessions...');
-  terminalService.destroyAllSessions();
-  terminalListeners.clear();
-});
+// Note: Terminal and worker cleanup is handled in consolidated before-quit handler
 
 // Account Service IPC Handlers
 ipcMain.handle('account-get-all', async () => {
@@ -1380,27 +1462,19 @@ mcpService.initialize().then(() => {
 
 // Forward MCP events to renderer
 mcpService.on('server-status', (data) => {
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send('mcp-server-status', data);
-  }
+  safeIPCSend('mcp-server-status', data);
 });
 
 mcpService.on('server-capabilities', (data) => {
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send('mcp-server-capabilities', data);
-  }
+  safeIPCSend('mcp-server-capabilities', data);
 });
 
 mcpService.on('server-log', (data) => {
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send('mcp-server-log', data);
-  }
+  safeIPCSend('mcp-server-log', data);
 });
 
 mcpService.on('server-error', (data) => {
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send('mcp-server-error', data);
-  }
+  safeIPCSend('mcp-server-error', data);
 });
 
 // Get all MCP servers
@@ -1562,9 +1636,6 @@ ipcMain.handle('mcp-get-all-prompts', async () => {
   }
 });
 
-// Cleanup MCP on app quit
-app.on('before-quit', () => {
-  mcpService.shutdown();
-});
+// Note: MCP cleanup is handled in consolidated before-quit handler
 
 console.log('[OK] Modular Dragon UI main process initialized with account service and MCP');

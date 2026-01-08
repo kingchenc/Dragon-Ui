@@ -362,47 +362,72 @@ class CLIDashboard {
       input: process.stdin,
       output: process.stdout
     });
-    
-    return new Promise((resolve) => {
-      settingsRl.question(colors.primary('Enter setting command: '), async (input) => {
-        const command = input.trim();
-        
-        switch (command) {
-          case '1':
-            this.settings = await toggleSetting('colors');
-            setColorMode(this.settings.useColors);
-            showSuccess(this.settings.useColors ? 'Colors enabled' : 'Colors disabled');
-            break;
-          case '2':
-            this.settings = await toggleSetting('tables');
-            showSuccess(`Table style: ${this.settings.tableStyle}`);
-            break;
-          case '3':
-            this.settings = await toggleSetting('compact');
-            showSuccess(this.settings.compactMode ? 'Compact mode enabled' : 'Compact mode disabled');
-            break;
-          case '4':
-            settingsRl.question('Enter refresh interval (1-60 seconds): ', async (seconds) => {
-              const interval = parseInt(seconds);
-              if (interval >= 1 && interval <= 60) {
-                this.settings.refreshInterval = interval * 1000;
-                await saveSettings(this.settings);
-                showSuccess(`Refresh interval set to ${interval} seconds`);
-              } else {
-                showError('Invalid interval. Use 1-60 seconds.');
-              }
-              settingsRl.close();
-              await waitForInput();
-              resolve();
-            });
-            return;
-          case '0':
-            break;
-          default:
-            showError('Invalid command');
+
+    // Ensure cleanup on unexpected close
+    const cleanupSettingsRl = () => {
+      try {
+        if (!settingsRl.closed) {
+          settingsRl.close();
         }
-        
-        settingsRl.close();
+      } catch {
+        // Ignore cleanup errors
+      }
+    };
+
+    return new Promise((resolve) => {
+      // Handle SIGINT during settings
+      const sigintHandler = () => {
+        cleanupSettingsRl();
+        resolve();
+      };
+      process.once('SIGINT', sigintHandler);
+
+      settingsRl.question(colors.primary('Enter setting command: '), async (input) => {
+        process.removeListener('SIGINT', sigintHandler);
+        const command = input.trim();
+
+        try {
+          switch (command) {
+            case '1':
+              this.settings = await toggleSetting('colors');
+              setColorMode(this.settings.useColors);
+              showSuccess(this.settings.useColors ? 'Colors enabled' : 'Colors disabled');
+              break;
+            case '2':
+              this.settings = await toggleSetting('tables');
+              showSuccess(`Table style: ${this.settings.tableStyle}`);
+              break;
+            case '3':
+              this.settings = await toggleSetting('compact');
+              showSuccess(this.settings.compactMode ? 'Compact mode enabled' : 'Compact mode disabled');
+              break;
+            case '4':
+              settingsRl.question('Enter refresh interval (1-60 seconds): ', async (seconds) => {
+                try {
+                  const interval = parseInt(seconds);
+                  if (interval >= 1 && interval <= 60) {
+                    this.settings.refreshInterval = interval * 1000;
+                    await saveSettings(this.settings);
+                    showSuccess(`Refresh interval set to ${interval} seconds`);
+                  } else {
+                    showError('Invalid interval. Use 1-60 seconds.');
+                  }
+                } finally {
+                  cleanupSettingsRl();
+                  await waitForInput();
+                  resolve();
+                }
+              });
+              return;
+            case '0':
+              break;
+            default:
+              showError('Invalid command');
+          }
+        } finally {
+          cleanupSettingsRl();
+        }
+
         await waitForInput();
         resolve();
       });
